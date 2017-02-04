@@ -1,0 +1,484 @@
+#include "Application.hpp"
+
+#include <iostream>
+#include <math.h>  
+#include <unordered_set>
+
+#include <imgui.h>
+#include <glmlv/imgui_impl_glfw_gl3.hpp>
+#include <glmlv/Image2DRGBA.hpp>
+#include <glmlv/load_obj.hpp>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
+
+int Application::run()
+{
+    float clearColor[3] = { 0, 0, 0 };
+    // Loop until the user closes the window
+    for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
+    {
+        const auto seconds = glfwGetTime();
+        const auto viewportSize = m_GLFWHandle.framebufferSize();
+
+        m_programGeo.use();
+
+        // Bind FBO Draw   
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+        
+        // Put here rendering code
+        //  Give to glViewPort the GBuffer dimension (m_nWindowWidth -> GBuffer.width -- normalement)
+        glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        const auto projMatrix = glm::perspective(70.f, float(viewportSize.x) / viewportSize.y, 0.01f * m_SceneSize, m_SceneSize);
+        const auto viewMatrix = m_viewController.getViewMatrix();
+
+//        const auto modelMatrix = glm::mat4();
+
+		const auto mvMatrix = viewMatrix * mesh.getModelMatrix();
+//        const auto mvMatrix = viewMatrix * modelMatrix;
+        const auto mvpMatrix = projMatrix * mvMatrix;
+        const auto normalMatrix = glm::transpose(glm::inverse(mvMatrix));
+
+        glUniformMatrix4fv(m_uModelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+        glUniformMatrix4fv(m_uModelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+        glUniformMatrix4fv(m_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+        // Same sampler for all texture units
+        glBindSampler(0, m_textureSampler);
+        glBindSampler(1, m_textureSampler);
+        glBindSampler(2, m_textureSampler);
+        glBindSampler(3, m_textureSampler);
+
+        // Set texture unit of each sampler
+        glUniform1i(m_uKaSamplerLocation, 0);
+        glUniform1i(m_uKdSamplerLocation, 1);
+        glUniform1i(m_uKsSamplerLocation, 2);
+        glUniform1i(m_uShininessSamplerLocation, 3);
+
+        const auto bindMaterial = [&](const PhongMaterial & material)
+        {
+            glUniform3fv(m_uKaLocation, 1, glm::value_ptr(material.Ka));
+            glUniform3fv(m_uKdLocation, 1, glm::value_ptr(material.Kd));
+            glUniform3fv(m_uKsLocation, 1, glm::value_ptr(material.Ks));
+            glUniform1fv(m_uShininessLocation, 1, &material.shininess);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, material.KaTextureId);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, material.KdTextureId);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D, material.KsTextureId);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D, material.shininessTextureId);
+        };
+
+        glBindVertexArray(mesh.getVao().getPointer());
+
+        const PhongMaterial * currentMaterial = nullptr;
+
+		const auto& shapes = mesh.getShapesData();
+        // We draw each shape by specifying how much indices it carries, and with an offset in the global index buffer
+        for (const auto shape : shapes)
+        {
+            const auto & material = shape.materialIndex >= 0 ? m_SceneMaterials[shape.materialIndex] : m_DefaultMaterial;
+            if (currentMaterial != &material)
+            {
+                bindMaterial(material);
+                currentMaterial = &material;
+            }
+
+            glDrawElements(GL_TRIANGLES, shape.shapeSize, GL_UNSIGNED_INT, (const GLvoid*) (shape.shapeIndex * sizeof(GLuint)));
+        }
+
+        for (GLuint i : {0, 1, 2, 3})
+            glBindSampler(0, m_textureSampler);
+
+        // Unbind FBO Draw
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+/*
+        // Read FBO
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
+        glReadBuffer(attachedToDraw);
+        glBlitFramebuffer(0,0, m_nWindowWidth, m_nWindowHeight, 0, 0, m_nWindowWidth, m_nWindowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+*/
+
+	// Compute Shader
+		// launch compute shaders
+		m_programCompute.use();
+
+		glUniform3fv(m_uDirectionalLightDirLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(glm::normalize(m_DirLightDirection), 0))));
+		glUniform3fv(m_uDirectionalLightIntensityLocation, 1, glm::value_ptr(m_DirLightColor * m_DirLightIntensity));
+
+		glUniform3fv(m_uPointLightPositionLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(m_PointLightPosition, 1))));
+		glUniform3fv(m_uPointLightIntensityLocation, 1, glm::value_ptr(m_PointLightColor * m_PointLightIntensity));
+
+        glUniform2fv(m_uWindowsDim, 1, glm::value_ptr(glm::vec2(m_nWindowWidth, m_nWindowHeight)));
+
+		for (int i = 0; i < GBufferTextureType::GDepth; i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, m_GBufferTextures[i]);
+			glUniform1i(m_uGTextures[i], i);
+		}
+
+		glDispatchCompute((GLuint)ceil(m_nWindowWidth / 32.f), (GLuint)ceil(m_nWindowHeight / 32.f), 1);
+        GLenum err = glGetError();
+        if(err != GL_NO_ERROR)
+        {
+            int xGroup = ceil(m_nWindowWidth / 32.f) * 32;
+            int yGroup = ceil(m_nWindowHeight / 32.f) * 32;
+            std::cout << m_nWindowWidth << " -- " <<  m_nWindowHeight << std::endl;
+            std::cout << xGroup << " -- " <<  yGroup << " -- " << yGroup * xGroup << std::endl;
+            std::cout << m_workGroupInvocation << std::endl;
+            std::cerr << "glGetError() : " << err << std::endl;
+            exit(1);
+        }
+		// make sure writing to image has finished before read
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+    // Uniforme Shading
+        m_programShading.use();
+		/*--------------------------------------------------*/
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // ! \ A NE SURTOUT PAS OUBLIER
+		/*------------------------------------------------*/
+
+		glBindVertexArray(m_ScreenVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_screenTexture);
+		glUniform1i(m_uScreenTexture, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+
+        // GUI code:
+        ImGui_ImplGlfwGL3_NewFrame();
+        {
+            ImGui::Begin("GUI");
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::ColorEditMode(ImGuiColorEditMode_RGB);
+            if (ImGui::ColorEdit3("clearColor", clearColor)) {
+                glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
+            }
+            /*if (ImGui::Button("Sort shapes wrt materialID"))
+            {
+                std::sort(begin(shapesSort), end(shapesSort), [&](const auto lhs, const auto rhs)
+                {
+                    return lhs.materialIndex < rhs.materialIndex;
+                });
+            }*/
+            ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
+            ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
+            ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();
+            ImGui::RadioButton("GDiffuse", &attachedToDraw, GL_COLOR_ATTACHMENT3);
+            ImGui::RadioButton("GGlossyShininess", &attachedToDraw, GL_COLOR_ATTACHMENT4);
+
+            if (ImGui::CollapsingHeader("Directional Light"))
+            {
+                ImGui::ColorEdit3("DirLightColor", glm::value_ptr(m_DirLightColor));
+                ImGui::DragFloat("DirLightIntensity", &m_DirLightIntensity, 0.1f, 0.f, 100.f);
+                if (ImGui::DragFloat("Phi Angle", &m_DirLightPhiAngleDegrees, 1.0f, 0.0f, 360.f) ||
+                    ImGui::DragFloat("Theta Angle", &m_DirLightThetaAngleDegrees, 1.0f, 0.0f, 180.f)) {
+                    m_DirLightDirection = computeDirectionVector(glm::radians(m_DirLightPhiAngleDegrees), glm::radians(m_DirLightThetaAngleDegrees));
+                }
+            }
+
+            if (ImGui::CollapsingHeader("Point Light"))
+            {
+                ImGui::ColorEdit3("PointLightColor", glm::value_ptr(m_PointLightColor));
+                ImGui::DragFloat("PointLightIntensity", &m_PointLightIntensity, 0.1f, 0.f, 16000.f);
+                ImGui::InputFloat3("Position", glm::value_ptr(m_PointLightPosition));
+            }
+
+            ImGui::End();
+        }
+
+        
+        ImGui::Render();
+
+        /* Poll for and process events */
+        glfwPollEvents();
+
+        /* Swap front and back buffers*/
+        m_GLFWHandle.swapBuffers();
+
+        auto ellapsedTime = glfwGetTime() - seconds;
+        auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+        if (!guiHasFocus) {
+            m_viewController.update(float(ellapsedTime));
+        }
+    }
+
+    return 0;
+}
+
+Application::Application(int argc, char** argv):
+    m_AppPath { glmlv::fs::path{ argv[0] } },
+    m_AppName { m_AppPath.stem().string() },
+    m_ImGuiIniFilename { m_AppName + ".imgui.ini" },
+    m_ShadersRootPath { m_AppPath.parent_path() / "shaders" },
+    m_AssetsRootPath { m_AppPath.parent_path() / "assets" }
+
+{
+    ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
+
+    {
+        const auto objPath = m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj";
+        glmlv::ObjData data;
+        loadObj(objPath, data);
+        m_SceneSize = glm::length(data.bboxMax - data.bboxMin);
+
+        std::cout << "# of shapes    : " << data.shapeCount << std::endl;
+        std::cout << "# of materials : " << data.materialCount << std::endl;
+        std::cout << "# of vertex    : " << data.vertexBuffer.size() << std::endl;
+        std::cout << "# of triangles    : " << data.indexBuffer.size() / 3 << std::endl;
+/*
+        // Fill VBO
+		vbo = qc::BufferObject<glmlv::Vertex3f3f2f>(data.vertexBuffer);
+
+        // Fill IBO
+		ibo = qc::BufferObject<uint32_t>(data.indexBuffer);
+
+		// Fill VAO
+		vao = qc::ArrayObject<glmlv::Vertex3f3f2f>(vbo, ibo);
+*/
+        // Init shape infos
+        uint32_t indexOffset = 0;
+		std::vector<qc::ShapeData> shapes;
+        for (auto shapeID = 0; shapeID < data.indexCountPerShape.size(); ++shapeID)
+        {
+            shapes.emplace_back(data.indexCountPerShape[shapeID], indexOffset, data.materialIDPerShape[shapeID]);
+/*            auto & shape = shapes.back();
+            shape.shapeSize = data.indexCountPerShape[shapeID];
+            shape.shapeIndex = indexOffset;
+            shape.materialIndex = data.materialIDPerShape[shapeID];*/
+            indexOffset += data.indexCountPerShape[shapeID];
+        }
+
+		mesh = qc::Mesh(data.vertexBuffer, data.indexBuffer, shapes);
+
+        glGenTextures(1, &m_WhiteTexture);
+        glBindTexture(GL_TEXTURE_2D, m_WhiteTexture);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1, 1);
+        glm::vec4 white(1.f, 1.f, 1.f, 1.f);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &white);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Upload all textures to the GPU
+        std::vector<GLint> textureIds;
+        for (const auto & texture : data.textures)
+        {
+            GLuint texId = 0;
+            glGenTextures(1, &texId);
+            glBindTexture(GL_TEXTURE_2D, texId);
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, texture.width(), texture.height());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(), GL_RGBA, GL_UNSIGNED_BYTE, texture.data());
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            textureIds.emplace_back(texId);
+        }
+
+        for (const auto & material : data.materials)
+        {
+            PhongMaterial newMaterial;
+            newMaterial.Ka = material.Ka;
+            newMaterial.Kd = material.Kd;
+            newMaterial.Ks = material.Ks;
+            newMaterial.shininess = material.shininess;
+            newMaterial.KaTextureId = material.KaTextureId >= 0 ? textureIds[material.KaTextureId] : m_WhiteTexture;
+            newMaterial.KdTextureId = material.KdTextureId >= 0 ? textureIds[material.KdTextureId] : m_WhiteTexture;
+            newMaterial.KsTextureId = material.KsTextureId >= 0 ? textureIds[material.KsTextureId] : m_WhiteTexture;
+            newMaterial.shininessTextureId = material.shininessTextureId >= 0 ? textureIds[material.shininessTextureId] : m_WhiteTexture;
+
+            m_SceneMaterials.emplace_back(newMaterial);
+        }
+
+        m_DefaultMaterial.Ka = glm::vec3(0);
+        m_DefaultMaterial.Kd = glm::vec3(1);
+        m_DefaultMaterial.Ks = glm::vec3(1);
+        m_DefaultMaterial.shininess = 32.f;
+        m_DefaultMaterial.KaTextureId = m_WhiteTexture;
+        m_DefaultMaterial.KdTextureId = m_WhiteTexture;
+        m_DefaultMaterial.KsTextureId = m_WhiteTexture;
+        m_DefaultMaterial.shininessTextureId = m_WhiteTexture;
+    }
+	
+    // Note: no need to bind a sampler for modifying it: the sampler API is already direct_state_access
+    glGenSamplers(1, &m_textureSampler);
+    glSamplerParameteri(m_textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glEnable(GL_DEPTH_TEST);
+
+	m_viewController.setSpeed(m_SceneSize * 0.1f); // Let's travel 10% of the scene per second
+
+	// Geo program
+	initForGeo();
+
+	// Shading program
+	initForShading();
+
+    // GBufferTexture
+    glGenTextures(GBufferTextureType::GBufferTextureCount, m_GBufferTextures);
+    for(int i = 0; i < GBufferTextureType::GBufferTextureCount; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, m_GBufferTextures[i]);
+        glTexStorage2D(GL_TEXTURE_2D, 1, m_GBufferTextureFormat[i], m_nWindowWidth, m_nWindowHeight);
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // FBO init
+    glGenFramebuffers(1, &m_FBO);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_FBO);
+        // Create buffer
+    for(int i = 0; i < GBufferTextureType::GDepth; ++i)
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, m_GBufferTextures[i], 0);
+
+    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_GBufferTextures[GBufferTextureType::GDepth], 0);
+
+    GLenum drawBuffers[] = {
+        GL_COLOR_ATTACHMENT0,
+        GL_COLOR_ATTACHMENT1,
+        GL_COLOR_ATTACHMENT2,
+        GL_COLOR_ATTACHMENT3,
+        GL_COLOR_ATTACHMENT4
+    };
+        // link out buffer and out
+    glDrawBuffers(5, drawBuffers);
+    
+        // Check create
+        // glCheckFramebufferStatus(GLenum target) -> target = target de glFramebufferTexture2D()
+    GLenum res = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+    if(res != GL_FRAMEBUFFER_COMPLETE)
+        std::cerr << "Error check frame buffer : " << res  << std::endl;
+
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+    attachedToDraw = GL_COLOR_ATTACHMENT0;
+
+	initScreenBuffers();
+
+	initForCompute();
+    std::cout << "End INIT" << std::endl;
+}
+
+void Application::initForGeo()
+{
+	m_programGeo = glmlv::compileProgram({ m_ShadersRootPath / m_AppName / "geometryPass.vs.glsl", m_ShadersRootPath / m_AppName / "geometryPass.fs.glsl" });
+	m_programGeo.use();
+
+	m_uModelViewProjMatrixLocation = glGetUniformLocation(m_programGeo.glId(), "uModelViewProjMatrix");
+	m_uModelViewMatrixLocation = glGetUniformLocation(m_programGeo.glId(), "uModelViewMatrix");
+	m_uNormalMatrixLocation = glGetUniformLocation(m_programGeo.glId(), "uNormalMatrix");
+
+	m_uKaLocation = glGetUniformLocation(m_programGeo.glId(), "uKa");
+	m_uKdLocation = glGetUniformLocation(m_programGeo.glId(), "uKd");
+	m_uKsLocation = glGetUniformLocation(m_programGeo.glId(), "uKs");
+	m_uShininessLocation = glGetUniformLocation(m_programGeo.glId(), "uShininess");
+	m_uKaSamplerLocation = glGetUniformLocation(m_programGeo.glId(), "uKaSampler");
+	m_uKdSamplerLocation = glGetUniformLocation(m_programGeo.glId(), "uKdSampler");
+	m_uKsSamplerLocation = glGetUniformLocation(m_programGeo.glId(), "uKsSampler");
+	m_uShininessSamplerLocation = glGetUniformLocation(m_programGeo.glId(), "uShininessSampler");
+    
+    std::cout << "End initForGeo() " << std::endl;
+}
+
+void Application::initForShading()
+{
+	m_programShading = glmlv::compileProgram({ m_ShadersRootPath / m_AppName / "shadingPass.vs.glsl", m_ShadersRootPath / m_AppName / "shadingPass.fs.glsl" });
+	m_programShading.use();
+
+	m_uScreenTexture = glGetUniformLocation(m_programShading.glId(), "uScreenTexture");
+    
+    std::cout << "End initForShading() " << std::endl;
+}
+
+void Application::initScreenBuffers()
+{
+	glm::vec2 triangle[3];
+	triangle[0] = glm::vec2(-1);
+	triangle[1] = glm::vec2(3, -1);
+	triangle[2] = glm::vec2(-1, 3);
+
+	glGenBuffers(1, &m_ScreenVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ScreenVBO);
+	glBufferStorage(GL_ARRAY_BUFFER, 3 * sizeof(glm::vec2), triangle, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+	const GLint position = glGetAttribLocation(m_programShading.glId(), "aPosition");
+	glGenVertexArrays(1, &m_ScreenVAO);
+	glBindVertexArray(m_ScreenVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ScreenVBO);
+	glEnableVertexAttribArray(position);
+	glVertexAttribPointer(position, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+    
+    std::cout << "End initScreenBuffers() " << std::endl;
+}
+
+void Application::initForCompute()
+{
+	m_programCompute = glmlv::compileProgram({ m_ShadersRootPath / m_AppName / "computePass.cs.glsl"});
+	m_programCompute.use();
+
+	// Gen texture
+	glGenTextures(1, &m_screenTexture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_screenTexture);
+	/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, m_nWindowWidth, m_nWindowHeight);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_nWindowWidth, m_nWindowHeight, GL_RGBA, GL_FLOAT, nullptr); // nullptr ???? Tuto -> Meh
+	glBindImageTexture(0, m_screenTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+	glBindTexture(GL_TEXTURE_2D, 0);*/
+	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_nWindowWidth, m_nWindowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindImageTexture(0, m_screenTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Retrieve work group count max
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &m_workGroupCount[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &m_workGroupCount[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &m_workGroupCount[2]);
+
+    std::cout << "m_workGroupCount" << std::endl;
+    for(int i = 0; i < 3; ++i)
+        std::cout << m_workGroupCount[i] << " - ";
+    std::cout << std::endl;
+
+	// Retrieve work group size max
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &m_workGroupSize[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &m_workGroupSize[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &m_workGroupSize[2]);
+
+    std::cout << "m_workGroupSize" << std::endl;
+    for(int i = 0; i < 3; ++i)
+        std::cout << m_workGroupSize[i] << " - ";
+    std::cout << std::endl;
+
+	// Retrieve work group invocation
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &m_workGroupInvocation);
+    std::cout << "m_workGroupInvocation : " << m_workGroupInvocation << std::endl;
+
+
+	m_uDirectionalLightDirLocation = glGetUniformLocation(m_programCompute.glId(), "uDirectionalLightDir");
+	m_uDirectionalLightIntensityLocation = glGetUniformLocation(m_programCompute.glId(), "uDirectionalLightIntensity");
+
+	m_uPointLightPositionLocation = glGetUniformLocation(m_programCompute.glId(), "uPointLightPosition");
+	m_uPointLightIntensityLocation = glGetUniformLocation(m_programCompute.glId(), "uPointLightIntensity");
+
+	m_uGTextures[0] = glGetUniformLocation(m_programCompute.glId(), "uGPosition");
+	m_uGTextures[1] = glGetUniformLocation(m_programCompute.glId(), "uGNormal");
+	m_uGTextures[2] = glGetUniformLocation(m_programCompute.glId(), "uGAmbient");
+	m_uGTextures[3] = glGetUniformLocation(m_programCompute.glId(), "uGDiffuse");
+	m_uGTextures[4] = glGetUniformLocation(m_programCompute.glId(), "uGlossyShininess");
+
+    m_uWindowsDim = glGetUniformLocation(m_programCompute.glId(), "uWindowsDim");
+
+    std::cout << "End initForCompute() " << std::endl;
+}
