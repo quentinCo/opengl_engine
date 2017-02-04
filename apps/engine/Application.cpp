@@ -215,11 +215,11 @@ void Application::drawComputePass(const glm::mat4& viewMatrix)
 	// launch compute shaders
 	m_programCompute.use();
 
-	glUniform3fv(m_uDirectionalLightDirLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(glm::normalize(m_DirLightDirection), 0))));
-	glUniform3fv(m_uDirectionalLightIntensityLocation, 1, glm::value_ptr(m_DirLightColor * m_DirLightIntensity));
+	glUniform3fv(m_uDirectionalLightDirLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(glm::normalize(directionalLight.getDirection()), 0))));
+	glUniform3fv(m_uDirectionalLightIntensityLocation, 1, glm::value_ptr(directionalLight.getColor() * directionalLight.getIntensity()));
 
-	glUniform3fv(m_uPointLightPositionLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(m_PointLightPosition, 1))));
-	glUniform3fv(m_uPointLightIntensityLocation, 1, glm::value_ptr(m_PointLightColor * m_PointLightIntensity));
+	glUniform3fv(m_uPointLightPositionLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(pointLight.getPosition(), 1))));
+	glUniform3fv(m_uPointLightIntensityLocation, 1, glm::value_ptr(pointLight.getColor() * pointLight.getIntensity()));
 
 	glUniform2fv(m_uWindowsDim, 1, glm::value_ptr(glm::vec2(m_nWindowWidth, m_nWindowHeight)));
 
@@ -280,19 +280,19 @@ void Application::drawGUI(float* clearColor)
 
 		if (ImGui::CollapsingHeader("Directional Light"))
 		{
-			ImGui::ColorEdit3("DirLightColor", glm::value_ptr(m_DirLightColor));
-			ImGui::DragFloat("DirLightIntensity", &m_DirLightIntensity, 0.1f, 0.f, 100.f);
-			if (ImGui::DragFloat("Phi Angle", &m_DirLightPhiAngleDegrees, 1.0f, 0.0f, 360.f) ||
-				ImGui::DragFloat("Theta Angle", &m_DirLightThetaAngleDegrees, 1.0f, 0.0f, 180.f)) {
-				m_DirLightDirection = computeDirectionVector(glm::radians(m_DirLightPhiAngleDegrees), glm::radians(m_DirLightThetaAngleDegrees));
+			ImGui::ColorEdit3("DirLightColor", glm::value_ptr(directionalLight.getColor()));
+			ImGui::DragFloat("DirLightIntensity", &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
+			if (ImGui::DragFloat("Phi Angle", &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
+				ImGui::DragFloat("Theta Angle", &directionalLight.getThetaAngle(), 1.0f, 0.0f, 180.f)) {
+				directionalLight.setDirection(directionalLight.getPhiAngle(), directionalLight.getThetaAngle());
 			}
 		}
 
 		if (ImGui::CollapsingHeader("Point Light"))
 		{
-			ImGui::ColorEdit3("PointLightColor", glm::value_ptr(m_PointLightColor));
-			ImGui::DragFloat("PointLightIntensity", &m_PointLightIntensity, 0.1f, 0.f, 16000.f);
-			ImGui::InputFloat3("Position", glm::value_ptr(m_PointLightPosition));
+			ImGui::ColorEdit3("PointLightColor", glm::value_ptr(pointLight.getColor()));
+			ImGui::DragFloat("PointLightIntensity", &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
+			ImGui::InputFloat3("Position", glm::value_ptr(pointLight.getPosition()));
 		}
 
 		ImGui::End();
