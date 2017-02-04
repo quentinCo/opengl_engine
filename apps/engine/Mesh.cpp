@@ -2,6 +2,8 @@
 
 using namespace qc;
 
+const Material Mesh::defaultMaterial = Material();
+
 Mesh::Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices, const std::vector<ShapeData> shapesData, const glm::vec3& position)
 	: shapesData(shapesData)
 {

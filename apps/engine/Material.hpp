@@ -67,7 +67,7 @@ private:
 	float shininess;
 	GLuint textures[NB_TEXTURE];
 
-	void generateTexture(GLuint& texture, const glmlv::Image2DRGBA& tex);
+	static void generateTexture(GLuint& texture, const glmlv::Image2DRGBA& tex);
 
 };
 
