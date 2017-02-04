@@ -13,6 +13,7 @@
 #include "BufferObject.hpp"
 #include "ArrayObject.hpp"
 #include "Mesh.hpp"
+#include "Material.hpp"
 
 class Application
 {
@@ -63,16 +64,16 @@ private:
 	qc::Mesh mesh;
 
     // Required data about the scene in CPU in order to send draw calls
-    struct ShapeInfo
+    /*struct ShapeInfo
     {
         uint32_t indexCount; // Number of indices
         uint32_t indexOffset; // Offset in GPU index buffer
         int materialID = -1;
     };
-
+	*/
     //std::vector<ShapeInfo> m_shapes; // For each shape of the scene, its number of indices
     float m_SceneSize = 0.f; // Used for camera speed and projection matrix parameters
-
+	/*
     struct PhongMaterial
     {
         glm::vec3 Ka = glm::vec3(0); // Ambient multiplier
@@ -90,6 +91,9 @@ private:
     GLuint m_WhiteTexture; // A white 1x1 texture
     PhongMaterial m_DefaultMaterial;
     std::vector<PhongMaterial> m_SceneMaterials;
+	*/
+	std::vector<qc::Material> materials;
+	qc::Material defaultMaterial;
 
     GLuint m_textureSampler = 0; // Only one sampler object since we will use the same sampling parameters for all textures
 

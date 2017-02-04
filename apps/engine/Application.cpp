@@ -58,7 +58,7 @@ int Application::run()
         glUniform1i(m_uKsSamplerLocation, 2);
         glUniform1i(m_uShininessSamplerLocation, 3);
 
-        const auto bindMaterial = [&](const PhongMaterial & material)
+        /*const auto bindMaterial = [&](const PhongMaterial & material)
         {
             glUniform3fv(m_uKaLocation, 1, glm::value_ptr(material.Ka));
             glUniform3fv(m_uKdLocation, 1, glm::value_ptr(material.Kd));
@@ -73,18 +73,37 @@ int Application::run()
             glBindTexture(GL_TEXTURE_2D, material.KsTextureId);
             glActiveTexture(GL_TEXTURE3);
             glBindTexture(GL_TEXTURE_2D, material.shininessTextureId);
-        };
+        };*/
+
+		const auto bindMaterial = [&](const qc::Material& material)
+		{
+			glUniform3fv(m_uKaLocation, 1, glm::value_ptr(material.getColor(qc::Material::AMBIENT_COLOR)));
+			glUniform3fv(m_uKdLocation, 1, glm::value_ptr(material.getColor(qc::Material::DIFFUSE_COLOR)));
+			glUniform3fv(m_uKsLocation, 1, glm::value_ptr(material.getColor(qc::Material::SPECULAR_COLOR)));
+			glUniform1f(m_uShininessLocation, material.getShininess());
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::AMBIENT_TEXTURE));
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::DIFFUSE_TEXTURE));
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::SPECULAR_TEXTURE));
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
+		};
 
         glBindVertexArray(mesh.getVao().getPointer());
 
-        const PhongMaterial * currentMaterial = nullptr;
+//        const PhongMaterial * currentMaterial = nullptr;
+		const qc::Material* currentMaterial = nullptr;
 
 		const auto& shapes = mesh.getShapesData();
         // We draw each shape by specifying how much indices it carries, and with an offset in the global index buffer
         for (const auto shape : shapes)
         {
-            const auto & material = shape.materialIndex >= 0 ? m_SceneMaterials[shape.materialIndex] : m_DefaultMaterial;
-            if (currentMaterial != &material)
+            //const auto & material = shape.materialIndex >= 0 ? m_SceneMaterials[shape.materialIndex] : m_DefaultMaterial;
+			const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
+			if (currentMaterial != &material)
             {
                 bindMaterial(material);
                 currentMaterial = &material;
@@ -258,14 +277,14 @@ Application::Application(int argc, char** argv):
         }
 
 		mesh = qc::Mesh(data.vertexBuffer, data.indexBuffer, shapes);
-
+		/*
         glGenTextures(1, &m_WhiteTexture);
         glBindTexture(GL_TEXTURE_2D, m_WhiteTexture);
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1, 1);
         glm::vec4 white(1.f, 1.f, 1.f, 1.f);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &white);
         glBindTexture(GL_TEXTURE_2D, 0);
-
+		
         // Upload all textures to the GPU
         std::vector<GLint> textureIds;
         for (const auto & texture : data.textures)
@@ -303,6 +322,26 @@ Application::Application(int argc, char** argv):
         m_DefaultMaterial.KdTextureId = m_WhiteTexture;
         m_DefaultMaterial.KsTextureId = m_WhiteTexture;
         m_DefaultMaterial.shininessTextureId = m_WhiteTexture;
+		*/
+
+		for (auto it: data.materials)
+		{
+			qc::Material material = qc::Material();
+
+			material.setColor(qc::Material::AMBIENT_COLOR, it.Ka);
+			glm::vec3 diffuseColor = (it.Kd == glm::vec3(0)) ? glm::vec3(1) : it.Kd;
+			material.setColor(qc::Material::DIFFUSE_COLOR, it.Kd);
+			material.setColor(qc::Material::SPECULAR_COLOR, it.Ks);
+			
+			if (it.KaTextureId >= 0) material.setMap(qc::Material::AMBIENT_TEXTURE, data.textures[it.KaTextureId]);
+			if (it.KdTextureId >= 0) material.setMap(qc::Material::DIFFUSE_TEXTURE, data.textures[it.KdTextureId]);
+			if (it.KsTextureId >= 0) material.setMap(qc::Material::SPECULAR_TEXTURE, data.textures[it.KsTextureId]);
+			if (it.shininessTextureId >= 0) material.setMap(qc::Material::SPECULAR_HIGHT_LIGHT_TEXTURE, data.textures[it.shininessTextureId]);
+			
+			materials.emplace_back(std::move(material));
+		}
+
+		defaultMaterial = qc::Material();
     }
 	
     // Note: no need to bind a sampler for modifying it: the sampler API is already direct_state_access
