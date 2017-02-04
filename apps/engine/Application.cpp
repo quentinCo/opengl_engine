@@ -35,10 +35,7 @@ int Application::run()
         const auto projMatrix = glm::perspective(70.f, float(viewportSize.x) / viewportSize.y, 0.01f * m_SceneSize, m_SceneSize);
         const auto viewMatrix = m_viewController.getViewMatrix();
 
-//        const auto modelMatrix = glm::mat4();
-
 		const auto mvMatrix = viewMatrix * mesh.getModelMatrix();
-//        const auto mvMatrix = viewMatrix * modelMatrix;
         const auto mvpMatrix = projMatrix * mvMatrix;
         const auto normalMatrix = glm::transpose(glm::inverse(mvMatrix));
 
@@ -58,22 +55,6 @@ int Application::run()
         glUniform1i(m_uKsSamplerLocation, 2);
         glUniform1i(m_uShininessSamplerLocation, 3);
 
-        /*const auto bindMaterial = [&](const PhongMaterial & material)
-        {
-            glUniform3fv(m_uKaLocation, 1, glm::value_ptr(material.Ka));
-            glUniform3fv(m_uKdLocation, 1, glm::value_ptr(material.Kd));
-            glUniform3fv(m_uKsLocation, 1, glm::value_ptr(material.Ks));
-            glUniform1fv(m_uShininessLocation, 1, &material.shininess);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, material.KaTextureId);
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, material.KdTextureId);
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, material.KsTextureId);
-            glActiveTexture(GL_TEXTURE3);
-            glBindTexture(GL_TEXTURE_2D, material.shininessTextureId);
-        };*/
 
 		const auto bindMaterial = [&](const qc::Material& material)
 		{
@@ -94,14 +75,12 @@ int Application::run()
 
         glBindVertexArray(mesh.getVao().getPointer());
 
-//        const PhongMaterial * currentMaterial = nullptr;
 		const qc::Material* currentMaterial = nullptr;
 
 		const auto& shapes = mesh.getShapesData();
         // We draw each shape by specifying how much indices it carries, and with an offset in the global index buffer
         for (const auto shape : shapes)
         {
-            //const auto & material = shape.materialIndex >= 0 ? m_SceneMaterials[shape.materialIndex] : m_DefaultMaterial;
 			const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
 			if (currentMaterial != &material)
             {
@@ -181,13 +160,7 @@ int Application::run()
             if (ImGui::ColorEdit3("clearColor", clearColor)) {
                 glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
             }
-            /*if (ImGui::Button("Sort shapes wrt materialID"))
-            {
-                std::sort(begin(shapesSort), end(shapesSort), [&](const auto lhs, const auto rhs)
-                {
-                    return lhs.materialIndex < rhs.materialIndex;
-                });
-            }*/
+
             ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
             ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
             ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();
@@ -253,77 +226,18 @@ Application::Application(int argc, char** argv):
         std::cout << "# of materials : " << data.materialCount << std::endl;
         std::cout << "# of vertex    : " << data.vertexBuffer.size() << std::endl;
         std::cout << "# of triangles    : " << data.indexBuffer.size() / 3 << std::endl;
-/*
-        // Fill VBO
-		vbo = qc::BufferObject<glmlv::Vertex3f3f2f>(data.vertexBuffer);
 
-        // Fill IBO
-		ibo = qc::BufferObject<uint32_t>(data.indexBuffer);
-
-		// Fill VAO
-		vao = qc::ArrayObject<glmlv::Vertex3f3f2f>(vbo, ibo);
-*/
         // Init shape infos
         uint32_t indexOffset = 0;
 		std::vector<qc::ShapeData> shapes;
         for (auto shapeID = 0; shapeID < data.indexCountPerShape.size(); ++shapeID)
         {
             shapes.emplace_back(data.indexCountPerShape[shapeID], indexOffset, data.materialIDPerShape[shapeID]);
-/*            auto & shape = shapes.back();
-            shape.shapeSize = data.indexCountPerShape[shapeID];
-            shape.shapeIndex = indexOffset;
-            shape.materialIndex = data.materialIDPerShape[shapeID];*/
             indexOffset += data.indexCountPerShape[shapeID];
         }
 
 		mesh = qc::Mesh(data.vertexBuffer, data.indexBuffer, shapes);
-		/*
-        glGenTextures(1, &m_WhiteTexture);
-        glBindTexture(GL_TEXTURE_2D, m_WhiteTexture);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, 1, 1);
-        glm::vec4 white(1.f, 1.f, 1.f, 1.f);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 1, 1, GL_RGBA, GL_FLOAT, &white);
-        glBindTexture(GL_TEXTURE_2D, 0);
 		
-        // Upload all textures to the GPU
-        std::vector<GLint> textureIds;
-        for (const auto & texture : data.textures)
-        {
-            GLuint texId = 0;
-            glGenTextures(1, &texId);
-            glBindTexture(GL_TEXTURE_2D, texId);
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, texture.width(), texture.height());
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texture.width(), texture.height(), GL_RGBA, GL_UNSIGNED_BYTE, texture.data());
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            textureIds.emplace_back(texId);
-        }
-
-        for (const auto & material : data.materials)
-        {
-            PhongMaterial newMaterial;
-            newMaterial.Ka = material.Ka;
-            newMaterial.Kd = material.Kd;
-            newMaterial.Ks = material.Ks;
-            newMaterial.shininess = material.shininess;
-            newMaterial.KaTextureId = material.KaTextureId >= 0 ? textureIds[material.KaTextureId] : m_WhiteTexture;
-            newMaterial.KdTextureId = material.KdTextureId >= 0 ? textureIds[material.KdTextureId] : m_WhiteTexture;
-            newMaterial.KsTextureId = material.KsTextureId >= 0 ? textureIds[material.KsTextureId] : m_WhiteTexture;
-            newMaterial.shininessTextureId = material.shininessTextureId >= 0 ? textureIds[material.shininessTextureId] : m_WhiteTexture;
-
-            m_SceneMaterials.emplace_back(newMaterial);
-        }
-
-        m_DefaultMaterial.Ka = glm::vec3(0);
-        m_DefaultMaterial.Kd = glm::vec3(1);
-        m_DefaultMaterial.Ks = glm::vec3(1);
-        m_DefaultMaterial.shininess = 32.f;
-        m_DefaultMaterial.KaTextureId = m_WhiteTexture;
-        m_DefaultMaterial.KdTextureId = m_WhiteTexture;
-        m_DefaultMaterial.KsTextureId = m_WhiteTexture;
-        m_DefaultMaterial.shininessTextureId = m_WhiteTexture;
-		*/
-
 		for (auto it: data.materials)
 		{
 			qc::Material material = qc::Material();
@@ -350,6 +264,11 @@ Application::Application(int argc, char** argv):
     glSamplerParameteri(m_textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	glFrontFace(GL_CW);
 
 	m_viewController.setSpeed(m_SceneSize * 0.1f); // Let's travel 10% of the scene per second
 
@@ -468,12 +387,6 @@ void Application::initForCompute()
 	glGenTextures(1, &m_screenTexture);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_screenTexture);
-	/*glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, m_nWindowWidth, m_nWindowHeight);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_nWindowWidth, m_nWindowHeight, GL_RGBA, GL_FLOAT, nullptr); // nullptr ???? Tuto -> Meh
-	glBindImageTexture(0, m_screenTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-	glBindTexture(GL_TEXTURE_2D, 0);*/
-	/*glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);*/
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_nWindowWidth, m_nWindowHeight, 0, GL_RGBA, GL_FLOAT, NULL);

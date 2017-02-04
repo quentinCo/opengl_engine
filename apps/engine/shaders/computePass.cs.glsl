@@ -51,13 +51,13 @@ void main()
             dothPointLight = pow(dothPointLight, shininess);
             dothDirLight = pow(dothDirLight, shininess);
         }
+
         vec3 fColor = vec3(0);
         fColor += ka;
         fColor += kd * (uDirectionalLightIntensity * max(0.f, dot(normal, uDirectionalLightDir)) + pointLightIncidentLight * max(0., dot(normal, dirToPointLight)));
         fColor += ks * (uDirectionalLightIntensity * dothDirLight + pointLightIncidentLight * dothPointLight);
 
         imageStore(imgOutput, pixelCoords, vec4(fColor,1));
-        //imageStore(imgOutput, pixelCoords, vec4(normalize(pixelCoords),0,1));
     }
     else
     {

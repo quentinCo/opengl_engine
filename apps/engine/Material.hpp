@@ -42,14 +42,14 @@ public:
 	Material(Material&& o);
 	Material& operator= (Material&& o);
 
-	glm::vec3 getColor(const MATERIALS_COLOR& color) const
-		{return (color != NB_COLOR) ? colors[color] : glm::vec3(0);}
+	const glm::vec3& getColor(const MATERIALS_COLOR& color) const
+		{return colors[color];}
 
 	float getShininess() const
 		{return shininess;}
 
 	GLuint getMap(const MATERIALS_TEXTURE& map) const
-		{return (map != NB_TEXTURE) ? textures[map] : 0;}
+		{return textures[map];}
 	
 	void setColor(const MATERIALS_COLOR& color, const glm::vec3& value)
 	{
