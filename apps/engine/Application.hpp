@@ -15,6 +15,7 @@
 #include "Mesh.hpp"
 #include "Material.hpp"
 #include "Light.hpp"
+#include "Camera.hpp"
 
 class Application
 {
@@ -50,12 +51,14 @@ private:
 	qc::DirectionalLight directionalLight = qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f);
 	qc::Light pointLight = qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f);
 
+	qc::Camera camera = qc::Camera(m_GLFWHandle);
+
     float m_SceneSize = 0.f; // Used for camera speed and projection matrix parameters
 	
     GLuint m_textureSampler = 0; // Only one sampler object since we will use the same sampling parameters for all textures
 
     glmlv::GLProgram m_programGeo;
-    glmlv::ViewController m_viewController{ m_GLFWHandle.window(), 3.f };
+
     GLint m_uModelViewProjMatrixLocation;
     GLint m_uModelViewMatrixLocation;
     GLint m_uNormalMatrixLocation;
@@ -104,8 +107,8 @@ private:
 
     
 	// Some initialisation functions
-	void drawGeoPass(const glm::mat4& viewMatrix, const glm::mat4& projMatrix);
-	void drawComputePass(const glm::mat4& viewMatrix);
+	void drawGeoPass();
+	void drawComputePass();
 	void drawShadingPass();
 	void drawGUI(float* clearColor);
 

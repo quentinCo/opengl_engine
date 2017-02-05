@@ -20,13 +20,10 @@ int Application::run()
     for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
     {
         const auto seconds = glfwGetTime();
-		const auto viewportSize = m_GLFWHandle.framebufferSize();
-		const auto projMatrix = glm::perspective(70.f, float(viewportSize.x) / viewportSize.y, 0.01f * m_SceneSize, m_SceneSize);
-		const auto viewMatrix = m_viewController.getViewMatrix();
-		drawGeoPass(viewMatrix, projMatrix);
+		drawGeoPass();
 
 	// Compute Shader
-		drawComputePass(viewMatrix);
+		drawComputePass();
 		
     // Uniforme Shading
 		drawShadingPass();
@@ -42,8 +39,9 @@ int Application::run()
 
         auto ellapsedTime = glfwGetTime() - seconds;
         auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
-        if (!guiHasFocus) {
-            m_viewController.update(float(ellapsedTime));
+        if (!guiHasFocus)
+		{
+			camera.updateViewController(float(ellapsedTime));
         }
     }
 
@@ -56,7 +54,6 @@ Application::Application(int argc, char** argv):
     m_ImGuiIniFilename { m_AppName + ".imgui.ini" },
     m_ShadersRootPath { m_AppPath.parent_path() / "shaders" },
     m_AssetsRootPath { m_AppPath.parent_path() / "assets" }
-
 {
     ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
 
@@ -74,7 +71,7 @@ Application::Application(int argc, char** argv):
 	glCullFace(GL_FRONT);
 	glFrontFace(GL_CW);
 
-	m_viewController.setSpeed(m_SceneSize * 0.1f); // Let's travel 10% of the scene per second
+	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * m_SceneSize, m_SceneSize, m_SceneSize * 0.1f);
 
 	// Geo program
 	initForGeo();
@@ -126,7 +123,7 @@ Application::Application(int argc, char** argv):
     std::cout << "End INIT" << std::endl;
 }
 
-void Application::drawGeoPass(const glm::mat4& viewMatrix, const glm::mat4& projMatrix)
+void Application::drawGeoPass()
 {
 	m_programGeo.use();
 
@@ -138,9 +135,8 @@ void Application::drawGeoPass(const glm::mat4& viewMatrix, const glm::mat4& proj
 	glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const auto mvMatrix = viewMatrix * mesh.getModelMatrix();
-	const auto mvpMatrix = projMatrix * mvMatrix;
-	const auto normalMatrix = glm::transpose(glm::inverse(mvMatrix));
+	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
+	camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
 
 	glUniformMatrix4fv(m_uModelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 	glUniformMatrix4fv(m_uModelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
@@ -210,10 +206,12 @@ void Application::drawGeoPass(const glm::mat4& viewMatrix, const glm::mat4& proj
 	*/
 }
 
-void Application::drawComputePass(const glm::mat4& viewMatrix)
+void Application::drawComputePass()
 {
 	// launch compute shaders
 	m_programCompute.use();
+
+	const auto& viewMatrix = camera.getViewMatrix();
 
 	glUniform3fv(m_uDirectionalLightDirLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(glm::normalize(directionalLight.getDirection()), 0))));
 	glUniform3fv(m_uDirectionalLightIntensityLocation, 1, glm::value_ptr(directionalLight.getColor() * directionalLight.getIntensity()));
