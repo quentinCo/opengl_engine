@@ -1,3 +1,5 @@
+#pragma once
+
 #include <glmlv/simple_geometry.hpp>
 
 #include "BufferObject.hpp"

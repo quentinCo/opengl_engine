@@ -16,6 +16,7 @@
 #include "Material.hpp"
 #include "Light.hpp"
 #include "Camera.hpp"
+#include "Scene.hpp"
 
 class Application
 {
@@ -47,13 +48,16 @@ private:
     const glmlv::fs::path m_AssetsRootPath;
 
     // Scene data in GPU:
+	/*
 	qc::Mesh mesh;
 	qc::DirectionalLight directionalLight = qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f);
 	qc::Light pointLight = qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f);
+	*/
+	qc::Scene scene;
 
 	qc::Camera camera = qc::Camera(m_GLFWHandle);
 
-    float m_SceneSize = 0.f; // Used for camera speed and projection matrix parameters
+//    float m_SceneSize = 0.f; // Used for camera speed and projection matrix parameters
 	
     GLuint m_textureSampler = 0; // Only one sampler object since we will use the same sampling parameters for all textures
 
@@ -112,7 +116,7 @@ private:
 	void drawShadingPass();
 	void drawGUI(float* clearColor);
 
-	void loadScene();
+//	void loadScene();
 
 	void initForGeo();
 	void initForShading();

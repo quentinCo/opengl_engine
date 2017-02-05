@@ -31,7 +31,7 @@ public:
 	ArrayObject(const ArrayObject<T>& o) = delete;
 	ArrayObject<T>& operator= (const ArrayObject<T>& o) = delete;
 
-	ArrayObject(const ArrayObject<T>&& o)
+	ArrayObject(ArrayObject<T>&& o)
 		: pointer(o.pointer)
 	{
 		o.pointer = 0;

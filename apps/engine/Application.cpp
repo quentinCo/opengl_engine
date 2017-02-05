@@ -57,7 +57,10 @@ Application::Application(int argc, char** argv):
 {
     ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
 
-	loadScene();
+	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
+	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
+	scene.addPointLight(qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f));
+		//loadScene();
 	
     // Note: no need to bind a sampler for modifying it: the sampler API is already direct_state_access
     glGenSamplers(1, &m_textureSampler);
@@ -71,7 +74,8 @@ Application::Application(int argc, char** argv):
 	glCullFace(GL_FRONT);
 	glFrontFace(GL_CW);
 
-	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * m_SceneSize, m_SceneSize, m_SceneSize * 0.1f);
+//	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * m_SceneSize, m_SceneSize, m_SceneSize * 0.1f);
+	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 
 	// Geo program
 	initForGeo();
@@ -135,75 +139,79 @@ void Application::drawGeoPass()
 	glViewport(0, 0, m_nWindowWidth, m_nWindowHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
-	camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
-
-	glUniformMatrix4fv(m_uModelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
-	glUniformMatrix4fv(m_uModelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
-	glUniformMatrix4fv(m_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
-
-	// Same sampler for all texture units
-	glBindSampler(0, m_textureSampler);
-	glBindSampler(1, m_textureSampler);
-	glBindSampler(2, m_textureSampler);
-	glBindSampler(3, m_textureSampler);
-
-	// Set texture unit of each sampler
-	glUniform1i(m_uKaSamplerLocation, 0);
-	glUniform1i(m_uKdSamplerLocation, 1);
-	glUniform1i(m_uKsSamplerLocation, 2);
-	glUniform1i(m_uShininessSamplerLocation, 3);
-
-
-	const auto bindMaterial = [&](const qc::Material& material)
+	const auto& meshes = scene.getMeshes();
+	for (const auto& mesh : meshes)
 	{
-		glUniform3fv(m_uKaLocation, 1, glm::value_ptr(material.getColor(qc::Material::AMBIENT_COLOR)));
-		glUniform3fv(m_uKdLocation, 1, glm::value_ptr(material.getColor(qc::Material::DIFFUSE_COLOR)));
-		glUniform3fv(m_uKsLocation, 1, glm::value_ptr(material.getColor(qc::Material::SPECULAR_COLOR)));
-		glUniform1f(m_uShininessLocation, material.getShininess());
+		glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
+		camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::AMBIENT_TEXTURE));
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::DIFFUSE_TEXTURE));
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::SPECULAR_TEXTURE));
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
-	};
+		glUniformMatrix4fv(m_uModelViewProjMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+		glUniformMatrix4fv(m_uModelViewMatrixLocation, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+		glUniformMatrix4fv(m_uNormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-	glBindVertexArray(mesh.getVao().getPointer());
+		// Same sampler for all texture units
+		glBindSampler(0, m_textureSampler);
+		glBindSampler(1, m_textureSampler);
+		glBindSampler(2, m_textureSampler);
+		glBindSampler(3, m_textureSampler);
 
-	const qc::Material* currentMaterial = nullptr;
-	const std::vector<qc::Material>& materials = mesh.getMaterials();
-	const qc::Material& defaultMaterial = qc::Mesh::defaultMaterial;
+		// Set texture unit of each sampler
+		glUniform1i(m_uKaSamplerLocation, 0);
+		glUniform1i(m_uKdSamplerLocation, 1);
+		glUniform1i(m_uKsSamplerLocation, 2);
+		glUniform1i(m_uShininessSamplerLocation, 3);
 
-	const auto& shapes = mesh.getShapesData();
-	// We draw each shape by specifying how much indices it carries, and with an offset in the global index buffer
-	for (const auto shape : shapes)
-	{
-		const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
-		if (currentMaterial != &material)
+
+		const auto bindMaterial = [&](const qc::Material& material)
 		{
-			bindMaterial(material);
-			currentMaterial = &material;
+			glUniform3fv(m_uKaLocation, 1, glm::value_ptr(material.getColor(qc::Material::AMBIENT_COLOR)));
+			glUniform3fv(m_uKdLocation, 1, glm::value_ptr(material.getColor(qc::Material::DIFFUSE_COLOR)));
+			glUniform3fv(m_uKsLocation, 1, glm::value_ptr(material.getColor(qc::Material::SPECULAR_COLOR)));
+			glUniform1f(m_uShininessLocation, material.getShininess());
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::AMBIENT_TEXTURE));
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::DIFFUSE_TEXTURE));
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::SPECULAR_TEXTURE));
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, material.getMap(qc::Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
+		};
+
+		glBindVertexArray(mesh.getVao().getPointer());
+
+		const qc::Material* currentMaterial = nullptr;
+		const std::vector<qc::Material>& materials = mesh.getMaterials();
+		const qc::Material& defaultMaterial = qc::Mesh::defaultMaterial;
+
+		const auto& shapes = mesh.getShapesData();
+		// We draw each shape by specifying how much indices it carries, and with an offset in the global index buffer
+		for (const auto shape : shapes)
+		{
+			const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
+			if (currentMaterial != &material)
+			{
+				bindMaterial(material);
+				currentMaterial = &material;
+			}
+
+			glDrawElements(GL_TRIANGLES, shape.shapeSize, GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
 		}
 
-		glDrawElements(GL_TRIANGLES, shape.shapeSize, GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
+		for (GLuint i : {0, 1, 2, 3})
+			glBindSampler(0, m_textureSampler);
+
+		// Unbind FBO Draw
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		/*
+		// Read FBO
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
+		glReadBuffer(attachedToDraw);
+		glBlitFramebuffer(0,0, m_nWindowWidth, m_nWindowHeight, 0, 0, m_nWindowWidth, m_nWindowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		*/
 	}
-
-	for (GLuint i : {0, 1, 2, 3})
-		glBindSampler(0, m_textureSampler);
-
-	// Unbind FBO Draw
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	/*
-	// Read FBO
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_FBO);
-	glReadBuffer(attachedToDraw);
-	glBlitFramebuffer(0,0, m_nWindowWidth, m_nWindowHeight, 0, 0, m_nWindowWidth, m_nWindowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	*/
 }
 
 void Application::drawComputePass()
@@ -212,6 +220,12 @@ void Application::drawComputePass()
 	m_programCompute.use();
 
 	const auto& viewMatrix = camera.getViewMatrix();
+
+	const auto& directionalLights = scene.getDirectionalLights();
+	const auto& pointLights = scene.getPointLights();
+
+	const auto& directionalLight = directionalLights[0];
+	const auto& pointLight = pointLights[0];
 
 	glUniform3fv(m_uDirectionalLightDirLocation, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(glm::normalize(directionalLight.getDirection()), 0))));
 	glUniform3fv(m_uDirectionalLightIntensityLocation, 1, glm::value_ptr(directionalLight.getColor() * directionalLight.getIntensity()));
@@ -278,6 +292,8 @@ void Application::drawGUI(float* clearColor)
 
 		if (ImGui::CollapsingHeader("Directional Light"))
 		{
+			auto& directionalLights = scene.getDirectionalLights();
+			auto& directionalLight = directionalLights[0];
 			ImGui::ColorEdit3("DirLightColor", glm::value_ptr(directionalLight.getColor()));
 			ImGui::DragFloat("DirLightIntensity", &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
 			if (ImGui::DragFloat("Phi Angle", &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
@@ -288,6 +304,8 @@ void Application::drawGUI(float* clearColor)
 
 		if (ImGui::CollapsingHeader("Point Light"))
 		{
+			auto& pointLights = scene.getPointLights();
+			auto& pointLight = pointLights[0];
 			ImGui::ColorEdit3("PointLightColor", glm::value_ptr(pointLight.getColor()));
 			ImGui::DragFloat("PointLightIntensity", &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
 			ImGui::InputFloat3("Position", glm::value_ptr(pointLight.getPosition()));
@@ -299,7 +317,7 @@ void Application::drawGUI(float* clearColor)
 
 	ImGui::Render();
 }
-
+/*
 void Application::loadScene()
 {
 	const auto objPath = m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj";
@@ -352,7 +370,7 @@ void Application::loadScene()
 
 	mesh.setMaterials(materials);
 }
-
+*/
 void Application::initForGeo()
 {
 	m_programGeo = glmlv::compileProgram({ m_ShadersRootPath / m_AppName / "geometryPass.vs.glsl", m_ShadersRootPath / m_AppName / "geometryPass.fs.glsl" });
