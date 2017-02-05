@@ -46,7 +46,7 @@ void Camera::updateViewController(float time)
 	viewMatrix = viewController.getViewMatrix();
 }
 
-void Camera::computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatrix, glm::mat4& mvpMatrix, glm::mat4& normalMatrix)
+void Camera::computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatrix, glm::mat4& mvpMatrix, glm::mat4& normalMatrix) const
 {
 	mvMatrix = viewMatrix * modelMatrix;
 	mvpMatrix = projMatrix * mvMatrix;

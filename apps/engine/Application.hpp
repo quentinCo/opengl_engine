@@ -17,6 +17,7 @@
 #include "Light.hpp"
 #include "Camera.hpp"
 #include "Scene.hpp"
+#include "Renderer.hpp"
 
 class Application
 {
@@ -46,80 +47,15 @@ private:
     const std::string m_ImGuiIniFilename;
     const glmlv::fs::path m_ShadersRootPath;
     const glmlv::fs::path m_AssetsRootPath;
-
+	
     // Scene data in GPU:
-	/*
-	qc::Mesh mesh;
-	qc::DirectionalLight directionalLight = qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f);
-	qc::Light pointLight = qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f);
-	*/
 	qc::Scene scene;
 
 	qc::Camera camera = qc::Camera(m_GLFWHandle);
 
-//    float m_SceneSize = 0.f; // Used for camera speed and projection matrix parameters
-	
-    GLuint m_textureSampler = 0; // Only one sampler object since we will use the same sampling parameters for all textures
-
-    glmlv::GLProgram m_programGeo;
-
-    GLint m_uModelViewProjMatrixLocation;
-    GLint m_uModelViewMatrixLocation;
-    GLint m_uNormalMatrixLocation;
-
-    GLint m_uKaLocation;
-    GLint m_uKdLocation;
-    GLint m_uKsLocation;
-    GLint m_uShininessLocation;
-    GLint m_uKaSamplerLocation;
-    GLint m_uKdSamplerLocation;
-    GLint m_uKsSamplerLocation;
-    GLint m_uShininessSamplerLocation;
-	
-    // Deferred
-    GLuint m_GBufferTextures[GBufferTextureCount];
-    GLuint m_FBO;
-
-    int attachedToDraw;
-
-
-    // Shading
-    glmlv::GLProgram m_programShading;
-
-	GLint m_uScreenTexture;
-	
-    GLuint m_ScreenVAO = 0;
-    GLuint m_ScreenVBO = 0;
-
-	// Compute shader
-	glmlv::GLProgram m_programCompute;
-	GLuint m_screenTexture = 0;
-
-	int m_workGroupCount[3];
-	int m_workGroupSize[3];
-	int m_workGroupInvocation;
-	
-	GLint m_uDirectionalLightDirLocation;
-	GLint m_uDirectionalLightIntensityLocation;
-
-	GLint m_uPointLightPositionLocation;
-	GLint m_uPointLightIntensityLocation;
-
-	GLint m_uGTextures[GBufferTextureCount];
-
-    GLint m_uWindowsDim;
-
+	qc::Renderer renderer;
     
 	// Some initialisation functions
-	void drawGeoPass();
-	void drawComputePass();
-	void drawShadingPass();
 	void drawGUI(float* clearColor);
 
-//	void loadScene();
-
-	void initForGeo();
-	void initForShading();
-	void initScreenBuffers();
-	void initForCompute();
 };

@@ -27,7 +27,7 @@ public:
 
 	void Camera::updateViewController(float time);
 	
-	void computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatrix, glm::mat4& mvpMatrix, glm::mat4& normalMatrix);
+	void computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatrix, glm::mat4& mvpMatrix, glm::mat4& normalMatrix) const;
 
 private:
 	glm::ivec2 viewportSize;
