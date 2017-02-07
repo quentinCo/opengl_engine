@@ -357,13 +357,17 @@ void Renderer::renderComputePass(const Scene& scene, const Camera& camera)
 	const auto& viewMatrix = camera.getViewMatrix();
 
 	const auto& directionalLights = scene.getDirectionalLights();
+	std::vector<Light> directionalPointLights;
+	for (const auto& it : directionalLights)
+		directionalPointLights.push_back(it);
+
 	const auto& pointLights = scene.getPointLights();
 
-	Renderer::bindUbos(directionalLights, 1, uDirectionalLights, programComputePass, scene.getUboDirectionalLights());
+	Renderer::bindUbos(directionalPointLights, 1, uDirectionalLights, programComputePass, scene.getUboDirectionalLights());
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
 	Renderer::bindUbos(pointLights, 2, uPointLights, programComputePass, scene.getUboPointLights());
-	glUniform1i(uPointLights, static_cast<GLint>(pointLights.size()));
+	glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
 
 	glUniformMatrix4fv(uViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
 
@@ -394,11 +398,11 @@ void Renderer::renderComputePass(const Scene& scene, const Camera& camera)
 template<typename T>
 void Renderer::bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)
 {
+	glUniformBlockBinding(program.glId(), uniform, bindingIndex);
+
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo.getPointer());
 	glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(T), data.data(), GL_STREAM_DRAW);
 	glBindBufferRange(GL_UNIFORM_BUFFER, bindingIndex, ubo.getPointer(), 0, sizeof(T) * data.size());
-
-	glUniformBlockBinding(program.glId(), uniform, bindingIndex);
 }
 
 void Renderer::renderShadingPass()

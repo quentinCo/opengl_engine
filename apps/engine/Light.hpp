@@ -11,7 +11,7 @@ class Light
 
 public:
 	Light(const glm::vec3& position = glm::vec3(0), const glm::vec3& color = glm::vec3(1), float intensity = 1.f)
-		: position(position), color(color), intensity(intensity)
+		: position(position, 1), color(color), intensity(intensity)
 	{}
 
 	const glm::vec3& getPosition() const
@@ -24,7 +24,7 @@ public:
 		{return intensity;}
 
 	/*TODO : delete after test*/
-	glm::vec3& getPosition()
+	glm::vec4& getPosition()
 		{return position;}
 
 	glm::vec3& getColor()
@@ -33,7 +33,7 @@ public:
 	float& getIntensity()
 		{return intensity;}
 	/* ---------------------- */
-	void setPosition(const glm::vec3& position)
+	void setPosition(const glm::vec4& position)
 		{this->position = position;}
 
 	void setColor(const glm::vec3& color)
@@ -43,7 +43,7 @@ public:
 		{this->intensity = intensity;}
 
 private:
-	glm::vec3 position;
+	glm::vec4 position;
 	glm::vec3 color;
 	float intensity;
 };
@@ -53,12 +53,9 @@ private:
 
 class DirectionalLight : public Light
 {
-
-	float m_DirLightPhiAngleDegrees = 90.f;
-	float m_DirLightThetaAngleDegrees = 45.f;
 public:
 	DirectionalLight(float phi = 90.f, float theta = 45.f, const glm::vec3& color = glm::vec3(1), float intensity = 1.f)
-		: Light(glm::vec3(0), color, intensity), phiAngle(phi), thetaAngle(theta)
+		: Light(glm::vec4(0), color, intensity), phiAngle(phi), thetaAngle(theta)
 	{
 		this->setPosition(this->computeDirection(phi, theta));
 	}
@@ -99,7 +96,7 @@ private:
 	float phiAngle;
 	float thetaAngle;
 
-	static glm::vec3 computeDirection(float phi, float theta);
+	static glm::vec4 computeDirection(float phi, float theta);
 };
 
 }

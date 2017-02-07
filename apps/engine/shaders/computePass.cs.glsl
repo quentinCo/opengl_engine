@@ -4,31 +4,22 @@
 layout(local_size_x = 32, local_size_y = 32) in;
 layout(rgba32f, binding = 0) uniform image2D imgOutput;
 
-struct DirectionalLight
+struct Light
 {
-	vec3 direction;
-	vec3 color;
-	float intensity;
-	float phiAngle;
-	float thetaAngle;
-};
-
-struct PointLight
-{
-	vec3 position;
+	vec4 position; // vec4 necessary cause std140 gap on vec4. If vec3, memory offset -> bug 
 	vec3 color;
 	float intensity;
 };
 
-layout(std140) uniform uDirectionalLights
+layout(std140, binding = 1) uniform uDirectionalLights
 {
-	DirectionalLight directionalLights[MAX_LIGHTS];
+	Light directionalLights[MAX_LIGHTS];
 };
 uniform int uDirectionalLightsNumber;
 
-layout(std140) uniform uPointLights
+layout(std140, binding = 2) uniform uPointLights
 {
-	PointLight pointLights[MAX_LIGHTS];
+	Light pointLights[MAX_LIGHTS];
 };
 uniform int uPointLightsNumber;
 
@@ -42,7 +33,6 @@ uniform sampler2D uGDiffuse;
 uniform sampler2D uGlossyShininess;
 
 uniform vec2 uWindowDim;
-
 vec3 computeFragColor(ivec2 pixelCoords)
 {
     vec3 position = vec3(texelFetch(uGPosition, pixelCoords, 0)); // Correspond a vViewSpacePosition dans le forward renderer
@@ -55,47 +45,55 @@ vec3 computeFragColor(ivec2 pixelCoords)
     vec3 normal = vec3(texelFetch(uGNormal, pixelCoords, 0));
     vec3 eyeDir = normalize(-position);
 
-	float dothDirLight = 0;
-	vec3 directionalLightsIntensity = vec3(0);
-	vec3 globalDirection = vec3(0); // TODO : revoir
-	for(int i = 1; i < uDirectionalLightsNumber; ++i)
+	vec3 diffuseDirectionalLightIntensity = vec3(0);
+	vec3 specularDirectionalLightIntensity = vec3(0);
+
+	vec3 lightCoords = vec3(0);
+	vec3 lightIntensity = vec3(0);
+	vec3 hLight = vec3(0);
+	float dothLight = 0;
+	for(int i = 0; i < uDirectionalLightsNumber; ++i)
 	{
-		vec3 lightDirection = (uViewMatrix * vec4(normalize(directionalLights[i].direction), 0)).xyz;
-		directionalLightsIntensity += directionalLights[i].color * directionalLights[i].intensity; // TODO : revoir
-		globalDirection += lightDirection;	
+		lightCoords = (uViewMatrix * vec4(normalize(directionalLights[i].position))).xyz;
+		lightIntensity = directionalLights[i].color * directionalLights[i].intensity;
+		diffuseDirectionalLightIntensity += lightIntensity * max(0.f, dot(normal, lightCoords));
 
-		vec3 hDirLight = normalize(eyeDir + lightDirection);
-		dothDirLight += (shininess == 0) ? 1.f :max(0.f, dot(normal, hDirLight)); // TODO : revoir
-	}
+		hLight = normalize(eyeDir + lightCoords);
+		dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, hLight)); 
+		if (shininess != 1.f && shininess != 0.f)
+		{
+			dothLight = pow(dothLight, shininess);
+		}
+		specularDirectionalLightIntensity += lightIntensity * dothLight;
+	}	
 
-	float dothPointLight = 0;
-	vec3 pointLightsIncidentLight = vec3(0);
-	vec3 globalDirToPoint = vec3(0);
+	vec3 diffusePointLightIntensity = vec3(0);
+	vec3 specularPointLightIntensity = vec3(0);
+
+	float distToPointLight = 0;
+	vec3 dirToPointLight = vec3(0);
 	for(int i = 0; i < uPointLightsNumber; ++i)
 	{
-		vec3 lightPosition = (uViewMatrix * vec4(pointLights[i].position, 1)).xyz;
-		vec3 pointLighIntensity = pointLights[i].color * pointLights[i].intensity;
-		
-		float distToPointLight = length(lightPosition - position);
-		vec3 dirToPointLight = (lightPosition - position) / distToPointLight;
-		pointLightsIncidentLight += pointLighIntensity / (distToPointLight * distToPointLight); // TODO : revoir
-		globalDirToPoint += dirToPointLight;
+		lightCoords = (uViewMatrix * vec4(pointLights[i].position)).xyz;
+		distToPointLight = length(lightCoords - position);
+		dirToPointLight = (lightCoords - position) / distToPointLight;
+		lightIntensity = (pointLights[i].color * pointLights[i].intensity) / (distToPointLight * distToPointLight);
 
-		vec3 hPointLight = normalize(eyeDir + dirToPointLight);
+		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
-		dothPointLight += (shininess == 0) ? 1.f : max(0.f, dot(normal, hPointLight));
+		hLight = normalize(eyeDir + dirToPointLight);
+		dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, hLight));
+		if (shininess != 1.f && shininess != 0.f)
+		{
+			dothLight = pow(dothLight, shininess);
+		}
+		specularPointLightIntensity += lightIntensity * dothLight;
 	}
-
-    if (shininess != 1.f && shininess != 0.f)
-    {
-        dothPointLight = pow(dothPointLight, shininess);
-        dothDirLight = pow(dothDirLight, shininess);
-    }
 
 	vec3 fColor = vec3(0);
     fColor += ka;
-    fColor += kd * (directionalLightsIntensity * max(0.f, dot(normal, globalDirection)) + pointLightsIncidentLight * max(0., dot(normal, globalDirToPoint)));
-    fColor += ks * (directionalLightsIntensity * dothDirLight + pointLightsIncidentLight * dothPointLight);
+	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
+	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
 	
 	return fColor;
 }

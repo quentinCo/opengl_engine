@@ -53,7 +53,7 @@ Application::Application(int argc, char** argv):
     ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
 
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
-	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
+	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), 1.f));
 	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
 	scene.addPointLight(qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f));
 
@@ -93,6 +93,8 @@ void Application::drawGUI(float* clearColor)
 				if (ImGui::CollapsingHeader(name.c_str()))
 				{
 					auto& directionalLight = directionalLights[i];
+					name = "DirLightDirection " + std::to_string(j);
+					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getPosition()));
 					name = "DirLightColor " + std::to_string(j);
 					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getColor()));
 					name = "DirLightIntensity " + std::to_string(j);

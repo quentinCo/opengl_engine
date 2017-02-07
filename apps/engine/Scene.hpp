@@ -47,14 +47,13 @@ public:
 	const BufferObject<Light>& getUboPointLights() const
 		{return uboPointLights;}
 
-	const BufferObject<DirectionalLight>& getUboDirectionalLights() const
+	const BufferObject<Light>& getUboDirectionalLights() const
 		{return uboDirectionalLights;}
 
 	void setUboPointLights()
 		{uboPointLights = BufferObject<Light>(pointLights, GL_UNIFORM_BUFFER);}
 
-	void setUboDirectionalLights()
-		{uboDirectionalLights = BufferObject<DirectionalLight>(directionalLights, GL_UNIFORM_BUFFER);}
+	void setUboDirectionalLights();
 
 	void addObj(const glmlv::fs::path& pathfile );
 
@@ -73,7 +72,7 @@ private:
 	glm::vec3 bboxMax = glm::vec3(std::numeric_limits<float>::lowest());
 
 	BufferObject<Light> uboPointLights;
-	BufferObject<DirectionalLight> uboDirectionalLights;
+	BufferObject<Light> uboDirectionalLights;
 };
 
 }
