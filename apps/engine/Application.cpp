@@ -54,7 +54,11 @@ Application::Application(int argc, char** argv):
 
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
+	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
 	scene.addPointLight(qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f));
+
+	scene.setUboDirectionalLights();
+	scene.setUboPointLights();
 	
 	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	renderer = qc::Renderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
@@ -82,22 +86,45 @@ void Application::drawGUI(float* clearColor)
 		if (ImGui::CollapsingHeader("Directional Light"))
 		{
 			auto& directionalLights = scene.getDirectionalLights();
-			auto& directionalLight = directionalLights[0];
-			ImGui::ColorEdit3("DirLightColor", glm::value_ptr(directionalLight.getColor()));
-			ImGui::DragFloat("DirLightIntensity", &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
-			if (ImGui::DragFloat("Phi Angle", &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
-				ImGui::DragFloat("Theta Angle", &directionalLight.getThetaAngle(), 1.0f, 0.0f, 180.f)) {
-				directionalLight.setDirection(directionalLight.getPhiAngle(), directionalLight.getThetaAngle());
-			}
+			for (size_t i = 0; i < directionalLights.size(); ++i)
+			{
+				int j = i + 1;
+				std::string name = "Directional Light " + std::to_string(j);
+				if (ImGui::CollapsingHeader(name.c_str()))
+				{
+					auto& directionalLight = directionalLights[i];
+					name = "DirLightColor " + std::to_string(j);
+					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getColor()));
+					name = "DirLightIntensity " + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
+					name = "Phi Angle " + std::to_string(j);
+					std::string name2 = "Theta Angle " + std::to_string(j);
+					if (ImGui::DragFloat(name.c_str(), &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
+						ImGui::DragFloat(name2.c_str(), &directionalLight.getThetaAngle(), 1.0f, 0.0f, 180.f)) {
+						directionalLight.setDirection(directionalLight.getPhiAngle(), directionalLight.getThetaAngle());
+					}
+				}
+			}			
 		}
 
 		if (ImGui::CollapsingHeader("Point Light"))
 		{
 			auto& pointLights = scene.getPointLights();
-			auto& pointLight = pointLights[0];
-			ImGui::ColorEdit3("PointLightColor", glm::value_ptr(pointLight.getColor()));
-			ImGui::DragFloat("PointLightIntensity", &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
-			ImGui::InputFloat3("Position", glm::value_ptr(pointLight.getPosition()));
+			for (size_t i = 0; i < pointLights.size(); ++i)
+			{
+				int j = i + 1;
+				std::string name = "Point Light" + std::to_string(j);
+				if (ImGui::CollapsingHeader(name.c_str()))
+				{
+					auto& pointLight = pointLights[i];
+					name = "PointLightColor" + std::to_string(j);
+					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pointLight.getColor()));
+					name = "PointLightIntensity" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
+					name = "Position" + std::to_string(j);
+					ImGui::InputFloat3(name.c_str(), glm::value_ptr(pointLight.getPosition()));
+				}
+			}
 		}
 
 		ImGui::End();

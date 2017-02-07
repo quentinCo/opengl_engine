@@ -88,11 +88,13 @@ private:
 	GLuint screenTexture = 0;
 
 		// Light uniforms
-	GLint uDirectionalLightDirection;
-	GLint uDirectionalLightIntensity;
+	GLint uDirectionalLights;
+	GLint uDirectionalLightsNumber;
 
-	GLint uPointLightPosition;
-	GLint uPointLightIntensity;
+	GLint uPointLights;
+	GLint uPointLightsNumber;
+
+	GLint uViewMatrix;
 
 		// Texture uniforms
 	GLint uGTextures[GBUFFER_NB_TEXTURE];
@@ -111,6 +113,10 @@ private:
 	void bindMeshMaterial(const Material& material);
 	
 	void renderComputePass(const Scene& scene, const Camera& camera);
+
+	template<typename T>
+	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo);
+
 	void renderShadingPass();
 
 };

@@ -7,7 +7,7 @@ using namespace qc;
 const GLenum Renderer::gBufferTextureFormat[GBUFFER_NB_TEXTURE] = { GL_RGB32F, GL_RGB32F, GL_RGB32F, GL_RGB32F, GL_RGBA32F, GL_DEPTH_COMPONENT32F };
 
 Renderer::Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)
-	: shaderDirectory(shaderDirectory), windowWidth(windowWidth), windowHeight(windowHeight)
+	: shaderDirectory(shaderDirectory), windowWidth(static_cast<GLsizei>(windowWidth)), windowHeight(static_cast<GLsizei>(windowHeight))
 {
 	initOpenGLProperties();
 	initGeoPassVariables();
@@ -30,8 +30,10 @@ Renderer::Renderer(Renderer&& o)
 	textureSampler(o.textureSampler), uModelViewProjMatrix (o.uModelViewProjMatrix), uModelViewMatrix (o.uModelViewMatrix), uNormalMatrix (o.uNormalMatrix),
 	uKa (o.uKa), uKd (o.uKd), uKs (o.uKs), uShininess (o.uShininess), uKaSampler (o.uKaSampler), uKdSampler (o.uKdSampler), uKsSampler (o.uKsSampler),
 	uShininessSampler (o.uShininessSampler), fbo (o.fbo), programShadingPass (std::move(o.programShadingPass)), screenVao (o.screenVao), screenVbo (o.screenVbo),
-	uScreenTexture (o.uScreenTexture), programComputePass (std::move(o.programComputePass)), screenTexture (o.screenTexture), uDirectionalLightDirection (o.uDirectionalLightDirection),
-	uDirectionalLightIntensity (o.uDirectionalLightIntensity), uPointLightPosition (o.uPointLightPosition), uPointLightIntensity (o.uPointLightIntensity), uWindowDim (o.uWindowDim)
+	uScreenTexture (o.uScreenTexture), programComputePass (std::move(o.programComputePass)), screenTexture (o.screenTexture), uDirectionalLights(o.uDirectionalLights),
+	uDirectionalLightsNumber(o.uDirectionalLightsNumber), uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber), uViewMatrix(o.uViewMatrix),
+	/* uDirectionalLightDirection (o.uDirectionalLightDirection),
+	uDirectionalLightIntensity (o.uDirectionalLightIntensity), uPointLightPosition (o.uPointLightPosition), uPointLightIntensity (o.uPointLightIntensity),*/ uWindowDim (o.uWindowDim)
 {
 	o.programGeoPass = glmlv::GLProgram();
 	o.textureSampler = 0;
@@ -99,11 +101,18 @@ Renderer& Renderer::operator= (Renderer&& o)
 
 	screenTexture = o.screenTexture;
 	o.screenTexture = 0;
+
+	uDirectionalLights = o.uDirectionalLights;
+	uDirectionalLightsNumber = o.uDirectionalLightsNumber;
+	uPointLights = o.uPointLights;
+	uPointLightsNumber = o.uPointLightsNumber;
+	uViewMatrix = o.uViewMatrix;
+	/*
 	uDirectionalLightDirection = o.uDirectionalLightDirection;
 	uDirectionalLightIntensity = o.uDirectionalLightIntensity;
 	uPointLightPosition = o.uPointLightPosition;
 	uPointLightIntensity = o.uPointLightIntensity;
-
+	*/
 	uWindowDim = o.uWindowDim;
 	return *this;
 }
@@ -147,6 +156,10 @@ void Renderer::initGeoPassVariables()
 	uShininessSampler = glGetUniformLocation(programGeoPass.glId(), "uShininessSampler");
 
 	initFBOGeoPass();
+	
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+		std::cerr << "Error : " << error << " in initGeoPass" << std::endl;
 }
 
 void Renderer::initFBOGeoPass()
@@ -200,19 +213,31 @@ void Renderer::initComputePassVariables()
 	glBindImageTexture(0, screenTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
+	uDirectionalLights = glGetUniformBlockIndex(programComputePass.glId(), "uDirectionalLights");
+	uDirectionalLightsNumber = glGetUniformLocation(programComputePass.glId(), "uDirectionalLightsNumber");
+
+	uPointLights = glGetUniformBlockIndex(programComputePass.glId(), "uPointLights");
+	uPointLightsNumber = glGetUniformLocation(programComputePass.glId(), "uPointLightsNumber");
+
+	uViewMatrix = glGetUniformLocation(programComputePass.glId(), "uViewMatrix");
+	/*
 	uDirectionalLightDirection = glGetUniformLocation(programComputePass.glId(), "uDirectionalLightDir");
 	uDirectionalLightIntensity = glGetUniformLocation(programComputePass.glId(), "uDirectionalLightIntensity");
 
 	uPointLightPosition = glGetUniformLocation(programComputePass.glId(), "uPointLightPosition");
 	uPointLightIntensity = glGetUniformLocation(programComputePass.glId(), "uPointLightIntensity");
-
+	*/
 	uGTextures[0] = glGetUniformLocation(programComputePass.glId(), "uGPosition");
 	uGTextures[1] = glGetUniformLocation(programComputePass.glId(), "uGNormal");
 	uGTextures[2] = glGetUniformLocation(programComputePass.glId(), "uGAmbient");
 	uGTextures[3] = glGetUniformLocation(programComputePass.glId(), "uGDiffuse");
 	uGTextures[4] = glGetUniformLocation(programComputePass.glId(), "uGlossyShininess");
 
-	uWindowDim = glGetUniformLocation(programComputePass.glId(), "uWindowsDim");
+	uWindowDim = glGetUniformLocation(programComputePass.glId(), "uWindowDim");
+
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+		std::cerr << "Error : " << error << " in initComputePass" << std::endl;
 }
 
 void Renderer::initShadingPassVariables()
@@ -239,6 +264,10 @@ void Renderer::initShadingPassVariables()
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), 0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+		std::cerr << "Error : " << error << " in initShaddingPass" << std::endl;
 }
 
 void Renderer::renderGeoPass(const Scene& scene, const Camera& camera)
@@ -330,14 +359,13 @@ void Renderer::renderComputePass(const Scene& scene, const Camera& camera)
 	const auto& directionalLights = scene.getDirectionalLights();
 	const auto& pointLights = scene.getPointLights();
 
-	const auto& directionalLight = directionalLights[0];
-	const auto& pointLight = pointLights[0];
+	Renderer::bindUbos(directionalLights, 1, uDirectionalLights, programComputePass, scene.getUboDirectionalLights());
+	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
-	glUniform3fv(uDirectionalLightDirection, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(glm::normalize(directionalLight.getDirection()), 0))));
-	glUniform3fv(uDirectionalLightIntensity, 1, glm::value_ptr(directionalLight.getColor() * directionalLight.getIntensity()));
+	Renderer::bindUbos(pointLights, 2, uPointLights, programComputePass, scene.getUboPointLights());
+	glUniform1i(uPointLights, static_cast<GLint>(pointLights.size()));
 
-	glUniform3fv(uPointLightPosition, 1, glm::value_ptr(glm::vec3(viewMatrix * glm::vec4(pointLight.getPosition(), 1))));
-	glUniform3fv(uPointLightIntensity, 1, glm::value_ptr(pointLight.getColor() * pointLight.getIntensity()));
+	glUniformMatrix4fv(uViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
 
 	glUniform2fv(uWindowDim, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
@@ -361,6 +389,16 @@ void Renderer::renderComputePass(const Scene& scene, const Camera& camera)
 	}
 
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+}
+
+template<typename T>
+void Renderer::bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)
+{
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo.getPointer());
+	glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(T), data.data(), GL_STREAM_DRAW);
+	glBindBufferRange(GL_UNIFORM_BUFFER, bindingIndex, ubo.getPointer(), 0, sizeof(T) * data.size());
+
+	glUniformBlockBinding(program.glId(), uniform, bindingIndex);
 }
 
 void Renderer::renderShadingPass()
