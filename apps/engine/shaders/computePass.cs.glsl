@@ -1,5 +1,5 @@
 #version 430
-#define MAX_LIGHTS 10 // TODO : revoir
+#define MAX_LIGHTS 100 // TODO : revoir
 
 layout(local_size_x = 32, local_size_y = 32) in;
 layout(rgba32f, binding = 0) uniform image2D imgOutput;
@@ -91,7 +91,7 @@ vec3 computeFragColor(ivec2 pixelCoords)
 	}
 
 	vec3 fColor = vec3(0);
-    fColor += ka;
+//    fColor += ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
 	

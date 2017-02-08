@@ -55,7 +55,18 @@ Application::Application(int argc, char** argv):
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), 1.f));
 	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
-	scene.addPointLight(qc::Light(glm::vec3(0, 1, 0), glm::vec3(1), 5.f));
+	std::srand(std::time(0)); //use current time as seed for random generator
+	for (size_t i = 0; i < 100; ++i)
+	{
+		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * 500 + 10;
+		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
+		float r = static_cast<float>(std::rand()) / RAND_MAX;
+		float v = static_cast<float>(std::rand()) / RAND_MAX;
+		float b = static_cast<float>(std::rand()) / RAND_MAX;
+
+		scene.addPointLight(qc::Light(glm::vec3(x, y, z), glm::vec3(r,v,b), 25000.f));
+	}
 
 	scene.setUboDirectionalLights();
 	scene.setUboPointLights();
