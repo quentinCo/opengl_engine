@@ -27,13 +27,16 @@ public:
 	BufferObject<T>& operator= (const BufferObject<T>& o) = delete;
 
 	BufferObject(BufferObject<T>&& o)
-		: pointer(o.pointer), target(o.target), size(o.size)
+		: target(o.target), size(o.size)
 	{
+		if (pointer) glDeleteBuffers(1, &pointer);
+		pointer = o.pointer;
 		o.pointer = 0;
 	}
 
 	BufferObject<T>& operator= (BufferObject<T>&& o)
 	{
+		if (pointer) glDeleteBuffers(1, &pointer);
 		pointer = o.pointer;
 		target = o.target;
 		size = o.size;

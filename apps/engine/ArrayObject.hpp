@@ -32,13 +32,15 @@ public:
 	ArrayObject<T>& operator= (const ArrayObject<T>& o) = delete;
 
 	ArrayObject(ArrayObject<T>&& o)
-		: pointer(o.pointer)
 	{
+		if (pointer) glDeleteBuffers(1, &pointer);
+		pointer = o.pointer;
 		o.pointer = 0;
 	}
 
 	ArrayObject<T>& operator= (ArrayObject<T>&& o)
 	{
+		if (pointer) glDeleteBuffers(1, &pointer);
 		pointer = o.pointer;
 		o.pointer = 0;
 		return *this;

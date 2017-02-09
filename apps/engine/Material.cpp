@@ -45,6 +45,7 @@ Material::Material(Material&& o)
 	
 	for (size_t i = 0; i < NB_TEXTURE; ++i)
 	{
+		if (textures[i]) glDeleteTextures(1, &textures[i]);
 		textures[i] = o.textures[i];
 		o.textures[i] = 0;
 	}
@@ -59,6 +60,7 @@ Material& Material::operator= (Material&& o)
 
 	for (size_t i = 0; i < NB_TEXTURE; ++i)
 	{
+		if (textures[i]) glDeleteTextures(1, &textures[i]);
 		textures[i] = o.textures[i];
 		o.textures[i] = 0;
 	}

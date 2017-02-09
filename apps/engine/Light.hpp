@@ -14,7 +14,7 @@ public:
 		: position(position, 1), color(color), intensity(intensity)
 	{}
 
-	const glm::vec3& getPosition() const
+	const glm::vec4& getPosition() const
 		{return position;}
 
 	const glm::vec3& getColor() const
