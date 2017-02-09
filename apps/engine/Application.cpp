@@ -1,0 +1,148 @@
+#include "Application.hpp"
+
+#include <iostream>
+#include <math.h>  
+#include <unordered_set>
+
+#include <imgui.h>
+#include <glmlv/imgui_impl_glfw_gl3.hpp>
+#include <glmlv/Image2DRGBA.hpp>
+#include <glmlv/load_obj.hpp>
+
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
+
+int Application::run()
+{
+    float clearColor[3] = { 0, 0, 0 };
+    // Loop until the user closes the window
+    for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
+    {
+        const auto seconds = glfwGetTime();
+
+		renderer.renderScene(scene, camera);
+
+        // GUI code:
+		drawGUI(clearColor);
+
+        /* Poll for and process events */
+        glfwPollEvents();
+
+        /* Swap front and back buffers*/
+        m_GLFWHandle.swapBuffers();
+
+        auto ellapsedTime = glfwGetTime() - seconds;
+        auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+        if (!guiHasFocus)
+		{
+			camera.updateViewController(float(ellapsedTime));
+        }
+    }
+
+    return 0;
+}
+
+Application::Application(int argc, char** argv):
+    m_AppPath { glmlv::fs::path{ argv[0] } },
+    m_AppName { m_AppPath.stem().string() },
+    m_ImGuiIniFilename { m_AppName + ".imgui.ini" },
+    m_ShadersRootPath { m_AppPath.parent_path() / "shaders" },
+    m_AssetsRootPath { m_AppPath.parent_path() / "assets" }
+{
+    ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
+
+	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
+	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
+	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
+	std::srand(std::time(0)); //use current time as seed for random generator
+	for (size_t i = 0; i < 100; ++i)
+	{
+		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * 500 + 10;
+		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
+		float r = static_cast<float>(std::rand()) / RAND_MAX;
+		float v = static_cast<float>(std::rand()) / RAND_MAX;
+		float b = static_cast<float>(std::rand()) / RAND_MAX;
+
+		scene.addPointLight(qc::Light(glm::vec3(x, y, z), glm::vec3(r,v,b), 25000.f));
+	}
+
+	scene.setUboDirectionalLights();
+	scene.setUboPointLights();
+	
+	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
+	renderer = qc::Renderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+
+    std::cout << "End INIT" << std::endl;
+}
+
+void Application::drawGUI(float* clearColor)
+{
+	ImGui_ImplGlfwGL3_NewFrame();
+	{
+		ImGui::Begin("GUI");
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::ColorEditMode(ImGuiColorEditMode_RGB);
+		if (ImGui::ColorEdit3("clearColor", clearColor)) {
+			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
+		}
+/*
+		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
+		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
+		ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();
+		ImGui::RadioButton("GDiffuse", &attachedToDraw, GL_COLOR_ATTACHMENT3);
+		ImGui::RadioButton("GGlossyShininess", &attachedToDraw, GL_COLOR_ATTACHMENT4);
+*/
+		if (ImGui::CollapsingHeader("Directional Light"))
+		{
+			auto& directionalLights = scene.getDirectionalLights();
+			for (size_t i = 0; i < directionalLights.size(); ++i)
+			{
+				int j = i + 1;
+				std::string name = "Directional Light " + std::to_string(j);
+				if (ImGui::CollapsingHeader(name.c_str()))
+				{
+					auto& directionalLight = directionalLights[i];
+					name = "DirLightDirection " + std::to_string(j);
+					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getPosition()));
+					name = "DirLightColor " + std::to_string(j);
+					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getColor()));
+					name = "DirLightIntensity " + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
+					name = "Phi Angle " + std::to_string(j);
+					std::string name2 = "Theta Angle " + std::to_string(j);
+					if (ImGui::DragFloat(name.c_str(), &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
+						ImGui::DragFloat(name2.c_str(), &directionalLight.getThetaAngle(), 1.0f, 0.0f, 180.f)) {
+						directionalLight.setDirection(directionalLight.getPhiAngle(), directionalLight.getThetaAngle());
+					}
+				}
+			}			
+		}
+
+		if (ImGui::CollapsingHeader("Point Light"))
+		{
+			auto& pointLights = scene.getPointLights();
+			for (size_t i = 0; i < pointLights.size(); ++i)
+			{
+				int j = i + 1;
+				std::string name = "Point Light" + std::to_string(j);
+				if (ImGui::CollapsingHeader(name.c_str()))
+				{
+					auto& pointLight = pointLights[i];
+					name = "PointLightColor" + std::to_string(j);
+					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pointLight.getColor()));
+					name = "PointLightIntensity" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
+					name = "Position" + std::to_string(j);
+					ImGui::InputFloat3(name.c_str(), glm::value_ptr(pointLight.getPosition()));
+				}
+			}
+		}
+
+		ImGui::End();
+	}
+
+
+	ImGui::Render();
+}
