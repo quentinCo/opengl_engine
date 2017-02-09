@@ -53,8 +53,8 @@ Application::Application(int argc, char** argv):
     ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
 
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
-	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), 1.f));
-	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
+	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
+	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
 	std::srand(std::time(0)); //use current time as seed for random generator
 	for (size_t i = 0; i < 100; ++i)
 	{
