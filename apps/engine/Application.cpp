@@ -61,11 +61,15 @@ Application::Application(int argc, char** argv):
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * 500 + 10;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
+
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
-		scene.addPointLight(qc::Light(glm::vec3(x, y, z), glm::vec3(r,v,b), 25000.f));
+		float radius = static_cast<float>(std::rand()) / RAND_MAX * 50 + 10;
+		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 30 + 10;
+
+		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}
 
 	scene.setUboDirectionalLights();
@@ -134,6 +138,14 @@ void Application::drawGUI(float* clearColor)
 					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pointLight.getColor()));
 					name = "PointLightIntensity" + std::to_string(j);
 					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
+					name = "PointAttenuationRadius" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 1.f, 100.f);
+					name = "ConstantAttenuation" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getConstantAttenuation(), 0.1f, 1.f, 100.f);
+					name = "LinearAttenuation" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getLinearAttenuation(), 0.1f, 1.f, 100.f);
+					name = "QuadraticAttenuation" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getQuadraticAttenuation(), 0.1f, 1.f, 100.f);
 					name = "Position" + std::to_string(j);
 					ImGui::InputFloat3(name.c_str(), glm::value_ptr(pointLight.getPosition()));
 				}
