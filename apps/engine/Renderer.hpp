@@ -26,13 +26,14 @@ public:
 
 	static const GLenum gBufferTextureFormat[GBUFFER_NB_TEXTURE];
 
-	Renderer() {} // TODO: change
-
+	Renderer() {}
 	Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight);
-	~Renderer();
 
-	Renderer(Renderer&& o);
-	Renderer& operator= (Renderer&& o);
+	GLsizei getWindowWidth() const
+		{return windowWidth;}
+	
+	GLsizei getWindowHeight() const
+		{return windowHeight;}
 
 	void setWindowsDimmenssion(size_t width, size_t height)
 	{
@@ -40,85 +41,24 @@ public:
 		windowHeight = static_cast<GLsizei>(height);
 	}
 
-	void renderScene(const Scene& scene, const Camera& camera);
+	virtual void renderScene(const Scene& scene, const Camera& camera) = 0;
 
-private:
+protected:
 	glmlv::fs::path shaderDirectory;
 	GLsizei windowWidth;
 	GLsizei windowHeight;
 
-	// Geo Pass variables
-	glmlv::GLProgram programGeoPass;
-
-	GLuint textureSampler = 0;
-
-		// View uniforms
-	GLint uModelViewProjMatrix;
-	GLint uModelViewMatrix;
-	GLint uNormalMatrix;
-
-		// Material uniforms
-	GLint uKa;
-	GLint uKd;
-	GLint uKs;
-	GLint uShininess;
-	GLint uKaSampler;
-	GLint uKdSampler;
-	GLint uKsSampler;
-	GLint uShininessSampler;
-
-		// Fragement shader
-	GLuint gBufferTextures[GBUFFER_NB_TEXTURE];
-	GLuint fbo = 0;
-
-	// Shading Pass variables
-	glmlv::GLProgram programShadingPass;
-
-		// Screen Texture support
-	GLuint screenVao = 0;
-	GLuint screenVbo = 0;
-	
-		// Texture uniform
-	GLint uScreenTexture;
-
-	// Compute Pass variables
-	glmlv::GLProgram programComputePass;
-
-		// Screen texture
-	GLuint screenTexture = 0;
-
-		// Light uniforms
-	GLint uDirectionalLights;
-	GLint uDirectionalLightsNumber;
-
-	GLint uPointLights;
-	GLint uPointLightsNumber;
-
-	GLint uViewMatrix;
-
-		// Texture uniforms
-	GLint uGTextures[GBUFFER_NB_TEXTURE];
-
-		// Windows dimension uniform (for thread control in shader)
-	GLint uWindowDim;
-	
 	void initOpenGLProperties();
-	void initGeoPassVariables();
-	void initFBOGeoPass();
-	void initComputePassVariables();
-	void initShadingPassVariables();
-
-	void renderGeoPass(const Scene& scene, const Camera& camera);
-	void renderGeoPassMesh(const Mesh& mesh, const Camera& camera);
-	void bindMeshMaterial(const Material& material);
-	
-	void renderComputePass(const Scene& scene, const Camera& camera);
 
 	template<typename T>
-	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo);
+	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)
+	{
+		glUniformBlockBinding(program.glId(), uniform, bindingIndex);
 
-	void renderShadingPass();
-
+		glBindBuffer(GL_UNIFORM_BUFFER, ubo.getPointer());
+		glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(T), data.data(), GL_STREAM_DRAW);
+		glBindBufferRange(GL_UNIFORM_BUFFER, bindingIndex, ubo.getPointer(), 0, sizeof(T) * data.size());
+	}
 };
 
 }

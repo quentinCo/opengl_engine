@@ -1,8 +1,4 @@
-#version 430
-#define MAX_LIGHTS 100 // TODO : revoir
-
-layout(local_size_x = 32, local_size_y = 32) in;
-layout(rgba32f, binding = 0) uniform image2D imgOutput;
+#version 330
 
 struct Light
 {
@@ -34,27 +30,45 @@ layout(std140, binding = 2) uniform uPointLights
 };
 uniform int uPointLightsNumber;
 
-uniform mat4 uViewMatrix;
+in vec3 vViewSpacePosition;
+in vec3 vViewSpaceNormal;
+in vec2 vTexCoords;
 
-// GBuffer Textures
-uniform sampler2D uGPosition;
-uniform sampler2D uGNormal;
-uniform sampler2D uGAmbient;
-uniform sampler2D uGDiffuse;
-uniform sampler2D uGlossyShininess;
 
-uniform vec2 uWindowDim;
+uniform mat4 uModelViewMatrix;
+//  Light
+//   Directional
+uniform vec3 uDirectionalLightDir;
+uniform vec3 uDirectionalLightIntensity;
 
-vec3 computeFragColor(ivec2 pixelCoords)
+//   Point
+uniform vec3 uPointLightPosition;
+uniform vec3 uPointLightIntensity;
+
+//  Color
+uniform vec3 uKa;
+uniform vec3 uKd;
+uniform vec3 uKs;
+uniform float uShininess;
+
+uniform sampler2D uKaSampler;
+uniform sampler2D uKdSampler;
+uniform sampler2D uKsSampler;
+uniform sampler2D uShininessSampler;
+
+out vec3 fColor;
+
+vec3 computeFragColor()
 {
-    vec3 position = vec3(texelFetch(uGPosition, pixelCoords, 0)); // Correspond a vViewSpacePosition dans le forward renderer
+    vec3 position = vViewSpacePosition;
 
-    vec3 ka = vec3(texelFetch(uGAmbient, pixelCoords, 0)); 
-    vec3 kd = vec3(texelFetch(uGDiffuse, pixelCoords, 0));
-    vec3 ks = vec3(texelFetch(uGlossyShininess, pixelCoords, 0)).xyz;
-    float shininess = (texelFetch(uGlossyShininess, pixelCoords, 0)).w;
+	vec3 ka = uKa * vec3(texture(uKaSampler, vTexCoords));
+    vec3 kd = uKd * vec3(texture(uKdSampler, vTexCoords));
+    vec3 ks = uKs * vec3(texture(uKsSampler, vTexCoords));
 
-    vec3 normal = vec3(texelFetch(uGNormal, pixelCoords, 0));
+    float shininess = uShininess * vec3(texture(uShininessSampler, vTexCoords)).x;
+
+    vec3 normal = vViewSpaceNormal;
     vec3 eyeDir = normalize(-position);
 
 	vec3 diffuseDirectionalLightIntensity = vec3(0);
@@ -111,19 +125,7 @@ vec3 computeFragColor(ivec2 pixelCoords)
 	
 	return fColor;
 }
-
 void main()
 {
-
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
-    if(pixelCoords.x < uWindowDim.x && pixelCoords.y < uWindowDim.y)
-    {
-		vec3 fColor = computeFragColor(pixelCoords);
-
-        imageStore(imgOutput, pixelCoords, vec4(fColor,1));
-    }
-    else
-    {
-        imageStore(imgOutput, pixelCoords, vec4(0, normalize(pixelCoords),1));
-    }
+	fColor = computeFragColor();
 }

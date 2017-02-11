@@ -18,6 +18,7 @@
 #include "Camera.hpp"
 #include "Scene.hpp"
 #include "Renderer.hpp"
+#include "DeferredRenderer.hpp"
 
 class Application
 {
@@ -53,7 +54,9 @@ private:
 
 	qc::Camera camera = qc::Camera(m_GLFWHandle);
 
-	qc::Renderer renderer;
+	qc::Renderer* renderer = nullptr;
+
+	qc::DeferredRenderer deferred;
     
 	// Some initialisation functions
 	void drawGUI(float* clearColor);

@@ -21,7 +21,7 @@ int Application::run()
     {
         const auto seconds = glfwGetTime();
 
-		renderer.renderScene(scene, camera);
+		renderer->renderScene(scene, camera);
 
         // GUI code:
 		drawGUI(clearColor);
@@ -76,7 +76,8 @@ Application::Application(int argc, char** argv):
 	scene.setUboPointLights();
 	
 	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
-	renderer = qc::Renderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	renderer = &deferred;
 
     std::cout << "End INIT" << std::endl;
 }
