@@ -136,7 +136,7 @@ void Renderer::initOpenGLProperties()
 
 void Renderer::initGeoPassVariables()
 {
-	programGeoPass = glmlv::compileProgram({ shaderDirectory / "geometryPass.vs.glsl", shaderDirectory / "geometryPass.fs.glsl" });
+	programGeoPass = glmlv::compileProgram({ shaderDirectory / "deferred" / "geometryPass.vs.glsl", shaderDirectory / "deferred" / "geometryPass.fs.glsl" });
 
 	glGenSamplers(1, &textureSampler);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -201,7 +201,7 @@ void Renderer::initFBOGeoPass()
 
 void Renderer::initComputePassVariables()
 {
-	programComputePass = glmlv::compileProgram({ shaderDirectory / "computePass.cs.glsl" });
+	programComputePass = glmlv::compileProgram({ shaderDirectory / "deferred" / "computePass.cs.glsl" });
 
 	// Gen texture
 	glGenTextures(1, &screenTexture);
@@ -242,7 +242,7 @@ void Renderer::initComputePassVariables()
 
 void Renderer::initShadingPassVariables()
 {
-	programShadingPass = glmlv::compileProgram({shaderDirectory / "shadingPass.vs.glsl",shaderDirectory / "shadingPass.fs.glsl" });
+	programShadingPass = glmlv::compileProgram({shaderDirectory / "deferred" / "shadingPass.vs.glsl",shaderDirectory / "deferred" / "shadingPass.fs.glsl" });
 	
 	uScreenTexture = glGetUniformLocation(programShadingPass.glId(), "uScreenTexture");
 
