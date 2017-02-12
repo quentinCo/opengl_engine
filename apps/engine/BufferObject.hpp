@@ -60,7 +60,8 @@ private:
 		glGenBuffers(1, &pointer);
 		glBindBuffer(target, pointer);
 		if(target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) glBufferStorage(target, size * sizeof(T), data.data(), 0);
-		if(target == GL_UNIFORM_BUFFER) glBufferData(target, size * sizeof(T), data.data(), GL_DYNAMIC_DRAW);
+		else if(target == GL_UNIFORM_BUFFER) glBufferData(target, size * sizeof(T), data.data(), GL_DYNAMIC_DRAW);
+		else if(target == GL_SHADER_STORAGE_BUFFER) glBufferData(target, size * sizeof(T), data.data(), GL_DYNAMIC_COPY);
 		glBindBuffer(target, 0);
 	}
 };

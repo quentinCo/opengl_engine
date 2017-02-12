@@ -4,6 +4,8 @@
 
 using namespace qc;
 
+const GLenum DeferredRenderer::gBufferTextureFormat[GBUFFER_NB_TEXTURE] = { GL_RGB32F, GL_RGB32F, GL_RGB32F, GL_RGB32F, GL_RGBA32F, GL_DEPTH_COMPONENT32F };
+
 DeferredRenderer::DeferredRenderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)
 	: Renderer(shaderDirectory, windowWidth, windowHeight)
 {
@@ -55,6 +57,7 @@ DeferredRenderer& DeferredRenderer::operator= (DeferredRenderer&& o)
 	shaderDirectory = o.shaderDirectory;
 	windowWidth = o.windowWidth;
 	windowHeight = o.windowHeight;
+
 	programGeoPass = std::move(o.programGeoPass);
 	o.programGeoPass = glmlv::GLProgram();
 
@@ -178,7 +181,6 @@ void DeferredRenderer::initFBOGeoPass()
 		std::cerr << "Error check frame buffer : " << res << std::endl;
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	//attachedToDraw = GL_COLOR_ATTACHMENT0;
 }
 
 void DeferredRenderer::initComputePassVariables()
@@ -195,10 +197,10 @@ void DeferredRenderer::initComputePassVariables()
 	glBindImageTexture(0, screenTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	uDirectionalLights = glGetUniformBlockIndex(programComputePass.glId(), "uDirectionalLights");
+	uDirectionalLights = glGetProgramResourceIndex(programComputePass.glId(), GL_SHADER_STORAGE_BLOCK, "uDirectionalLights");
 	uDirectionalLightsNumber = glGetUniformLocation(programComputePass.glId(), "uDirectionalLightsNumber");
 
-	uPointLights = glGetUniformBlockIndex(programComputePass.glId(), "uPointLights");
+	uPointLights = glGetProgramResourceIndex(programComputePass.glId(), GL_SHADER_STORAGE_BLOCK, "uPointLights");
 	uPointLightsNumber = glGetUniformLocation(programComputePass.glId(), "uPointLightsNumber");
 
 	uViewMatrix = glGetUniformLocation(programComputePass.glId(), "uViewMatrix");
@@ -337,10 +339,10 @@ void DeferredRenderer::renderComputePass(const Scene& scene, const Camera& camer
 
 	const auto& pointLights = scene.getPointLights();
 
-	Renderer::bindUbos(directionalPointLights, 1, uDirectionalLights, programComputePass, scene.getUboDirectionalLights());
+	Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programComputePass, scene.getSsboDirectionalLights());
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
-	Renderer::bindUbos(pointLights, 2, uPointLights, programComputePass, scene.getUboPointLights());
+	Renderer::bindSsbos(pointLights, 2, uPointLights, programComputePass, scene.getSsboPointLights());
 	glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
 
 	glUniformMatrix4fv(uViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
