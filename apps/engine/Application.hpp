@@ -10,29 +10,20 @@
 
 #include <limits>
 
-#include "BufferObject.hpp"
-#include "ArrayObject.hpp"
-#include "Mesh.hpp"
-#include "Material.hpp"
-#include "Light.hpp"
 #include "Camera.hpp"
 #include "Scene.hpp"
 #include "Renderer.hpp"
+#include "DeferredRenderer.hpp"
+#include "ForwardRenderer.hpp"
 
 class Application
 {
 public:
-    enum GBufferTextureType
+    enum RendererType
     {
-        GPosition = 0,
-        GNormal,
-        GAmbient,
-        GDiffuse,
-        GGlossyShininess,
-        GDepth, // On doit créer une texture de depth mais on écrit pas directement dedans dans le FS. OpenGL le fait pour nous (et l'utilise).
-        GBufferTextureCount
+		DEFERRED = 0,
+		FORWARD
     };
-    const GLenum m_GBufferTextureFormat[GBufferTextureCount] = { GL_RGB32F, GL_RGB32F, GL_RGB32F, GL_RGB32F, GL_RGBA32F, GL_DEPTH_COMPONENT32F };
 
     Application(int argc, char** argv);
 
@@ -40,7 +31,7 @@ public:
 private:
     const size_t m_nWindowWidth = 1280;
     const size_t m_nWindowHeight = 720;
-    glmlv::GLFWHandle m_GLFWHandle{ m_nWindowWidth, m_nWindowHeight, "Template" }; // Note: the handle must be declared before the creation of any object managing OpenGL resource (e.g. GLProgram, GLShader)
+    glmlv::GLFWHandle m_GLFWHandle{ static_cast<int>(m_nWindowWidth), static_cast<int>(m_nWindowHeight), "Template" }; // Note: the handle must be declared before the creation of any object managing OpenGL resource (e.g. GLProgram, GLShader)
 
     const glmlv::fs::path m_AppPath;
     const std::string m_AppName;
@@ -53,7 +44,13 @@ private:
 
 	qc::Camera camera = qc::Camera(m_GLFWHandle);
 
-	qc::Renderer renderer;
+	qc::Renderer* renderer = nullptr;
+
+	int chosenRenderer = DEFERRED;
+	int currentRenderer = DEFERRED;
+
+	qc::DeferredRenderer deferred;
+	qc::ForwardRenderer forward;
     
 	// Some initialisation functions
 	void drawGUI(float* clearColor);

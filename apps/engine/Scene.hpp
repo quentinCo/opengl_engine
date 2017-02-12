@@ -27,14 +27,14 @@ public:
 	const std::vector<Mesh>& getMeshes() const
 		{return meshes;}
 
-	const std::vector<Light>& getPointLights() const
+	const std::vector<PointLight>& getPointLights() const
 		{return pointLights;}
 
 	const std::vector<DirectionalLight>& getDirectionalLights() const
 		{return directionalLights;}
 
 	// TODO : delete
-	std::vector<Light>& getPointLights()
+	std::vector<PointLight>& getPointLights()
 		{return pointLights;}
 
 	std::vector<DirectionalLight>& getDirectionalLights()
@@ -44,20 +44,20 @@ public:
 	const float getSceneSize() const
 		{return glm::length(bboxMax - bboxMin);}
 
-	const BufferObject<Light>& getUboPointLights() const
+	const BufferObject<PointLight>& getUboPointLights() const
 		{return uboPointLights;}
 
 	const BufferObject<Light>& getUboDirectionalLights() const
 		{return uboDirectionalLights;}
 
 	void setUboPointLights()
-		{uboPointLights = BufferObject<Light>(pointLights, GL_UNIFORM_BUFFER);}
+		{uboPointLights = BufferObject<PointLight>(pointLights, GL_UNIFORM_BUFFER);}
 
 	void setUboDirectionalLights();
 
 	void addObj(const glmlv::fs::path& pathfile );
 
-	void addPointLight(const Light& light)
+	void addPointLight(const PointLight& light)
 		{pointLights.push_back(light);}
 
 	void addDirectionalLight(const DirectionalLight& light)
@@ -65,13 +65,13 @@ public:
 
 private:
 	std::vector<Mesh> meshes;
-	std::vector<Light> pointLights;
+	std::vector<PointLight> pointLights;
 	std::vector<DirectionalLight> directionalLights; // TODO : revoir passer DirectionalLight -> Light
 
 	glm::vec3 bboxMin = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 bboxMax = glm::vec3(std::numeric_limits<float>::lowest());
 
-	BufferObject<Light> uboPointLights;
+	BufferObject<PointLight> uboPointLights;
 	BufferObject<Light> uboDirectionalLights;
 };
 

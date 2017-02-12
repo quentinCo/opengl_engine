@@ -21,7 +21,16 @@ int Application::run()
     {
         const auto seconds = glfwGetTime();
 
-		renderer.renderScene(scene, camera);
+		if (chosenRenderer != currentRenderer)
+		{
+			currentRenderer = chosenRenderer;
+			if (currentRenderer == DEFERRED)
+				renderer = &deferred;
+			else if (currentRenderer == FORWARD)
+				renderer = &forward;
+		}
+
+		renderer->renderScene(scene, camera);
 
         // GUI code:
 		drawGUI(clearColor);
@@ -55,24 +64,30 @@ Application::Application(int argc, char** argv):
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
 	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
-	std::srand(std::time(0)); //use current time as seed for random generator
+	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
 	for (size_t i = 0; i < 100; ++i)
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * 500 + 10;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
+
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
-		scene.addPointLight(qc::Light(glm::vec3(x, y, z), glm::vec3(r,v,b), 25000.f));
+		float radius = static_cast<float>(std::rand()) / RAND_MAX * 50 + 10;
+		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 30 + 10;
+
+		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}
 
 	scene.setUboDirectionalLights();
 	scene.setUboPointLights();
 	
 	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
-	renderer = qc::Renderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	renderer = &deferred;
 
     std::cout << "End INIT" << std::endl;
 }
@@ -87,6 +102,10 @@ void Application::drawGUI(float* clearColor)
 		if (ImGui::ColorEdit3("clearColor", clearColor)) {
 			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
 		}
+
+		ImGui::RadioButton("Deferred", &chosenRenderer, DEFERRED); ImGui::SameLine();
+		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD);// ImGui::SameLine();
+
 /*
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
 		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
@@ -99,7 +118,7 @@ void Application::drawGUI(float* clearColor)
 			auto& directionalLights = scene.getDirectionalLights();
 			for (size_t i = 0; i < directionalLights.size(); ++i)
 			{
-				int j = i + 1;
+				size_t j = i + 1;
 				std::string name = "Directional Light " + std::to_string(j);
 				if (ImGui::CollapsingHeader(name.c_str()))
 				{
@@ -125,7 +144,7 @@ void Application::drawGUI(float* clearColor)
 			auto& pointLights = scene.getPointLights();
 			for (size_t i = 0; i < pointLights.size(); ++i)
 			{
-				int j = i + 1;
+				size_t j = i + 1;
 				std::string name = "Point Light" + std::to_string(j);
 				if (ImGui::CollapsingHeader(name.c_str()))
 				{
@@ -134,6 +153,14 @@ void Application::drawGUI(float* clearColor)
 					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pointLight.getColor()));
 					name = "PointLightIntensity" + std::to_string(j);
 					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
+					name = "PointAttenuationRadius" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 1.f, 100.f);
+					name = "ConstantAttenuation" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getConstantAttenuation(), 0.1f, 1.f, 100.f);
+					name = "LinearAttenuation" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getLinearAttenuation(), 0.1f, 1.f, 100.f);
+					name = "QuadraticAttenuation" + std::to_string(j);
+					ImGui::DragFloat(name.c_str(), &pointLight.getQuadraticAttenuation(), 0.1f, 1.f, 100.f);
 					name = "Position" + std::to_string(j);
 					ImGui::InputFloat3(name.c_str(), glm::value_ptr(pointLight.getPosition()));
 				}

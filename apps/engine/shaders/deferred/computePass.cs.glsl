@@ -11,6 +11,17 @@ struct Light
 	float intensity;
 };
 
+struct PointLight
+{
+	vec4 position;
+	vec3 color;
+	float intensity;
+	float radiusAttenuation;
+	float constantAttenuation;
+	float linearAttenuation;
+	float quadraticAttenuation;
+};
+
 layout(std140, binding = 1) uniform uDirectionalLights
 {
 	Light directionalLights[MAX_LIGHTS];
@@ -19,7 +30,7 @@ uniform int uDirectionalLightsNumber;
 
 layout(std140, binding = 2) uniform uPointLights
 {
-	Light pointLights[MAX_LIGHTS];
+	PointLight pointLights[MAX_LIGHTS];
 };
 uniform int uPointLightsNumber;
 
@@ -33,6 +44,7 @@ uniform sampler2D uGDiffuse;
 uniform sampler2D uGlossyShininess;
 
 uniform vec2 uWindowDim;
+
 vec3 computeFragColor(ivec2 pixelCoords)
 {
     vec3 position = vec3(texelFetch(uGPosition, pixelCoords, 0)); // Correspond a vViewSpacePosition dans le forward renderer
@@ -72,13 +84,15 @@ vec3 computeFragColor(ivec2 pixelCoords)
 
 	float distToPointLight = 0;
 	vec3 dirToPointLight = vec3(0);
+	float attenuation = 0;
 	for(int i = 0; i < uPointLightsNumber; ++i)
 	{
 		lightCoords = (uViewMatrix * vec4(pointLights[i].position)).xyz;
 		distToPointLight = length(lightCoords - position);
 		dirToPointLight = (lightCoords - position) / distToPointLight;
-		lightIntensity = (pointLights[i].color * pointLights[i].intensity) / (distToPointLight * distToPointLight);
-
+		attenuation = ( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
+		lightIntensity = (pointLights[i].color * pointLights[i].intensity) / attenuation;
+		
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
 		hLight = normalize(eyeDir + dirToPointLight);
