@@ -286,9 +286,9 @@ void DeferredRenderer::renderGeoPassMesh(const Mesh& mesh, const Camera& camera)
 
 	glBindVertexArray(mesh.getVao().getPointer());
 
-	const qc::Material* currentMaterial = nullptr;
-	const std::vector<qc::Material>& materials = mesh.getMaterials();
-	const qc::Material& defaultMaterial = qc::Mesh::defaultMaterial;
+	const Material* currentMaterial = nullptr;
+	const std::vector<Material>& materials = mesh.getMaterials();
+	const Material& defaultMaterial = Mesh::defaultMaterial;
 
 	const auto& shapes = mesh.getShapesData();
 	for (const auto shape : shapes)
@@ -304,7 +304,7 @@ void DeferredRenderer::renderGeoPassMesh(const Mesh& mesh, const Camera& camera)
 	}
 
 	for (GLuint i : {0, 1, 2, 3})
-		glBindSampler(0, textureSampler);
+		glBindSampler(i, 0);
 }
 
 void DeferredRenderer::bindMeshMaterial(const Material& material)

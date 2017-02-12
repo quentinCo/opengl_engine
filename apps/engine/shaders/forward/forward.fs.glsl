@@ -1,4 +1,6 @@
-#version 330
+#version 420
+
+#define MAX_LIGHTS 100 // TODO : revoir
 
 struct Light
 {
@@ -34,16 +36,8 @@ in vec3 vViewSpacePosition;
 in vec3 vViewSpaceNormal;
 in vec2 vTexCoords;
 
-
 uniform mat4 uModelViewMatrix;
-//  Light
-//   Directional
-uniform vec3 uDirectionalLightDir;
-uniform vec3 uDirectionalLightIntensity;
-
-//   Point
-uniform vec3 uPointLightPosition;
-uniform vec3 uPointLightIntensity;
+uniform mat4 uViewMatrix;
 
 //  Color
 uniform vec3 uKa;
