@@ -28,6 +28,8 @@ int Application::run()
 				renderer = &deferred;
 			else if (currentRenderer == FORWARD)
 				renderer = &forward;
+			else if (currentRenderer == FORWARD_PLUS)
+				renderer = &forwardPlus;
 		}
 
 		renderer->renderScene(scene, camera);
@@ -81,13 +83,14 @@ Application::Application(int argc, char** argv):
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}
 
-	scene.setUboDirectionalLights();
-	scene.setUboPointLights();
+	scene.setSsboDirectionalLights();
+	scene.setSsboPointLights();
 	
 	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
-	renderer = &deferred;
+	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	renderer = &forwardPlus;
 
     std::cout << "End INIT" << std::endl;
 }
@@ -104,8 +107,8 @@ void Application::drawGUI(float* clearColor)
 		}
 
 		ImGui::RadioButton("Deferred", &chosenRenderer, DEFERRED); ImGui::SameLine();
-		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD);// ImGui::SameLine();
-
+		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD); ImGui::SameLine();
+		ImGui::RadioButton("Forward Plus", &chosenRenderer, FORWARD_PLUS);
 /*
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
 		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
