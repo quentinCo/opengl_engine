@@ -9,6 +9,7 @@ ForwardPlusRenderer::ForwardPlusRenderer(const glmlv::fs::path& shaderDirectory,
 {
 	initDepthPass();
 	initDepthDebug();
+	initLightCullingPass();
 	//initUniforms();
 }
 
@@ -21,7 +22,10 @@ ForwardPlusRenderer::~ForwardPlusRenderer()
 
 ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	:Renderer(o), programDepthPass(std::move(o.programDepthPass)), fboDepth(o.fboDepth), depthMap(o.depthMap), uDepthModelViewProjMatrix(o.uDepthModelViewProjMatrix),
-	programForward(std::move(o.programForward)), uModelViewProjMatrix(o.uModelViewProjMatrix), uModelViewMatrix(o.uModelViewMatrix),
+	programLightCullingPass(std::move(o.programLightCullingPass)), nbComputeBlock(o.nbComputeBlock), pointLightsIndex(pointLightsIndex),
+	ssboPointLightsIndex(std::move(o.ssboPointLightsIndex)), uPointLightsForCulling(o.uPointLightsForCulling), uPointLightsNumberForCulling(o.uPointLightsNumberForCulling),
+	uPointLightsIndexForCulling(o.uPointLightsIndexForCulling), uInverseProjMatrix(o.uInverseProjMatrix), uWindowDim(o.uWindowDim),
+	uDepthMapForCulling(o.uDepthMapForCulling), programForward(std::move(o.programForward)), uModelViewProjMatrix(o.uModelViewProjMatrix), uModelViewMatrix(o.uModelViewMatrix),
 	uNormalMatrix(o.uNormalMatrix), uViewMatrix(o.uViewMatrix), uDirectionalLights(o.uDirectionalLights), uDirectionalLightsNumber(o.uDirectionalLightsNumber),
 	uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber), uKa(o.uKa), uKd(o.uKd), uKs(o.uKs), uShininess(o.uShininess), uKaSampler(o.uKaSampler),
 	uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler), uShininessSampler(o.uShininessSampler)
@@ -35,7 +39,7 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	if (depthMap) glDeleteSamplers(1, &depthMap);
 	depthMap = o.depthMap;
 	o.depthMap = 0;
-
+	//TODO :delete
 	programDebugDepth = std::move(o.programDebugDepth);
 	o.programDebugDepth = glmlv::GLProgram();
 
@@ -45,6 +49,8 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	o.screenVbo = 0;
 	uDepthMap = o.uDepthMap;
 	o.uDepthMap = 0;
+	//--------------
+	o.programLightCullingPass = glmlv::GLProgram();
 
 	o.programForward = glmlv::GLProgram();
 
@@ -72,6 +78,7 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 
 	uDepthModelViewProjMatrix = o.uDepthModelViewProjMatrix;
 
+	// TODO : delete
 	programDebugDepth = std::move(o.programDebugDepth);
 	o.programDebugDepth = glmlv::GLProgram();
 
@@ -81,6 +88,19 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 	o.screenVbo = 0;
 	uDepthMap = o.uDepthMap;
 	o.uDepthMap = 0;
+	// --------------
+
+	programLightCullingPass = std::move(o.programLightCullingPass);
+	o.programLightCullingPass = glmlv::GLProgram();
+	nbComputeBlock = o.nbComputeBlock;
+	pointLightsIndex = o.pointLightsIndex;
+	ssboPointLightsIndex = std::move(o.ssboPointLightsIndex);
+	uPointLightsForCulling = o.uPointLightsForCulling;
+	uPointLightsNumberForCulling = o.uPointLightsNumberForCulling;
+	uPointLightsIndexForCulling = o.uPointLightsIndexForCulling;
+	uInverseProjMatrix = o.uInverseProjMatrix;
+	uWindowDim = o.uWindowDim;
+	uDepthMapForCulling = o.uDepthMapForCulling;
 
 	programForward = std::move(o.programForward);
 	o.programForward = glmlv::GLProgram();
@@ -116,6 +136,7 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 {
 	renderDepthPass(scene, camera);
+	renderLightCullingPass(scene, camera);
 	renderDepthDebug();
 	//renderShadingPass(scene, camera);
 }
@@ -175,6 +196,30 @@ void ForwardPlusRenderer::initDepthDebug()
 	if (error != GL_NO_ERROR)
 		std::cerr << "Error : " << error << " in initDepthDebug" << std::endl;
 }
+
+void ForwardPlusRenderer::initLightCullingPass()
+{
+	programLightCullingPass = glmlv::compileProgram({ shaderDirectory / "forwardPlus" / "forwardPlusPointLightCulling.cs.glsl"});
+
+	nbComputeBlock = glm::vec3((GLuint)ceil(windowWidth / 32.f), (GLuint)ceil(windowHeight / 32.f), 1);
+
+	pointLightsIndex = std::vector<int>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200)); // TODO : find a better solution.
+	ssboPointLightsIndex = BufferObject<int>(pointLightsIndex, GL_SHADER_STORAGE_BUFFER);
+
+	uPointLightsForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK,"uPointLights");
+	uPointLightsNumberForCulling = glGetUniformLocation(programLightCullingPass.glId(), "uPointLightsNumber");
+	uPointLightsIndexForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK, "uPointLightsIndex");
+
+	uInverseProjMatrix = glGetUniformLocation(programLightCullingPass.glId(), "uInverseProjMatrix");
+	uWindowDim = glGetUniformLocation(programLightCullingPass.glId(), "uWindowDim");
+
+	uDepthMapForCulling = glGetUniformLocation(programLightCullingPass.glId(), "uDepthMap");
+
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR)
+		std::cerr << "Error : " << error << " in initDepthPass" << std::endl;
+}
+
 
 void ForwardPlusRenderer::initUniforms()
 {
@@ -250,6 +295,39 @@ void ForwardPlusRenderer::renderDepthDebug()
 	glUniform1i(uDepthMap, 0);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glBindVertexArray(0);
+}
+
+void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camera& camera)
+{
+	programLightCullingPass.use();
+
+	glm::mat4 invProjMatrix = glm::inverse(camera.getProjMatrix());
+	glUniformMatrix4fv(uInverseProjMatrix, 1, FALSE, glm::value_ptr(invProjMatrix));
+	glUniform2fv(uWindowDim, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
+
+	const std::vector<PointLight>& pointLights = scene.getPointLights();
+	Renderer::bindSsbos(pointLights, 0, uPointLightsForCulling, programLightCullingPass, scene.getSsboPointLights());
+	glUniform1i(uPointLightsNumberForCulling, static_cast<GLint>(pointLights.size()));
+
+	Renderer::bindSsbos(pointLightsIndex, 1, uPointLightsIndexForCulling, programLightCullingPass, ssboPointLightsIndex);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glUniform1i(uDepthMapForCulling, 0);
+
+	glDispatchCompute((GLuint)nbComputeBlock.x, (GLuint)nbComputeBlock.y, (GLuint)nbComputeBlock.z);
+	GLenum err = glGetError();
+	if (err != GL_NO_ERROR)
+	{
+		int xGroup = static_cast<int>(ceil(windowWidth / 32.f) * 32);
+		int yGroup = static_cast<int>(ceil(windowHeight / 32.f) * 32);
+		std::cerr << windowWidth << " -- " << windowHeight << std::endl;
+		std::cerr << xGroup << " -- " << yGroup << " -- " << yGroup * xGroup << std::endl;
+		std::cerr << "glGetError() : " << err << std::endl;
+		exit(1);
+	}
+
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& camera)

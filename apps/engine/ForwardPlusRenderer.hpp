@@ -33,6 +33,22 @@ private:
 	GLuint screenVbo = 0;
 	GLint uDepthMap = 0;
 
+	// Light Culling
+	glmlv::GLProgram programLightCullingPass;
+	
+	glm::vec3 nbComputeBlock;
+	std::vector<int> pointLightsIndex;
+	BufferObject<int> ssboPointLightsIndex;
+
+	GLuint uPointLightsForCulling;
+	GLuint uPointLightsNumberForCulling;
+	GLuint uPointLightsIndexForCulling;
+	
+	GLuint uInverseProjMatrix;
+	GLuint uWindowDim;
+
+	GLuint uDepthMapForCulling;
+
 	// Shading Pass
 	glmlv::GLProgram programForward; // TODO: change name
 
@@ -62,12 +78,14 @@ private:
 
 	void initDepthPass();
 	void initDepthDebug(); // TODO : delete
+	void initLightCullingPass();
+
 	void initUniforms();
 
 	void renderDepthPass(const Scene& scene, const Camera& camera);
 	void renderDepthDebug();
+	void renderLightCullingPass(const Scene& scene, const Camera& camera);
 	void renderShadingPass(const Scene& scene, const Camera& camera);
-
 	void renderMeshShaddingPass(const Mesh& mesh, const Camera& camera);
 	void bindMeshMaterial(const Material& material);
 };
