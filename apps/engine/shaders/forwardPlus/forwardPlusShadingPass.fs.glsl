@@ -95,9 +95,8 @@ vec3 computeFragColor()
 	}	
 
 
-	int pointLightListIndex = int((gl_FragCoord.x / 32 + (gl_FragCoord.y / 32) * ceil(uWindowDim.x / 32))*  MAX_LIGHTS);
+	int pointLightListIndex = ((int(gl_FragCoord.x / 32.f) + int(gl_FragCoord.y / 32.f) * int(ceil(uWindowDim.x / 32.f))) *  MAX_LIGHTS);
 	int count = 0;
-	int pointLightIndex = pointLightsIndex[pointLightListIndex];
 
 	vec3 diffusePointLightIntensity = vec3(0);
 	vec3 specularPointLightIntensity = vec3(0);
@@ -105,9 +104,9 @@ vec3 computeFragColor()
 	float distToPointLight = 0;
 	vec3 dirToPointLight = vec3(0);
 	float attenuation = 0;
-	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightIndex != -1; ++i)
+	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
 	{
-		pointLightIndex = pointLightsIndex[pointLightListIndex + i];
+		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
 		count++;
 
 		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
@@ -139,7 +138,8 @@ vec3 computeFragColor()
 	{
 		fColor += vec3(0.25);
 	}
-	//fColor += vec3(count / 4.f);
+	fColor += vec3(pointLightListIndex / (32 * 32 * MAX_LIGHTS));
+	//fColor += vec3(pointLightListIndex / (ceil(uWindowDim.x / 32) * ceil(uWindowDim.y / 32) * MAX_LIGHTS));
 
 	return fColor;
 }

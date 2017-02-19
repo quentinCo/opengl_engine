@@ -29,7 +29,7 @@ layout(std430, binding = 1) writeonly buffer uPointLightsIndex
 
 layout(std430, binding = 2) writeonly buffer uDebugOutput
 {
-	vec4 debugOutput[];
+	int debugOutput[];
 };
 
 uniform mat4 uInverseProjMatrix;
@@ -121,7 +121,7 @@ void lightCulling(int threadIndex)
 		{
 			continue;	
 		}
-		debugOutput[offset + lightIndex] = vec4(threadIndex, pointLightCoords.z, depthMinFloat, depthMaxFloat);
+//		debugOutput[offset + lightIndex] = vec4(threadIndex, pointLightCoords.z, depthMinFloat, depthMaxFloat);
 
 		// Check distance from pointLight to frustum
 		bool intersect = false;
@@ -208,13 +208,13 @@ void main()
 		for(i = 0; i < countTilePointLight; ++i)
 		{
 			pointLightsIndex[i + offset] = tilePointLightsIndex[i];
-			//debugOutput[i + offset] = tilePointLightsIndex[i];
+			debugOutput[i + offset] = tilePointLightsIndex[i];
 		}
 		if(countTilePointLight <= MAX_LIGHTS)
 		{
 			int indexMinus1 = i + offset;
 			pointLightsIndex[indexMinus1] = -1; // To mark limite data.
-			//debugOutput[indexMinus1] = -1;
+			debugOutput[indexMinus1] = -1;
 		}
 	}
 
