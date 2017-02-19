@@ -1,5 +1,7 @@
 #version 430
 
+#define MAX_LIGHTS 200
+
 struct Light
 {
 	vec4 position; // vec4 necessary cause std140 gap on vec4. If vec3, memory offset -> bug 
@@ -18,17 +20,22 @@ struct PointLight
 	float quadraticAttenuation;
 };
 
-layout(std430, binding = 1) buffer uDirectionalLights
+layout(std430, binding = 1) readonly buffer uDirectionalLights
 {
 	Light directionalLights[ ];
 };
 uniform int uDirectionalLightsNumber;
 
-layout(std430, binding = 2) buffer uPointLights
+layout(std430, binding = 2) readonly buffer uPointLights
 {
 	PointLight pointLights[ ];
 };
 uniform int uPointLightsNumber;
+
+layout(std430, binding = 3) readonly buffer uPointLightsIndex
+{
+	int pointLightsIndex[ ];
+};
 
 in vec3 vViewSpacePosition;
 in vec3 vViewSpaceNormal;
@@ -36,6 +43,8 @@ in vec2 vTexCoords;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uViewMatrix;
+
+uniform vec2 uWindowDim;
 
 //  Color
 uniform vec3 uKa;
@@ -85,19 +94,27 @@ vec3 computeFragColor()
 		specularDirectionalLightIntensity += lightIntensity * dothLight;
 	}	
 
+
+	int pointLightListIndex = int((gl_FragCoord.x / 32 + (gl_FragCoord.y / 32) * ceil(uWindowDim.x / 32))*  MAX_LIGHTS);
+	int count = 0;
+	int pointLightIndex = pointLightsIndex[pointLightListIndex];
+
 	vec3 diffusePointLightIntensity = vec3(0);
 	vec3 specularPointLightIntensity = vec3(0);
 
 	float distToPointLight = 0;
 	vec3 dirToPointLight = vec3(0);
 	float attenuation = 0;
-	for(int i = 0; i < uPointLightsNumber; ++i)
+	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightIndex != -1; ++i)
 	{
-		lightCoords = (uViewMatrix * vec4(pointLights[i].position)).xyz;
+		pointLightIndex = pointLightsIndex[pointLightListIndex + i];
+		count++;
+
+		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
 		distToPointLight = length(lightCoords - position);
 		dirToPointLight = (lightCoords - position) / distToPointLight;
-		attenuation = ( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
-		lightIntensity = (pointLights[i].color * pointLights[i].intensity) / attenuation;
+		attenuation = ( pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * distToPointLight + pointLights[pointLightIndex].quadraticAttenuation * distToPointLight * distToPointLight);
+		lightIntensity = (pointLights[pointLightIndex].color * pointLights[pointLightIndex].intensity) / attenuation;
 		
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
@@ -114,7 +131,16 @@ vec3 computeFragColor()
 //    fColor += ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
-	
+	if(mod(int(gl_FragCoord.x), 32) == 0 || mod(int(gl_FragCoord.y), 32) == 0)
+	{
+		fColor = vec3(0.5);
+	}
+	if(gl_FragCoord.x < 32 && gl_FragCoord.y < 32)
+	{
+		fColor += vec3(0.25);
+	}
+	//fColor += vec3(count / 4.f);
+
 	return fColor;
 }
 void main()

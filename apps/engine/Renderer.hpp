@@ -53,7 +53,7 @@ protected:
 		glShaderStorageBlockBinding(program.glId(), uniform, bindingIndex);
 				
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo.getPointer());
-		glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), usage);
+		if(usage != GL_STREAM_READ) glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), usage);
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * data.size());
 	}
 };

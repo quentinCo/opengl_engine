@@ -115,11 +115,13 @@ void lightCulling(int threadIndex)
 		// Check depth
 		//debugOutput[offset + lightIndex] = vec4(frustumPlans[4].w,  frustumPlans[5].w, 0 , 0);
 		//debugOutput[offset + lightIndex] = vec4(depthMinFloat,  depthMaxFloat, 0 , 0);
+		// Watch in -z
 		if(pointLightCoords.z - pointLights[lightIndex].radiusAttenuation > depthMinFloat ||
 		 pointLightCoords.z + pointLights[lightIndex].radiusAttenuation < depthMaxFloat)
 		{
 			continue;	
 		}
+		debugOutput[offset + lightIndex] = vec4(threadIndex, pointLightCoords.z, depthMinFloat, depthMaxFloat);
 
 		// Check distance from pointLight to frustum
 		bool intersect = false;
@@ -130,7 +132,6 @@ void lightCulling(int threadIndex)
 			if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w >= -pointLights[lightIndex].radiusAttenuation)
 			{
 				intersect = true;
-				debugOutput[offset + lightIndex] = vec4(pointLightCoords,  pointLights[lightIndex].radiusAttenuation);
 				break;
 			}
 		}

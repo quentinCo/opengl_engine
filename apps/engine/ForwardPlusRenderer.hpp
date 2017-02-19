@@ -39,6 +39,7 @@ private:
 	glm::vec3 nbComputeBlock;
 	std::vector<int> pointLightsIndex;
 	BufferObject<int> ssboPointLightsIndex;
+
 	std::vector<glm::vec4> debugLight;
 	BufferObject<glm::vec4> ssboDebug; // Debug
 	GLuint uDebugOutput;
@@ -56,21 +57,23 @@ private:
 	GLuint uDepthMapForCulling;
 
 	// Shading Pass
-	glmlv::GLProgram programForward; // TODO: change name
+	glmlv::GLProgram programShadingPass; // TODO: change name
 
 	GLuint textureSampler = 0;
 
-	GLint uModelViewProjMatrix;
-	GLint uModelViewMatrix;
-	GLint uNormalMatrix;
+	GLint uModelViewProjMatrixForShading;
+	GLint uModelViewMatrixForShading;
+	GLint uNormalMatrixForShading;
 
-	GLint uViewMatrix;
+	GLint uViewMatrixForShading;
+	GLuint uWindowDimForShading;
 	//  Light
 	GLint uDirectionalLights;
 	GLint uDirectionalLightsNumber;
 
 	GLint uPointLights;
 	GLint uPointLightsNumber;
+	GLint uPoinLightIndexForShading;
 
 	//  Color
 	GLint uKa;
@@ -86,7 +89,7 @@ private:
 	void initDepthDebug(); // TODO : delete
 	void initLightCullingPass();
 
-	void initUniforms();
+	void initShadingPass();
 
 	void renderDepthPass(const Scene& scene, const Camera& camera);
 	void renderDepthDebug();
