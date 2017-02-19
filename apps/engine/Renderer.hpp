@@ -48,12 +48,12 @@ protected:
 	}
 	*/
 	template<typename T>
-	static void bindSsbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ssbo)
+	static void bindSsbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ssbo, GLenum usage)
 	{
 		glShaderStorageBlockBinding(program.glId(), uniform, bindingIndex);
 				
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo.getPointer());
-		glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), GL_STREAM_DRAW);
+		glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), usage);
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * data.size());
 	}
 };
