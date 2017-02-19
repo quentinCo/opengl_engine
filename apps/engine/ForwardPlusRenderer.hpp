@@ -39,8 +39,8 @@ private:
 	glm::vec3 nbComputeBlock;
 	std::vector<int> pointLightsIndex;
 	BufferObject<int> ssboPointLightsIndex;
-	std::vector<int> debugLight;
-	BufferObject<int> ssboDebug; // Debug
+	std::vector<glm::vec4> debugLight;
+	BufferObject<glm::vec4> ssboDebug; // Debug
 	GLuint uDebugOutput;
 
 	GLuint uPointLightsForCulling;

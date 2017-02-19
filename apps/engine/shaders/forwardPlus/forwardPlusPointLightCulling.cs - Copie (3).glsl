@@ -29,7 +29,7 @@ layout(std430, binding = 1) writeonly buffer uPointLightsIndex
 
 layout(std430, binding = 2) writeonly buffer uDebugOutput
 {
-	vec4 debugOutput[];
+	float debugOutput[];
 };
 
 uniform mat4 uInverseProjMatrix;
@@ -46,32 +46,6 @@ shared int countTilePointLight;
 shared vec4 frustumPlans[6];
 shared uint depthMinInt;
 shared uint depthMaxInt;
-shared float depthMinFloat;
-shared float depthMaxFloat;
-//shared float nearPlan;
-
-vec4 clipSpaceToViewSpace(vec4 point)
-{
-	vec4 viewPoint = uInverseProjMatrix * point;
-	viewPoint = viewPoint / viewPoint.w;
-	return viewPoint;
-}
-
-vec4 screenSpaceToViewSpace(vec4 point)
-{
-	vec4 clipPoint = vec4(point.xy / uWindowDim, point.z, point.w); // normalize the point xy
-	clipPoint.xy = vec2((2 * clipPoint.x - 1), (2 * (1 - clipPoint.y) - 1));
-	clipPoint = clipSpaceToViewSpace(clipPoint);
-	return clipPoint;
-}
-
-vec4 computeFrustumPlan(vec4 point1, vec4 point2)
-{
-	// Origin is on 0,0,0
-	vec3 normal = normalize(cross(point1.xyz, point2.xyz));
-	float distanceToOrigin = dot(normal, point1.xyz);
-	return vec4(normal, distanceToOrigin);
-}
 
 void initFrustum(vec2 pixelGlobalPosition, vec2 pixelLocalPosition, vec2 tilePosition, vec2 numTiles, int tileIndex)
 {
@@ -85,14 +59,28 @@ void initFrustum(vec2 pixelGlobalPosition, vec2 pixelLocalPosition, vec2 tilePos
 	// Clip space
 	for(int i = 0; i < 4; ++i)
 	{
-		points[i] = screenSpaceToViewSpace(points[i]);
+		points[i].x = points[i].x / (gl_NumWorkGroups.x * TILE_SIZE);
+		points[i].y = points[i].y / (gl_NumWorkGroups.y * TILE_SIZE);
+		points[i].xy = vec2((-1 + 2 * points[i].x), (-1 + 2 * (1 - points[i].y)));
 	}
 	
+	// Camera space
+	//for(int i = 0; i < 4; ++i)
+	//{
+	//	points[i] *= uInverseProjMatrix;// * points[i];
+	//	//points[i] /= points[i] .w;
+	//}
+
 	// Compute frustums plan
 	for(int i = 0; i < 4; ++i)
 	{
-		frustumPlans[i] = computeFrustumPlan(points[i], points[(i + 1) % 4]);
+		vec3 normal = cross(points[i % 4].xyz, points[(i + 1) % 4].xyz);
+		float d = dot(normal, points[i].xyz);
+		normal = normalize(normal);
+		frustumPlans[i] = vec4(normal, d);
 	}
+
+	
 }
 
 void lightCulling(int threadIndex)
@@ -106,17 +94,16 @@ void lightCulling(int threadIndex)
 		{
 			break;
 		}
-
-		vec3 pointLightCoords = (uViewMatrix * vec4(pointLights[lightIndex].position)).xyz;
-		
-		int offset = int(gl_WorkGroupID.x + gl_WorkGroupID.y * gl_NumWorkGroups.x) * 4 ; 
-		//debugOutput[offset + lightIndex] = vec4(pointLightCoords,  pointLights[lightIndex].radiusAttenuation);
+		vec3 pointLightCoords = (uViewProjMatrix * pointLights[lightIndex].position).xyz;
 
 		// Check depth
-		//debugOutput[offset + lightIndex] = vec4(frustumPlans[4].w,  frustumPlans[5].w, 0 , 0);
-		//debugOutput[offset + lightIndex] = vec4(depthMinFloat,  depthMaxFloat, 0 , 0);
-		if(pointLightCoords.z - pointLights[lightIndex].radiusAttenuation > depthMinFloat ||
-		 pointLightCoords.z + pointLights[lightIndex].radiusAttenuation < depthMaxFloat)
+		debugOutput[lightIndex * 4 + i] = pointLights[lightIndex].radiusAttenuation;		
+		debugOutput[lightIndex * 4 + i + 1] = pointLightCoords.x;
+		debugOutput[lightIndex * 4 + i + 2] = pointLightCoords.y;
+		debugOutput[lightIndex * 4 + i + 3] = pointLightCoords.z;
+
+		if(pointLightCoords.z - pointLights[lightIndex].radiusAttenuation > frustumPlans[4].w ||
+		 pointLightCoords.z + pointLights[lightIndex].radiusAttenuation < frustumPlans[5].w)
 		{
 			continue;	
 		}
@@ -126,11 +113,10 @@ void lightCulling(int threadIndex)
 		for(int j = 0; j < 4; ++j)
 		{
 			// distance = dot(v, n) / length(n) -> length(n) = 1;
-			//if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w < -pointLights[lightIndex].radiusAttenuation)
-			if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w >= -pointLights[lightIndex].radiusAttenuation)
+			//!\ CAUTION : possible bug here
+			if(abs(dot(pointLightCoords.xyz, frustumPlans[j].xyz)) - frustumPlans[j].w < pointLights[lightIndex].radiusAttenuation)
 			{
 				intersect = true;
-				debugOutput[offset + lightIndex] = vec4(pointLightCoords,  pointLights[lightIndex].radiusAttenuation);
 				break;
 			}
 		}
@@ -150,7 +136,8 @@ void main()
 	vec2 pixelLocalPosition = gl_LocalInvocationID.xy;
 	vec2 tilePosition = gl_WorkGroupID.xy;	
 	vec2 numTiles = gl_NumWorkGroups.xy;
-	int threadIndex = int(pixelLocalPosition.x + pixelLocalPosition.y * TILE_SIZE );
+	int threadIndex = int(pixelLocalPosition.x * TILE_SIZE + pixelLocalPosition.y);
+	
 	int tileIndex = int(tilePosition.x + tilePosition.y * numTiles.x);
 
 	if(threadIndex == 0)
@@ -177,23 +164,20 @@ void main()
 	
 	if(threadIndex == 0)
 	{
-		//depthMinFloat = (0.5 * uProjMatrix[3][2]) / (uintBitsToFloat(depthMinInt) + 0.5 * uProjMatrix[2][2] - 0.5);
-		//depthMaxFloat = (0.5 * uProjMatrix[3][2]) / (uintBitsToFloat(depthMaxInt) + 0.5 * uProjMatrix[2][2] - 0.5);
+		float depthMin = uintBitsToFloat(depthMinInt);
+		float depthMax = uintBitsToFloat(depthMaxInt);
+
+		//Convert Clip depth to View depth
+		depthMin = (0.5 * uProjMatrix[3][2]) / (depthMin + 0.5 * uProjMatrix[2][2] - 0.5);
+		depthMax = (0.5 * uProjMatrix[3][2]) / (depthMax + 0.5 * uProjMatrix[2][2] - 0.5);
 		
-		//frustumPlans[4] = uViewMatrix * vec4(0,0,-1,depthMinFloat);
-		//frustumPlans[4] /= length(frustumPlans[4].xyz);
-		//frustumPlans[5] = uViewMatrix * vec4(0,0,1,depthMaxFloat);
-		//frustumPlans[5] /= length(frustumPlans[5].xyz);
+		frustumPlans[4] = uViewMatrix * vec4(0,0,-1,-depthMin);
+		frustumPlans[4] /= length(frustumPlans[4].xyz);
+
+		frustumPlans[5] = uViewMatrix * vec4(0,0,1,depthMax);
+		frustumPlans[5] /= length(frustumPlans[5].xyz);
 
 		initFrustum(pixelGlobalPosition, pixelLocalPosition, tilePosition, numTiles, tileIndex);
-		depthMinFloat = (2 * uintBitsToFloat(depthMinInt) - 1); // Space [0 ; 1] to [-1 ; 1]
-		depthMaxFloat = (2 * uintBitsToFloat(depthMaxInt) - 1);
-		depthMinFloat = clipSpaceToViewSpace(vec4(0, 0, depthMinFloat, 1)).z;
-		depthMaxFloat = clipSpaceToViewSpace(vec4(0, 0, depthMaxFloat, 1)).z;
-		//nearPlan = clipSpaceToViewSpace(vec4(0, 0, 0, 1)).z;
-		
-		frustumPlans[4] = vec4(0, 0, -1, depthMinFloat);
-		frustumPlans[5] = vec4(0, 0, 1, depthMaxFloat);	
 	}
 	barrier();
 
@@ -207,13 +191,13 @@ void main()
 		for(i = 0; i < countTilePointLight; ++i)
 		{
 			pointLightsIndex[i + offset] = tilePointLightsIndex[i];
-			//debugOutput[i + offset] = tilePointLightsIndex[i];
 		}
 		if(countTilePointLight <= MAX_LIGHTS)
 		{
 			int indexMinus1 = i + offset;
+			if(countTilePointLight != 0)
+				indexMinus1 += 1; 
 			pointLightsIndex[indexMinus1] = -1; // To mark limite data.
-			//debugOutput[indexMinus1] = -1;
 		}
 	}
 

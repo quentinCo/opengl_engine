@@ -214,8 +214,8 @@ void ForwardPlusRenderer::initLightCullingPass()
 	ssboPointLightsIndex = BufferObject<int>(pointLightsIndex, GL_SHADER_STORAGE_BUFFER);
 
 	uDebugOutput = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK, "uDebugOutput");
-	debugLight = std::vector<int>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200));
-	ssboDebug = BufferObject<int>(debugLight, GL_SHADER_STORAGE_BUFFER);
+	debugLight = std::vector<glm::vec4>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 4));
+	ssboDebug = BufferObject<glm::vec4>(debugLight, GL_SHADER_STORAGE_BUFFER);
 
 	uPointLightsForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK,"uPointLights");
 	uPointLightsNumberForCulling = glGetUniformLocation(programLightCullingPass.glId(), "uPointLightsNumber");
@@ -355,32 +355,32 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 	}
 	std::cout << "\n" << std::endl;
 
-	int* debug = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, debugLight.size() * sizeof(int), GL_MAP_READ_BIT);
+	glm::vec4* debug = (glm::vec4*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, debugLight.size() * sizeof(glm::vec4), GL_MAP_READ_BIT);
 	std::cout.precision(4);
 	bool ignor = false;
 	for (int y = 0; y < ceil(windowHeight / 32.f); y++)
 	{
 		for (int x = 0; x < ceil(windowWidth / 32.f); x++)
 		{
-			for (int j = 0; j < 200; j++)
+			for (int j = 0; j < 4; j++)
 			{
-				int i = (x + y * (ceil(windowWidth / 32.f))) * 200 + j;
-				if (i % 200 == 0)
+				int i = (x + y * (ceil(windowWidth / 32.f))) * 4 + j;
+				if (i % 4 == 0)
 				{
 					ignor = false;
-					std::cout << "\n [" << x * 32 << "; " << y * 32<< "] : " << debug[i];
-					//std::cout << "\n" << i / 6 << ": " << debug[i].x << "; " << debug[i].y << "; " << debug[i].z << "; " << debug[i].w;
+					//std::cout << "\n [" << x * 32 << "; " << y * 32<< "] : " << debug[i];
+					std::cout << "\n[" << x * 32 << "; " << y * 32<< "] : "<< debug[i].x << "; " << debug[i].y << "; " << debug[i].z << "; " << debug[i].w;
 				}
-				else if (debug[i] == 0 && ignor)
+				/*else if (debug[i] == 0 && ignor)
 				{
-				}
+				}*/
 				else
-					std::cout << "; " << debug[i];
-				//std::cout << " -- " << debug[i].x << "; " << debug[i].y << "; " << debug[i].z << "; " << debug[i].w;
-				if (debug[i] == -1)
+				//	std::cout << "; " << debug[i];
+				std::cout << " -- " << debug[i].x << "; " << debug[i].y << "; " << debug[i].z << "; " << debug[i].w;
+				/*if (debug[i] == -1)
 				{
 					ignor = true;
-				}
+				}*/
 			}
 		}
 	}
