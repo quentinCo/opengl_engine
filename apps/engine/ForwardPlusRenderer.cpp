@@ -218,8 +218,8 @@ void ForwardPlusRenderer::initLightCullingPass()
 	ssboPointLightsIndex = BufferObject<int>(pointLightsIndex, GL_SHADER_STORAGE_BUFFER);
 
 	uDebugOutput = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK, "uDebugOutput");
-	debugLight = std::vector<int>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200));
-	ssboDebug = BufferObject<int>(debugLight, GL_SHADER_STORAGE_BUFFER);
+	debugLight = std::vector<float>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200));
+	ssboDebug = BufferObject<float>(debugLight, GL_SHADER_STORAGE_BUFFER);
 
 	uPointLightsForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK,"uPointLights");
 	uPointLightsNumberForCulling = glGetUniformLocation(programLightCullingPass.glId(), "uPointLightsNumber");
@@ -362,10 +362,11 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 		std::cout << "[" << viewProj[i][0] << " ; " << viewProj[i][1] << " ; " << viewProj[i][2] << " ; " << viewProj[i][3] << "]" << std::endl;
 	}
 	std::cout << "\n" << std::endl;
-
-	int* debug = (int*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, debugLight.size() * sizeof(int), GL_MAP_READ_BIT);
+	
+	float* debug = (float*) glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, debugLight.size() * sizeof(float), GL_MAP_READ_BIT);
 	std::cout.precision(4);
 	bool ignor = false;
+	int count = 0;
 	for (int y = 0; y < ceil(windowHeight / 32.f); y++)
 	{
 		for (int x = 0; x < ceil(windowWidth / 32.f); x++)
@@ -373,23 +374,31 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 			for (int j = 0; j < 200; j++)
 			{
 				int i = (x + y * (ceil(windowWidth / 32.f))) * 200 + j;
-				if (i % 200 == 0)
+				if (debug[i] >= 0)
 				{
-					ignor = false;
-					std::cout << "\n[" << x * 32 << "; " << y * 32<< "] : "<< debug[i];
-				}
-				else if (debug[i] == 0 && ignor)
-				{
+					if (i % 200 == 0)
+					{
+						ignor = false;
+						std::cout << "\n[" << x * 32 << "; " << y * 32 << "] : " << debug[i];
+						count++;
+					}
+					else if (debug[i] == 0 && ignor)
+					{
+					}
+					else
+					{
+						std::cout << " -- " << debug[i];
+						count++;
+					}
 				}
 				else
-					std::cout << " -- " << debug[i];
-				if (debug[i] == -1)
 				{
 					ignor = true;
 				}
 			}
 		}
 	}
+	std::cout << "\ncout = " << count << std::endl;
 	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 	*/
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -410,6 +419,7 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	const auto& meshes = scene.getMeshes();
 
 	glUniformMatrix4fv(uViewMatrixForShading, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
+	glUniform2fv(uWindowDimForShading, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
 	Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));

@@ -40,8 +40,8 @@ private:
 	std::vector<int> pointLightsIndex;
 	BufferObject<int> ssboPointLightsIndex;
 
-	std::vector<int> debugLight;
-	BufferObject<int> ssboDebug; // Debug
+	std::vector<float> debugLight;
+	BufferObject<float> ssboDebug; // Debug
 	GLuint uDebugOutput;
 
 	GLuint uPointLightsForCulling;

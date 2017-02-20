@@ -114,15 +114,7 @@ vec3 computeFragColor()
 //    fColor += ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
-	//fColor += vec3(mod(vViewSpacePosition.x, 32), mod(vViewSpacePosition.y, 32), 0);
-	if(mod(int(gl_FragCoord.x), 32) == 0 || mod(int(gl_FragCoord.y), 32) == 0)
-	{
-		fColor = vec3(1);
-	}
-	if(gl_FragCoord.x < 32 && gl_FragCoord.y < 32)
-	{
-		fColor += vec3(0.25,0.25,0.25);
-	}
+
 	return fColor;
 }
 void main()

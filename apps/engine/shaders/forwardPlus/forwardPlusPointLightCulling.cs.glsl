@@ -29,7 +29,7 @@ layout(std430, binding = 1) writeonly buffer uPointLightsIndex
 
 layout(std430, binding = 2) writeonly buffer uDebugOutput
 {
-	int debugOutput[];
+	float debugOutput[];
 };
 
 uniform mat4 uInverseProjMatrix;
@@ -93,6 +93,26 @@ void initFrustum(vec2 pixelGlobalPosition, vec2 pixelLocalPosition, vec2 tilePos
 	{
 		frustumPlans[i] = computeFrustumPlan(points[i], points[(i + 1) % 4]);
 	}
+
+	depthMinFloat = (2 * uintBitsToFloat(depthMinInt) - 1); // Space [0 ; 1] to [-1 ; 1]
+	depthMaxFloat = (2 * uintBitsToFloat(depthMaxInt) - 1);
+	depthMinFloat = clipSpaceToViewSpace(vec4(0, 0, depthMinFloat, 1)).z;
+	depthMaxFloat = clipSpaceToViewSpace(vec4(0, 0, depthMaxFloat, 1)).z;
+	//nearPlan = clipSpaceToViewSpace(vec4(0, 0, 0, 1)).z;
+		
+	frustumPlans[4] = vec4(0, 0, -1, depthMinFloat);
+	frustumPlans[5] = vec4(0, 0, 1, depthMaxFloat);
+
+	//for(int i = 0; i < 4; ++i)
+	//{
+	//	frustumPlans[i] = uViewProjMatrix * frustumPlans[i];
+	//	frustumPlans[i] /= length(frustumPlans[i].xyz);
+	//}
+	//for(int i = 4; i < 6; ++i)
+	//{
+	//	frustumPlans[i] = uViewMatrix * frustumPlans[i];
+	//	frustumPlans[i] /= length(frustumPlans[i].xyz);
+	//}
 }
 
 void lightCulling(int threadIndex)
@@ -109,15 +129,15 @@ void lightCulling(int threadIndex)
 
 		vec3 pointLightCoords = (uViewMatrix * vec4(pointLights[lightIndex].position)).xyz;
 		
-		int offset = int(gl_WorkGroupID.x + gl_WorkGroupID.y * gl_NumWorkGroups.x) * 4 ; 
+		//int offset = int(gl_WorkGroupID.x + gl_WorkGroupID.y * gl_NumWorkGroups.x) * 8 ; 
 		//debugOutput[offset + lightIndex] = vec4(pointLightCoords,  pointLights[lightIndex].radiusAttenuation);
 
 		// Check depth
 		//debugOutput[offset + lightIndex] = vec4(frustumPlans[4].w,  frustumPlans[5].w, 0 , 0);
 		//debugOutput[offset + lightIndex] = vec4(depthMinFloat,  depthMaxFloat, 0 , 0);
 		// Watch in -z
-		if(pointLightCoords.z - pointLights[lightIndex].radiusAttenuation > depthMinFloat ||
-		 pointLightCoords.z + pointLights[lightIndex].radiusAttenuation < depthMaxFloat)
+		if(pointLightCoords.z - pointLights[lightIndex].radiusAttenuation >= depthMinFloat ||
+		 pointLightCoords.z + pointLights[lightIndex].radiusAttenuation <= depthMaxFloat)
 		{
 			continue;	
 		}
@@ -127,6 +147,8 @@ void lightCulling(int threadIndex)
 		bool intersect = false;
 		for(int j = 0; j < 4; ++j)
 		{
+//			debugOutput[offset + j * 4] = dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w;
+//			debugOutput[offset + j * 4 + 1] = pointLights[lightIndex].radiusAttenuation;
 			// distance = dot(v, n) / length(n) -> length(n) = 1;
 			//if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w < -pointLights[lightIndex].radiusAttenuation)
 			if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w >= -pointLights[lightIndex].radiusAttenuation)
@@ -159,6 +181,8 @@ void main()
 		countTilePointLight = 0;
 		depthMinInt = 0xFFFFFFFF;
 		depthMaxInt = 0;
+		depthMinFloat = 0;
+		depthMaxFloat = 0;
 
 		for(int i = 0; i < MAX_LIGHTS; ++i)
 		{
@@ -187,14 +211,6 @@ void main()
 		//frustumPlans[5] /= length(frustumPlans[5].xyz);
 
 		initFrustum(pixelGlobalPosition, pixelLocalPosition, tilePosition, numTiles, tileIndex);
-		depthMinFloat = (2 * uintBitsToFloat(depthMinInt) - 1); // Space [0 ; 1] to [-1 ; 1]
-		depthMaxFloat = (2 * uintBitsToFloat(depthMaxInt) - 1);
-		depthMinFloat = clipSpaceToViewSpace(vec4(0, 0, depthMinFloat, 1)).z;
-		depthMaxFloat = clipSpaceToViewSpace(vec4(0, 0, depthMaxFloat, 1)).z;
-		//nearPlan = clipSpaceToViewSpace(vec4(0, 0, 0, 1)).z;
-		
-		frustumPlans[4] = vec4(0, 0, -1, depthMinFloat);
-		frustumPlans[5] = vec4(0, 0, 1, depthMaxFloat);	
 	}
 	barrier();
 
