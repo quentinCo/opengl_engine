@@ -89,8 +89,9 @@ vec3 computeFragColor(ivec2 pixelCoords)
 		lightCoords = (uViewMatrix * vec4(pointLights[i].position)).xyz;
 		distToPointLight = length(lightCoords - position);
 		dirToPointLight = (lightCoords - position) / distToPointLight;
-		attenuation = ( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
-		lightIntensity = (pointLights[i].color * pointLights[i].intensity) / attenuation;
+		attenuation = 1 /( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
+		attenuation -= 1 /( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * pointLights[i].radiusAttenuation + pointLights[i].quadraticAttenuation *  pointLights[i].radiusAttenuation *  pointLights[i].radiusAttenuation);
+		lightIntensity = (pointLights[i].color * pointLights[i].intensity) * attenuation;
 		
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 

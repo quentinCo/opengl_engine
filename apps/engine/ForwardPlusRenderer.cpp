@@ -374,7 +374,7 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 			for (int j = 0; j < 200; j++)
 			{
 				int i = (x + y * (ceil(windowWidth / 32.f))) * 200 + j;
-				if (debug[i] >= 0)
+				if (debug[i] < 99999)
 				{
 					if (i % 200 == 0)
 					{
@@ -399,8 +399,8 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 		}
 	}
 	std::cout << "\ncout = " << count << std::endl;
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	*/
+	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);*/
+	
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 

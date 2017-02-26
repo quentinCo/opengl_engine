@@ -82,10 +82,10 @@ Application::Application(int argc, char** argv):
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}*/
-	scene.addPointLight(qc::PointLight(1, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
+	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
 	scene.addPointLight(qc::PointLight(1, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
 	scene.addPointLight(qc::PointLight(1, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
-	scene.addPointLight(qc::PointLight(1, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
+	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
 
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
@@ -161,7 +161,7 @@ void Application::drawGUI(float* clearColor)
 					name = "PointLightIntensity" + std::to_string(j);
 					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
 					name = "PointAttenuationRadius" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 1.f, 100.f);
+					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 1.f, 1000.f);
 					name = "ConstantAttenuation" + std::to_string(j);
 					ImGui::DragFloat(name.c_str(), &pointLight.getConstantAttenuation(), 0.1f, 1.f, 100.f);
 					name = "LinearAttenuation" + std::to_string(j);

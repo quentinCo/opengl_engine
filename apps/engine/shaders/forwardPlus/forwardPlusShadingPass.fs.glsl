@@ -111,10 +111,11 @@ vec3 computeFragColor()
 
 		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
 		distToPointLight = length(lightCoords - position);
-		dirToPointLight = (lightCoords - position) / distToPointLight;
-		attenuation = ( pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * distToPointLight + pointLights[pointLightIndex].quadraticAttenuation * distToPointLight * distToPointLight);
-		lightIntensity = (pointLights[pointLightIndex].color * pointLights[pointLightIndex].intensity) / attenuation;
+		attenuation = 1 / (pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * distToPointLight + pointLights[pointLightIndex].quadraticAttenuation * distToPointLight * distToPointLight);
+		attenuation -= 1 /( pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * pointLights[pointLightIndex].radiusAttenuation + pointLights[pointLightIndex].quadraticAttenuation *  pointLights[pointLightIndex].radiusAttenuation *  pointLights[pointLightIndex].radiusAttenuation);
+		lightIntensity = (distToPointLight <= pointLights[pointLightIndex].radiusAttenuation) ? (pointLights[pointLightIndex].color * pointLights[pointLightIndex].intensity) * attenuation : vec3(0);
 		
+		dirToPointLight = (lightCoords - position) / distToPointLight;
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
 		hLight = normalize(eyeDir + dirToPointLight);
