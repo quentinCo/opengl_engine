@@ -142,7 +142,7 @@ vec3 computeFragColor()
 	//float x = (int(gl_FragCoord.x / 32.f) / ceil(uWindowDim.x / 32.f));// + (int(gl_FragCoord.y / 32.f) / int(ceil(uWindowDim.y / 32.f)))* int(ceil(uWindowDim.x / 32.f));
 	//float y = (int(gl_FragCoord.y / 32.f) / ceil(uWindowDim.y / 32.f));
 	//fColor = vec3(x , y, 0);
-	fColor += vec3(count/8.f, 0, 0);
+	//fColor += vec3(count/8.f, 0, 0);
 	//fColor += vec3(pointLightListIndex / (ceil(uWindowDim.x / 32) * ceil(uWindowDim.y / 32) * MAX_LIGHTS));
 
 	return fColor;
