@@ -1,6 +1,7 @@
 #version 430
 
 #define MAX_LIGHTS 200
+#define TILE_SIZE 32
 
 struct Light
 {
@@ -95,7 +96,7 @@ vec3 computeFragColor()
 	}	
 
 
-	int pointLightListIndex = ((int(gl_FragCoord.x / 32.f) + int(gl_FragCoord.y / 32.f) * int(ceil(uWindowDim.x / 32.f))) *  MAX_LIGHTS);
+	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
 	int count = 0;
 
 	vec3 diffusePointLightIntensity = vec3(0);
@@ -135,15 +136,18 @@ vec3 computeFragColor()
 	//{
 	//	fColor = vec3(0.5);
 	//}
-	if(gl_FragCoord.x < 32 && gl_FragCoord.y < 32)
-	{
-		fColor += vec3(0.25);
-	}
-	//float x = (int(gl_FragCoord.x / 32.f) / ceil(uWindowDim.x / 32.f));// + (int(gl_FragCoord.y / 32.f) / int(ceil(uWindowDim.y / 32.f)))* int(ceil(uWindowDim.x / 32.f));
-	//float y = (int(gl_FragCoord.y / 32.f) / ceil(uWindowDim.y / 32.f));
-	//fColor = vec3(x , y, 0);
-	//fColor += vec3(count/8.f, 0, 0);
-	//fColor += vec3(pointLightListIndex / (ceil(uWindowDim.x / 32) * ceil(uWindowDim.y / 32) * MAX_LIGHTS));
+	//if(count > 50)
+	//{
+	//	fColor += vec3(0.5, 0, 0);
+	//}
+	//else if(count > 25)
+	//{
+	//	fColor += vec3(0, 0.5, 0);
+	//}
+	//else if(count > 10)
+	//{
+	//	fColor += vec3(0, 0, 0.5);
+	//}
 
 	return fColor;
 }

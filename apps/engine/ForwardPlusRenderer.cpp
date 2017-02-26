@@ -24,7 +24,7 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	:Renderer(o), programDepthPass(std::move(o.programDepthPass)), fboDepth(o.fboDepth), depthMap(o.depthMap), uDepthModelViewProjMatrix(o.uDepthModelViewProjMatrix),
 	programLightCullingPass(std::move(o.programLightCullingPass)), nbComputeBlock(o.nbComputeBlock), pointLightsIndex(pointLightsIndex), uPoinLightIndexForShading(o.uPoinLightIndexForShading),
 	uWindowDimForShading(o.uWindowDimForShading),
-	ssboPointLightsIndex(std::move(o.ssboPointLightsIndex)), ssboDebug(std::move(o.ssboDebug)), debugLight(o.debugLight), uDebugOutput(o.uDebugOutput), uPointLightsForCulling(o.uPointLightsForCulling), uPointLightsNumberForCulling(o.uPointLightsNumberForCulling),
+	ssboPointLightsIndex(std::move(o.ssboPointLightsIndex)),/* ssboDebug(std::move(o.ssboDebug)), debugLight(o.debugLight), uDebugOutput(o.uDebugOutput), */uPointLightsForCulling(o.uPointLightsForCulling), uPointLightsNumberForCulling(o.uPointLightsNumberForCulling),
 	uPointLightsIndexForCulling(o.uPointLightsIndexForCulling), uInverseProjMatrix(o.uInverseProjMatrix), uViewMatrixForCulling(o.uViewMatrixForCulling),
 	uViewProjMatrixForCulling(o.uViewProjMatrixForCulling), uProjMatrixForCulling(o.uProjMatrixForCulling), uWindowDim(o.uWindowDim),
 	uDepthMapForCulling(o.uDepthMapForCulling), programShadingPass(std::move(o.programShadingPass)), uModelViewProjMatrixForShading(o.uModelViewProjMatrixForShading),
@@ -100,9 +100,9 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 	uPoinLightIndexForShading = o.uPoinLightIndexForShading;
 	uWindowDimForShading = o.uWindowDimForShading;
 	ssboPointLightsIndex = std::move(o.ssboPointLightsIndex);
-	ssboDebug = std::move(o.ssboDebug);
+	/*ssboDebug = std::move(o.ssboDebug);
 	debugLight = o.debugLight;
-	uDebugOutput = o.uDebugOutput;
+	uDebugOutput = o.uDebugOutput;*/
 	uPointLightsForCulling = o.uPointLightsForCulling;
 	uPointLightsNumberForCulling = o.uPointLightsNumberForCulling;
 	uPointLightsIndexForCulling = o.uPointLightsIndexForCulling;
@@ -216,11 +216,11 @@ void ForwardPlusRenderer::initLightCullingPass()
 
 	pointLightsIndex = std::vector<int>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200)); // TODO : find a better solution.
 	ssboPointLightsIndex = BufferObject<int>(pointLightsIndex, GL_SHADER_STORAGE_BUFFER);
-
+	/*
 	uDebugOutput = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK, "uDebugOutput");
 	debugLight = std::vector<float>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200));
 	ssboDebug = BufferObject<float>(debugLight, GL_SHADER_STORAGE_BUFFER);
-
+	*/
 	uPointLightsForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK,"uPointLights");
 	uPointLightsNumberForCulling = glGetUniformLocation(programLightCullingPass.glId(), "uPointLightsNumber");
 	uPointLightsIndexForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK, "uPointLightsIndex");
@@ -337,7 +337,7 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 
 	Renderer::bindSsbos(pointLightsIndex, 1, uPointLightsIndexForCulling, programLightCullingPass, ssboPointLightsIndex, GL_STREAM_READ);
 
-	Renderer::bindSsbos(debugLight, 2, uDebugOutput, programLightCullingPass, ssboDebug, GL_STREAM_READ);
+	//Renderer::bindSsbos(debugLight, 2, uDebugOutput, programLightCullingPass, ssboDebug, GL_STREAM_READ);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -347,8 +347,8 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR)
 	{
-		int xGroup = static_cast<int>(ceil(windowWidth / 32.f) * 32);
-		int yGroup = static_cast<int>(ceil(windowHeight / 32.f) * 32);
+		int xGroup = static_cast<int>(ceil(windowWidth / 16.f) * 16);
+		int yGroup = static_cast<int>(ceil(windowHeight / 16.f) * 16);
 		std::cerr << windowWidth << " -- " << windowHeight << std::endl;
 		std::cerr << xGroup << " -- " << yGroup << " -- " << yGroup * xGroup << std::endl;
 		std::cerr << "glGetError() : " << err << std::endl;

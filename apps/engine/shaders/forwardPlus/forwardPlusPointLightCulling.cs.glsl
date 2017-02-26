@@ -1,7 +1,7 @@
 #version 430
 
 #define MAX_LIGHTS 200
-#define TILE_SIZE 32
+#define TILE_SIZE 32 //16
 
 layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE, local_size_z = 1) in;
 
@@ -27,10 +27,10 @@ layout(std430, binding = 1) writeonly buffer uPointLightsIndex
 	uint pointLightsIndex[ ];
 };
 
-layout(std430, binding = 2) writeonly buffer uDebugOutput
+/*layout(std430, binding = 2) writeonly buffer uDebugOutput
 {
 	float debugOutput[];
-};
+};*/
 
 uniform mat4 uInverseProjMatrix;
 uniform mat4 uViewProjMatrix;
@@ -50,7 +50,7 @@ shared float depthMinFloat;
 shared float depthMaxFloat;
 //shared float nearPlan;
 
-shared int debugIndex;
+//shared int debugIndex;
 
 vec4 clipSpaceToViewSpace(vec4 point)
 {
@@ -92,25 +92,25 @@ void initFrustum(vec2 pixelGlobalPosition, vec2 pixelLocalPosition, vec2 tilePos
 	}
 	
 	// Compute frustums plan
-	int indexLightDebug = 0;
+	//int indexLightDebug = 0;
 	for(int i = 0; i < 4; ++i)
 	{
 		frustumPlans[i] = computeFrustumPlan(points[i], points[(i + 1) % 4]);
-		indexLightDebug = atomicAdd(debugIndex, 1);
-		debugOutput[indexLightDebug] = frustumPlans[i].x;
-		indexLightDebug = atomicAdd(debugIndex, 1);
-		debugOutput[indexLightDebug] = frustumPlans[i].y;
-		indexLightDebug = atomicAdd(debugIndex, 1);
-		debugOutput[indexLightDebug] = frustumPlans[i].z;
-		indexLightDebug = atomicAdd(debugIndex, 1);
-		debugOutput[indexLightDebug] = frustumPlans[i].w;
+	//	indexLightDebug = atomicAdd(debugIndex, 1);
+	//	debugOutput[indexLightDebug] = frustumPlans[i].x;
+	//	indexLightDebug = atomicAdd(debugIndex, 1);
+	//	debugOutput[indexLightDebug] = frustumPlans[i].y;
+	//	indexLightDebug = atomicAdd(debugIndex, 1);
+	//	debugOutput[indexLightDebug] = frustumPlans[i].z;
+	//	indexLightDebug = atomicAdd(debugIndex, 1);
+	//	debugOutput[indexLightDebug] = frustumPlans[i].w;
 	}
 
 	depthMinFloat = (2 * uintBitsToFloat(depthMinInt) - 1); // Space [0 ; 1] to [-1 ; 1]
 	depthMaxFloat = (2 * uintBitsToFloat(depthMaxInt) - 1);
 	depthMinFloat = clipSpaceToViewSpace(vec4(0, 0, depthMinFloat, 1)).z;
 	depthMaxFloat = clipSpaceToViewSpace(vec4(0, 0, depthMaxFloat, 1)).z;
-	//nearPlan = clipSpaceToViewSpace(vec4(0, 0, 0, 1)).z;
+	//nearPlan = clipSpaceToViewSpace(vec4(0, 0, 0, 1)).z; // if transparence
 		
 	frustumPlans[4] = vec4(0, 0, -1, depthMinFloat);
 	frustumPlans[5] = vec4(0, 0, 1, depthMaxFloat);
@@ -140,8 +140,6 @@ void lightCulling(int threadIndex)
 		}
 
 		vec3 pointLightCoords = (uViewMatrix * pointLights[lightIndex].position).xyz;
-		
-		//int offset = int(gl_WorkGroupID.x + gl_WorkGroupID.y * gl_NumWorkGroups.x) * 8 ; 
 
 		// Check depth
 		// Watch in -z
@@ -155,21 +153,19 @@ void lightCulling(int threadIndex)
 		bool intersect = true;
 		for(int j = 0; j < 4; ++j)
 		{
-			if(threadIndex == 0)
-			{
-				int indexLightDebug = atomicAdd(debugIndex, 1);
-				debugOutput[indexLightDebug] = dot(frustumPlans[j].xyz, pointLightCoords.xyz);
-				indexLightDebug = atomicAdd(debugIndex, 1);
-				debugOutput[indexLightDebug] = dot(pointLightCoords.xyz, frustumPlans[j].xyz) - frustumPlans[j].w;
-				indexLightDebug = atomicAdd(debugIndex, 1);
-				debugOutput[indexLightDebug] = -pointLights[lightIndex].radiusAttenuation;
-			}
+			//if(threadIndex == 0)
+			//{
+			//	int indexLightDebug = atomicAdd(debugIndex, 1);
+			//	debugOutput[indexLightDebug] = dot(frustumPlans[j].xyz, pointLightCoords.xyz);
+			//	indexLightDebug = atomicAdd(debugIndex, 1);
+			//	debugOutput[indexLightDebug] = dot(pointLightCoords.xyz, frustumPlans[j].xyz) - frustumPlans[j].w;
+			//	indexLightDebug = atomicAdd(debugIndex, 1);
+			//	debugOutput[indexLightDebug] = -pointLights[lightIndex].radiusAttenuation;
+			//}
 			// distance = dot(v, n) / length(n) -> length(n) = 1;
 			if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w < -pointLights[lightIndex].radiusAttenuation)
-			//if(dot(frustumPlans[j].xyz, pointLightCoords.xyz) - frustumPlans[j].w >= -pointLights[lightIndex].radiusAttenuation)
 			{
 				intersect = false;
-				//intersect = true;
 				break;
 			}
 		}
@@ -205,7 +201,7 @@ void main()
 			tilePointLightsIndex[i] = 0;
 		}
 
-		debugIndex = int(gl_WorkGroupID.x + gl_WorkGroupID.y * gl_NumWorkGroups.x) * MAX_LIGHTS;
+		//debugIndex = int(gl_WorkGroupID.x + gl_WorkGroupID.y * gl_NumWorkGroups.x) * MAX_LIGHTS;
 	}
 	barrier();
 
@@ -251,12 +247,12 @@ void main()
 			//debugOutput[indexMinus1] = -1;
 		}
 
-		if(countTilePointLight != 0)
-		{
-			int indexLightDebug = atomicAdd(debugIndex, 1);
-			debugOutput[indexLightDebug] = 1;
-		}
-		debugOutput[debugIndex] = 99999;
+		//if(countTilePointLight != 0)
+		//{
+		//	int indexLightDebug = atomicAdd(debugIndex, 1);
+		//	debugOutput[indexLightDebug] = 1;
+		//}
+		//debugOutput[debugIndex] = 99999;
 	}
 
 }
