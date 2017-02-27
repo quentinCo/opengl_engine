@@ -321,6 +321,10 @@ void ForwardPlusRenderer::renderDepthDebug()
 
 void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camera& camera)
 {
+	const std::vector<PointLight>& pointLights = scene.getPointLights();
+	if (pointLights.size() <= 0)
+		return;
+
 	programLightCullingPass.use();
 
 	glm::mat4 invProjMatrix = glm::inverse(camera.getProjMatrix());
@@ -331,7 +335,6 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 	glUniformMatrix4fv(uProjMatrixForCulling, 1, FALSE, glm::value_ptr(camera.getProjMatrix()));
 	glUniform2fv(uWindowDim, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
-	const std::vector<PointLight>& pointLights = scene.getPointLights();
 	Renderer::bindSsbos(pointLights, 0, uPointLightsForCulling, programLightCullingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
 	glUniform1i(uPointLightsNumberForCulling, static_cast<GLint>(pointLights.size()));
 
@@ -424,10 +427,13 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
-	Renderer::bindSsbos(pointLights, 2, uPointLights, programShadingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+	if (pointLights.size() > 0)
+	{
+		Renderer::bindSsbos(pointLights, 2, uPointLights, programShadingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+		Renderer::bindSsbos(pointLightsIndex, 3, uPoinLightIndexForShading, programShadingPass, ssboPointLightsIndex, GL_STREAM_READ);
+	}
+	
 	glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
-
-	Renderer::bindSsbos(pointLightsIndex, 3, uPoinLightIndexForShading, programShadingPass, ssboPointLightsIndex, GL_STREAM_READ);
 	
 	for (const auto& mesh : meshes)
 	{
