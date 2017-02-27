@@ -1,5 +1,4 @@
 #version 430
-#define MAX_LIGHTS 100 // TODO : revoir
 
 layout(local_size_x = 32, local_size_y = 32) in;
 layout(rgba32f, binding = 0) uniform image2D imgOutput;
@@ -22,15 +21,15 @@ struct PointLight
 	float quadraticAttenuation;
 };
 
-layout(std140, binding = 1) uniform uDirectionalLights
+layout(std430, binding = 1) buffer uDirectionalLights
 {
-	Light directionalLights[MAX_LIGHTS];
+	Light directionalLights[];
 };
 uniform int uDirectionalLightsNumber;
 
-layout(std140, binding = 2) uniform uPointLights
+layout(std430, binding = 2) buffer uPointLights
 {
-	PointLight pointLights[MAX_LIGHTS];
+	PointLight pointLights[];
 };
 uniform int uPointLightsNumber;
 
@@ -90,8 +89,9 @@ vec3 computeFragColor(ivec2 pixelCoords)
 		lightCoords = (uViewMatrix * vec4(pointLights[i].position)).xyz;
 		distToPointLight = length(lightCoords - position);
 		dirToPointLight = (lightCoords - position) / distToPointLight;
-		attenuation = ( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
-		lightIntensity = (pointLights[i].color * pointLights[i].intensity) / attenuation;
+		attenuation = 1 /( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
+		attenuation -= 1 /( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * pointLights[i].radiusAttenuation + pointLights[i].quadraticAttenuation *  pointLights[i].radiusAttenuation *  pointLights[i].radiusAttenuation);
+		lightIntensity = (pointLights[i].color * pointLights[i].intensity) * attenuation;
 		
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 

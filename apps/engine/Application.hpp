@@ -15,6 +15,7 @@
 #include "Renderer.hpp"
 #include "DeferredRenderer.hpp"
 #include "ForwardRenderer.hpp"
+#include "ForwardPlusRenderer.hpp"
 
 class Application
 {
@@ -22,7 +23,8 @@ public:
     enum RendererType
     {
 		DEFERRED = 0,
-		FORWARD
+		FORWARD,
+		FORWARD_PLUS
     };
 
     Application(int argc, char** argv);
@@ -46,11 +48,12 @@ private:
 
 	qc::Renderer* renderer = nullptr;
 
-	int chosenRenderer = DEFERRED;
-	int currentRenderer = DEFERRED;
+	int chosenRenderer = FORWARD_PLUS;
+	int currentRenderer = FORWARD_PLUS;
 
 	qc::DeferredRenderer deferred;
 	qc::ForwardRenderer forward;
+	qc::ForwardPlusRenderer forwardPlus;
     
 	// Some initialisation functions
 	void drawGUI(float* clearColor);

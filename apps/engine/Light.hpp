@@ -144,8 +144,9 @@ private:
 
 	void computeAttenuationCoeff()
 	{
-		linearAttenuation = 1 / radiusAttenuation;
-		quadraticAttenuation = 1 / (radiusAttenuation * radiusAttenuation);
+		constantAttenuation = radiusAttenuation;
+		linearAttenuation = getIntensity() / radiusAttenuation;
+		quadraticAttenuation = getIntensity() / (radiusAttenuation * radiusAttenuation);
 	}
 
 };

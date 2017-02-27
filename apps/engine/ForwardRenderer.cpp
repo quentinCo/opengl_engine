@@ -77,10 +77,10 @@ void ForwardRenderer::renderScene(const Scene& scene, const Camera& camera)
 
 	glUniformMatrix4fv(uViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
 
-	Renderer::bindUbos(directionalPointLights, 1, uDirectionalLights, programForward, scene.getUboDirectionalLights());
+	Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programForward, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
-	Renderer::bindUbos(pointLights, 2, uPointLights, programForward, scene.getUboPointLights());
+	Renderer::bindSsbos(pointLights, 2, uPointLights, programForward, scene.getSsboPointLights(), GL_STREAM_DRAW);
 	glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
 
 	for (const auto& mesh : meshes)
@@ -92,7 +92,7 @@ void ForwardRenderer::renderScene(const Scene& scene, const Camera& camera)
 
 void ForwardRenderer::initUniforms()
 {
-	programForward = glmlv::compileProgram({ shaderDirectory / "Forward" / "forward.vs.glsl" , shaderDirectory / "Forward" / "forward.fs.glsl" });
+	programForward = glmlv::compileProgram({ shaderDirectory / "forward" / "forward.vs.glsl" , shaderDirectory / "forward" / "forward.fs.glsl" });
 
 	glGenSamplers(1, &textureSampler);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -104,10 +104,10 @@ void ForwardRenderer::initUniforms()
 
 	uViewMatrix = glGetUniformLocation(programForward.glId(), "uViewMatrix");
 
-	uDirectionalLights = glGetUniformBlockIndex(programForward.glId(), "uDirectionalLights");
+	uDirectionalLights = glGetProgramResourceIndex(programForward.glId(), GL_SHADER_STORAGE_BLOCK, "uDirectionalLights");
 	uDirectionalLightsNumber = glGetUniformLocation(programForward.glId(), "uDirectionalLightsNumber");
 
-	uPointLights = glGetUniformBlockIndex(programForward.glId(), "uPointLights");
+	uPointLights = glGetProgramResourceIndex(programForward.glId(), GL_SHADER_STORAGE_BLOCK, "uPointLights");
 	uPointLightsNumber = glGetUniformLocation(programForward.glId(), "uPointLightsNumber");
 	
 	uKa = glGetUniformLocation(programForward.glId(), "uKa");

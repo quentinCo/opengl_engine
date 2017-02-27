@@ -8,7 +8,20 @@ namespace qc
 class DeferredRenderer : public Renderer
 {
 
-public:
+public:	
+	enum GBufferTextureType
+	{
+		GBUFFER_POSITION = 0,
+		GBUFFER_NORMAL,
+		GBUFFER_AMBIENT,
+		GBUFFER_DIFFUSE,
+		GBUFFER_GLOSSY_SHININESS,
+		GBUFFER_DEPTH, // On doit créer une texture de depth mais on écrit pas directement dedans dans le FS. OpenGL le fait pour nous (et l'utilise).
+		GBUFFER_NB_TEXTURE
+	};
+
+	static const GLenum gBufferTextureFormat[GBUFFER_NB_TEXTURE];
+
 	DeferredRenderer()
 		:Renderer()
 	{}

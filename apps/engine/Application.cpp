@@ -28,6 +28,8 @@ int Application::run()
 				renderer = &deferred;
 			else if (currentRenderer == FORWARD)
 				renderer = &forward;
+			else if (currentRenderer == FORWARD_PLUS)
+				renderer = &forwardPlus;
 		}
 
 		renderer->renderScene(scene, camera);
@@ -65,29 +67,35 @@ Application::Application(int argc, char** argv):
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
 	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 100; ++i)
+	for (size_t i = 0; i < 250; ++i)
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * 500 + 10;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 100;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
 
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
-		float radius = static_cast<float>(std::rand()) / RAND_MAX * 50 + 10;
-		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 30 + 10;
+		float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}
+	/*scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
+	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
+	scene.addPointLight(qc::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
+	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
+	scene.addPointLight(qc::PointLight(3000, glm::vec3(-500, -100, 0), glm::vec3(0, 1, 1), 1000));*/
 
-	scene.setUboDirectionalLights();
-	scene.setUboPointLights();
+	scene.setSsboDirectionalLights();
+	scene.setSsboPointLights();
 	
 	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
-	renderer = &deferred;
+	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	renderer = &forwardPlus;
 
     std::cout << "End INIT" << std::endl;
 }
@@ -104,8 +112,8 @@ void Application::drawGUI(float* clearColor)
 		}
 
 		ImGui::RadioButton("Deferred", &chosenRenderer, DEFERRED); ImGui::SameLine();
-		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD);// ImGui::SameLine();
-
+		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD); ImGui::SameLine();
+		ImGui::RadioButton("Forward Plus", &chosenRenderer, FORWARD_PLUS);
 /*
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
 		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
@@ -154,7 +162,7 @@ void Application::drawGUI(float* clearColor)
 					name = "PointLightIntensity" + std::to_string(j);
 					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
 					name = "PointAttenuationRadius" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 1.f, 100.f);
+					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 20.f, 1000.f);
 					name = "ConstantAttenuation" + std::to_string(j);
 					ImGui::DragFloat(name.c_str(), &pointLight.getConstantAttenuation(), 0.1f, 1.f, 100.f);
 					name = "LinearAttenuation" + std::to_string(j);

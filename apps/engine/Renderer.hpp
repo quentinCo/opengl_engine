@@ -13,19 +13,6 @@ class Renderer
 {
 
 public:
-	enum GBufferTextureType
-	{
-		GBUFFER_POSITION = 0,
-		GBUFFER_NORMAL,
-		GBUFFER_AMBIENT,
-		GBUFFER_DIFFUSE,
-		GBUFFER_GLOSSY_SHININESS,
-		GBUFFER_DEPTH, // On doit créer une texture de depth mais on écrit pas directement dedans dans le FS. OpenGL le fait pour nous (et l'utilise).
-		GBUFFER_NB_TEXTURE
-	};
-
-	static const GLenum gBufferTextureFormat[GBUFFER_NB_TEXTURE];
-
 	Renderer() {}
 	Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight);
 
@@ -49,7 +36,7 @@ protected:
 	GLsizei windowHeight;
 
 	void initOpenGLProperties();
-
+	/*
 	template<typename T>
 	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)
 	{
@@ -58,6 +45,16 @@ protected:
 		glBindBuffer(GL_UNIFORM_BUFFER, ubo.getPointer());
 		glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(T), data.data(), GL_STREAM_DRAW);
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingIndex, ubo.getPointer(), 0, sizeof(T) * data.size());
+	}
+	*/
+	template<typename T>
+	static void bindSsbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ssbo, GLenum usage)
+	{
+		glShaderStorageBlockBinding(program.glId(), uniform, bindingIndex);
+				
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo.getPointer());
+		if(usage != GL_STREAM_READ) glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), usage);
+		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * data.size());
 	}
 };
 

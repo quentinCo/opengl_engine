@@ -1,5 +1,8 @@
 #version 430
 
+#define MAX_LIGHTS 200
+#define TILE_SIZE 32
+
 struct Light
 {
 	vec4 position; // vec4 necessary cause std140 gap on vec4. If vec3, memory offset -> bug 
@@ -18,17 +21,22 @@ struct PointLight
 	float quadraticAttenuation;
 };
 
-layout(std430, binding = 1) buffer uDirectionalLights
+layout(std430, binding = 1) readonly buffer uDirectionalLights
 {
-	Light directionalLights[];
+	Light directionalLights[ ];
 };
 uniform int uDirectionalLightsNumber;
 
-layout(std430, binding = 2) buffer uPointLights
+layout(std430, binding = 2) readonly buffer uPointLights
 {
-	PointLight pointLights[];
+	PointLight pointLights[ ];
 };
 uniform int uPointLightsNumber;
+
+layout(std430, binding = 3) readonly buffer uPointLightsIndex
+{
+	int pointLightsIndex[ ];
+};
 
 in vec3 vViewSpacePosition;
 in vec3 vViewSpaceNormal;
@@ -36,6 +44,8 @@ in vec2 vTexCoords;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uViewMatrix;
+
+uniform vec2 uWindowDim;
 
 //  Color
 uniform vec3 uKa;
@@ -85,21 +95,28 @@ vec3 computeFragColor()
 		specularDirectionalLightIntensity += lightIntensity * dothLight;
 	}	
 
+
+	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
+	int count = 0;
+
 	vec3 diffusePointLightIntensity = vec3(0);
 	vec3 specularPointLightIntensity = vec3(0);
 
 	float distToPointLight = 0;
 	vec3 dirToPointLight = vec3(0);
 	float attenuation = 0;
-	for(int i = 0; i < uPointLightsNumber; ++i)
+	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
 	{
-		lightCoords = (uViewMatrix * vec4(pointLights[i].position)).xyz;
+		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
+		count++;
+
+		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
 		distToPointLight = length(lightCoords - position);
-		dirToPointLight = (lightCoords - position) / distToPointLight;
-		attenuation = 1/( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * distToPointLight + pointLights[i].quadraticAttenuation * distToPointLight * distToPointLight);
-		attenuation -= 1 /( pointLights[i].constantAttenuation + pointLights[i].linearAttenuation * pointLights[i].radiusAttenuation + pointLights[i].quadraticAttenuation *  pointLights[i].radiusAttenuation *  pointLights[i].radiusAttenuation);
-		lightIntensity = (distToPointLight <= pointLights[i].radiusAttenuation) ? (pointLights[i].color * pointLights[i].intensity) * attenuation : vec3(0);
+		attenuation = 1 / (pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * distToPointLight + pointLights[pointLightIndex].quadraticAttenuation * distToPointLight * distToPointLight);
+		attenuation -= 1 /( pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * pointLights[pointLightIndex].radiusAttenuation + pointLights[pointLightIndex].quadraticAttenuation *  pointLights[pointLightIndex].radiusAttenuation *  pointLights[pointLightIndex].radiusAttenuation);
+		lightIntensity = (distToPointLight <= pointLights[pointLightIndex].radiusAttenuation) ? (pointLights[pointLightIndex].color * pointLights[pointLightIndex].intensity) * attenuation : vec3(0);
 		
+		dirToPointLight = (lightCoords - position) / distToPointLight;
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
 		hLight = normalize(eyeDir + dirToPointLight);
@@ -115,6 +132,22 @@ vec3 computeFragColor()
 //    fColor += ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
+	//if(mod(int(gl_FragCoord.x), 32) == 0 || mod(int(gl_FragCoord.y), 32) == 0)
+	//{
+	//	fColor = vec3(0.5);
+	//}
+	//if(count > 50)
+	//{
+	//	fColor += vec3(0.5, 0, 0);
+	//}
+	//else if(count > 25)
+	//{
+	//	fColor += vec3(0, 0.5, 0);
+	//}
+	//else if(count > 10)
+	//{
+	//	fColor += vec3(0, 0, 0.5);
+	//}
 
 	return fColor;
 }
