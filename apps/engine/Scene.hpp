@@ -9,6 +9,9 @@
 
 #include "Mesh.hpp"
 #include "Light.hpp"
+#include "DirectionalLight.hpp"
+#include "PointLight.hpp"
+#include "Particule.hpp"
 
 namespace qc
 {
@@ -27,11 +30,18 @@ public:
 	const std::vector<Mesh>& getMeshes() const
 		{return meshes;}
 
+	std::vector<Mesh>& getMeshes()
+		{return meshes;}
+
+
 	const std::vector<PointLight>& getPointLights() const
 		{return pointLights;}
 
 	const std::vector<DirectionalLight>& getDirectionalLights() const
 		{return directionalLights;}
+
+	const std::vector<Particule>& getParticules() const
+		{return particules;}
 
 	// TODO : delete
 	std::vector<PointLight>& getPointLights()
@@ -56,6 +66,10 @@ public:
 	void setSsboDirectionalLights();
 
 	void addObj(const glmlv::fs::path& pathfile );
+	void addObj(Mesh& mesh)
+	{
+		meshes.push_back(std::move(mesh));
+	}
 
 	void addPointLight(const PointLight& light)
 		{pointLights.push_back(light);}
@@ -63,10 +77,17 @@ public:
 	void addDirectionalLight(const DirectionalLight& light)
 		{directionalLights.push_back(light);}
 
+	void addParticules(const Particule& particule)
+	{
+//		particules.push_back(particule);
+		pointLights.push_back(static_cast<PointLight>(particule));
+	}
+
 private:
 	std::vector<Mesh> meshes;
 	std::vector<PointLight> pointLights;
 	std::vector<DirectionalLight> directionalLights; // TODO : revoir passer DirectionalLight -> Light
+	std::vector<Particule> particules;
 
 	glm::vec3 bboxMin = glm::vec3(std::numeric_limits<float>::max());
 	glm::vec3 bboxMax = glm::vec3(std::numeric_limits<float>::lowest());
