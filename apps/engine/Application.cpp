@@ -67,7 +67,7 @@ Application::Application(int argc, char** argv):
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
 	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 250; ++i)
+	for (size_t i = 0; i < 50; ++i)
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 100;
