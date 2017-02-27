@@ -48,6 +48,12 @@ public:
 	const std::vector<Material>& getMaterials() const
 		{return materials;}
 	
+	void setPosition(const glm::vec3& position)
+		{modelMatrix = glm::translate(modelMatrix, position);}
+
+	void setRotation(const float angle, const glm::vec3& axis)
+		{modelMatrix = glm::rotate(modelMatrix, angle, axis);}
+
 	void setShapesData(const std::vector<ShapeData>& shapesData)
 		{this->shapesData = shapesData;}
 
