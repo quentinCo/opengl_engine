@@ -64,13 +64,14 @@ Application::Application(int argc, char** argv):
     ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
 
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
-	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
-	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
+	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
+	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
+	//scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 50; ++i)
+	/*for (size_t i = 0; i < 50; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 100;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
 
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
@@ -78,19 +79,56 @@ Application::Application(int argc, char** argv):
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
 		float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
-	}
-	/*scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
+	}*/
+	/*scene.addParticules(qc::Particule(200, glm::vec3(400, 0, 0), glm::vec3(1, 0, 1), 300));
+	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::PointLight(3000, glm::vec3(-500, -100, 0), glm::vec3(0, 1, 1), 1000));*/
+	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));*/
 
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
-	
+//---------------------------------
+	float radius = 100;
+	std::vector<glmlv::Vertex3f3f2f> vertices;
+	std::vector<uint32_t> index;
+	/*
+	vertices.emplace_back(glm::vec3(0), glm::vec3(0, 0, 1), glm::vec2(0));
+	for (int i = 0; i < 20; ++i)
+	{
+		float x = static_cast<float>(radius * std::cos(i * 2 * M_PI / 10));
+		float y = static_cast<float>(radius * std::sin(i * 2 * M_PI / 10));
+		vertices.emplace_back(glm::vec3(x, y, 0), glm::vec3(0, 0, -1), glm::vec2(-1));
+		if (i > 0) index.push_back(i + 1);
+		index.push_back(0);
+		index.push_back(i + 1);
+	}
+	index.push_back(1);*/
+	glmlv::SimpleGeometry sp = glmlv::makeSphere(radius);
+	vertices = sp.vertexBuffer;
+	index = sp.indexBuffer;
+	qc::Material mat = qc::Material();
+	mat.setColor(qc::Material::DIFFUSE_COLOR, glm::vec3(1,0,1)); // TODO : change for white ?
+	std::vector<qc::Material> materials;
+	materials.emplace_back(std::move(mat));
+
+	qc::ShapeData shapeData = qc::ShapeData(index.size(),0,0);
+	std::vector<qc::ShapeData> shapes = { shapeData };
+
+	qc::Mesh particuleShape = qc::Mesh(vertices, index, shapes, glm::vec3(-500,2*radius,0));
+	particuleShape.setMaterials(materials);
+	particuleShape.setRotation(90, glm::vec3(0, 1, 0));
+	scene.addObj(particuleShape);
+
+	std::vector<qc::Mesh>& meshes = scene.getMeshes();
+	meshes[1].setPosition(glm::vec3(500, 100, 0));
+
+//---------------------------------	
 	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);

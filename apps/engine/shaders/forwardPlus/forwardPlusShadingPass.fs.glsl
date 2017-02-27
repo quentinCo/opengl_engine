@@ -64,9 +64,15 @@ vec3 computeFragColor()
 {
     vec3 position = vViewSpacePosition;
 
-	vec3 ka = uKa * vec3(texture(uKaSampler, vTexCoords));
-    vec3 kd = uKd * vec3(texture(uKdSampler, vTexCoords));
-    vec3 ks = uKs * vec3(texture(uKsSampler, vTexCoords));
+
+	//ATTENTION-----------------------------------------------------------------------------------------------
+	//vec3 ka = uKa * vec3(texture(uKaSampler, vTexCoords));
+    //vec3 kd = uKd * vec3(texture(uKdSampler, vTexCoords));
+    //vec3 ks = uKs * vec3(texture(uKsSampler, vTexCoords));
+	//ATTENTION-----------------------------------------------------------------------------------------------
+	vec3 ka = uKa;
+    vec3 kd = uKd;
+    vec3 ks = uKs;
 
     float shininess = uShininess * vec3(texture(uShininessSampler, vTexCoords)).x;
 
