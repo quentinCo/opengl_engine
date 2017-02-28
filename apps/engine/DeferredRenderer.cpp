@@ -334,10 +334,14 @@ void DeferredRenderer::renderComputePass(const Scene& scene, const Camera& camer
 
 	const auto& pointLights = scene.getPointLights();
 
-	Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programComputePass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+	if (directionalLights.size() > 0)
+		Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programComputePass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+	
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
-	Renderer::bindSsbos(pointLights, 2, uPointLights, programComputePass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+	if (pointLights.size() > 0)
+		Renderer::bindSsbos(pointLights, 2, uPointLights, programComputePass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+	
 	glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
 
 	glUniformMatrix4fv(uViewMatrix, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
