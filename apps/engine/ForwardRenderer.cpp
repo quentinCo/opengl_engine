@@ -92,7 +92,7 @@ void ForwardRenderer::renderScene(const Scene& scene, const Camera& camera)
 
 void ForwardRenderer::initUniforms()
 {
-	programForward = glmlv::compileProgram({ shaderDirectory / "forward" / "forward.vs.glsl" , shaderDirectory / "forward" / "forward.fs.glsl" });
+	programForward = glmlv::compileProgram({ shaderDirectory / "general" / "geometryPass.vs.glsl" , shaderDirectory / "forward" / "forward.fs.glsl" });
 
 	glGenSamplers(1, &textureSampler);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

@@ -121,7 +121,7 @@ void DeferredRenderer::renderScene(const Scene& scene, const Camera& camera)
 
 void DeferredRenderer::initGeoPassVariables()
 {
-	programGeoPass = glmlv::compileProgram({ shaderDirectory / "deferred" / "geometryPass.vs.glsl", shaderDirectory / "deferred" / "geometryPass.fs.glsl" });
+	programGeoPass = glmlv::compileProgram({ shaderDirectory / "general" / "geometryPass.vs.glsl", shaderDirectory / "deferred" / "geometryPass.fs.glsl" });
 
 	glGenSamplers(1, &textureSampler);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

@@ -241,7 +241,7 @@ void ForwardPlusRenderer::initLightCullingPass()
 
 void ForwardPlusRenderer::initShadingPass()
 {
-	programShadingPass = glmlv::compileProgram({ shaderDirectory / "forwardPlus" / "forwardPlusShadingPass.vs.glsl" , shaderDirectory / "forwardPlus" / "forwardPlusShadingPass.fs.glsl" });
+	programShadingPass = glmlv::compileProgram({ shaderDirectory / "general" / "geometryPass.vs.glsl" , shaderDirectory / "forwardPlus" / "forwardPlusShadingPass.fs.glsl" });
 
 	glGenSamplers(1, &textureSampler);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
