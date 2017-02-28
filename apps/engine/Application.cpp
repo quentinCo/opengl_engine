@@ -67,6 +67,8 @@ int Application::run()
 			float angle = acos(dot((positionCamera - meshPosition), normal) / (normal.length() *  (positionCamera - meshPosition).length()));
 			mesh.setRotation(angle, glm::vec3(0, 0, 1));
 		}*/
+		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
+			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
     }
 
     return 0;
