@@ -15,6 +15,14 @@ class Renderer
 public:
 	Renderer() {}
 	Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight);
+	~Renderer();
+
+	/*
+	Renderer(const Renderer& o) = delete;
+	virtual Renderer& operator=(const Renderer& o) = delete;
+	*/
+	Renderer(Renderer&& o);
+	virtual Renderer& operator=(Renderer&& o);
 
 	GLsizei getWindowWidth() const
 		{return windowWidth;}
@@ -35,7 +43,30 @@ protected:
 	GLsizei windowWidth;
 	GLsizei windowHeight;
 
+	// Materials
+	GLuint textureSampler = 0;
+
+	GLint uKa;
+	GLint uKd;
+	GLint uKs;
+	GLint uShininess;
+	GLint uKaSampler;
+	GLint uKdSampler;
+	GLint uKsSampler;
+	GLint uShininessSampler;
+
+	glmlv::GLProgram emissivePass;
+	GLint uMVPMatrixEmissivePass;
+	GLint uMVMatrixEmissivePass;
+
+	GLint uKe;
+
 	void initOpenGLProperties();
+
+	virtual void initEmissivePass();
+	virtual void renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix);
+	virtual void bindMeshMaterial(const Material& material);
+	virtual void renderEmissivePass(const Scene& scene);
 	/*
 	template<typename T>
 	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)

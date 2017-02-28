@@ -38,22 +38,10 @@ private:
 	// Geo Pass variables
 	glmlv::GLProgram programGeoPass;
 
-	GLuint textureSampler = 0;
-
 	// View uniforms
 	GLint uModelViewProjMatrix;
 	GLint uModelViewMatrix;
 	GLint uNormalMatrix;
-
-	// Material uniforms
-	GLint uKa;
-	GLint uKd;
-	GLint uKs;
-	GLint uShininess;
-	GLint uKaSampler;
-	GLint uKdSampler;
-	GLint uKsSampler;
-	GLint uShininessSampler;
 
 	// Fragement shader
 	GLuint gBufferTextures[GBUFFER_NB_TEXTURE];
@@ -96,8 +84,8 @@ private:
 	void initShadingPassVariables();
 	
 	void renderGeoPass(const Scene& scene, const Camera& camera);
-	void renderGeoPassMesh(const Mesh& mesh, const Camera& camera);
-	void bindMeshMaterial(const Material& material);
+	/*void renderGeoPassMesh(const Mesh& mesh, const Camera& camera);
+	void bindMeshMaterial(const Material& material);*/
 
 	void renderComputePass(const Scene& scene, const Camera& camera);
 

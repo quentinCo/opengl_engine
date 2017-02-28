@@ -17,11 +17,10 @@ ForwardPlusRenderer::~ForwardPlusRenderer()
 {
 	if (fboDepth) glDeleteFramebuffers(1, &fboDepth);
 	if (depthMap) glDeleteSamplers(1, &depthMap);
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
 }
 
 ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
-	:Renderer(o), programDepthPass(std::move(o.programDepthPass)), fboDepth(o.fboDepth), depthMap(o.depthMap), uDepthModelViewProjMatrix(o.uDepthModelViewProjMatrix),
+	:programDepthPass(std::move(o.programDepthPass)), fboDepth(o.fboDepth), depthMap(o.depthMap), uDepthModelViewProjMatrix(o.uDepthModelViewProjMatrix),
 	programLightCullingPass(std::move(o.programLightCullingPass)), nbComputeBlock(o.nbComputeBlock), pointLightsIndex(pointLightsIndex), uPoinLightIndexForShading(o.uPoinLightIndexForShading),
 	uWindowDimForShading(o.uWindowDimForShading),
 	ssboPointLightsIndex(std::move(o.ssboPointLightsIndex)),/* ssboDebug(std::move(o.ssboDebug)), debugLight(o.debugLight), uDebugOutput(o.uDebugOutput), */uPointLightsForCulling(o.uPointLightsForCulling), uPointLightsNumberForCulling(o.uPointLightsNumberForCulling),
@@ -30,8 +29,7 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	uDepthMapForCulling(o.uDepthMapForCulling), programShadingPass(std::move(o.programShadingPass)), uModelViewProjMatrixForShading(o.uModelViewProjMatrixForShading),
 	uModelViewMatrixForShading(o.uModelViewMatrixForShading), uNormalMatrixForShading(o.uNormalMatrixForShading), uViewMatrixForShading(o.uViewMatrixForShading),
 	uDirectionalLights(o.uDirectionalLights), uDirectionalLightsNumber(o.uDirectionalLightsNumber),
-	uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber), uKa(o.uKa), uKd(o.uKd), uKs(o.uKs), uShininess(o.uShininess), uKaSampler(o.uKaSampler),
-	uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler), uShininessSampler(o.uShininessSampler)
+	uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber)
 {
 	o.programDepthPass = glmlv::GLProgram();
 
@@ -56,10 +54,6 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	o.programLightCullingPass = glmlv::GLProgram();
 
 	o.programShadingPass = glmlv::GLProgram();
-
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
-	textureSampler = o.textureSampler;
-	o.textureSampler = 0;
 }
 
 ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
@@ -115,10 +109,6 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 
 	programShadingPass = std::move(o.programShadingPass);
 	o.programShadingPass = glmlv::GLProgram();
-
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
-	textureSampler = o.textureSampler;
-	o.textureSampler = 0;
 
 	uModelViewProjMatrixForShading = o.uModelViewProjMatrixForShading;
 	uModelViewMatrixForShading = o.uModelViewMatrixForShading;
@@ -439,10 +429,11 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	
 	for (const auto& mesh : meshes)
 	{
-		renderMeshShaddingPass(mesh, camera);
+		//renderMeshShaddingPass(mesh, camera);
+		renderMesh(mesh, camera, uModelViewProjMatrixForShading, uModelViewMatrixForShading, uNormalMatrixForShading);
 	}
 }
-
+/*
 void ForwardPlusRenderer::renderMeshShaddingPass(const Mesh& mesh, const Camera& camera)
 {
 	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
@@ -502,3 +493,4 @@ void ForwardPlusRenderer::bindMeshMaterial(const Material& material)
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
 }
+*/

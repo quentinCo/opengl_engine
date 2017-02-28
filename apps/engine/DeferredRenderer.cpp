@@ -17,7 +17,6 @@ DeferredRenderer::DeferredRenderer(const glmlv::fs::path& shaderDirectory, size_
 
 DeferredRenderer::~DeferredRenderer()
 {
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
 	if (screenVbo) glDeleteBuffers(1, &screenVbo);
 	if (screenVao) glDeleteBuffers(1, &screenVao);
 	if (gBufferTextures) glDeleteTextures(GBUFFER_NB_TEXTURE, gBufferTextures);
@@ -26,16 +25,14 @@ DeferredRenderer::~DeferredRenderer()
 }
 
 DeferredRenderer::DeferredRenderer(DeferredRenderer&& o)
-	: Renderer(o), programGeoPass(std::move(o.programGeoPass)),	textureSampler(o.textureSampler), uModelViewProjMatrix(o.uModelViewProjMatrix),
-	uModelViewMatrix(o.uModelViewMatrix), uNormalMatrix(o.uNormalMatrix), uKa(o.uKa), uKd(o.uKd), uKs(o.uKs), uShininess(o.uShininess),
-	uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler), uShininessSampler(o.uShininessSampler), fbo(o.fbo),
+	: programGeoPass(std::move(o.programGeoPass)), uModelViewProjMatrix(o.uModelViewProjMatrix),
+	uModelViewMatrix(o.uModelViewMatrix), uNormalMatrix(o.uNormalMatrix), fbo(o.fbo),
 	programShadingPass(std::move(o.programShadingPass)), screenVao(o.screenVao), screenVbo(o.screenVbo), uScreenTexture(o.uScreenTexture),
 	programComputePass(std::move(o.programComputePass)), screenTexture(o.screenTexture), uDirectionalLights(o.uDirectionalLights),
 	uDirectionalLightsNumber(o.uDirectionalLightsNumber), uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber), uViewMatrix(o.uViewMatrix),
 	uWindowDim(o.uWindowDim)
 {
 	o.programGeoPass = glmlv::GLProgram();
-	o.textureSampler = 0;
 
 	for (size_t i = 0; i < GBUFFER_NB_TEXTURE; ++i)
 	{
@@ -60,10 +57,7 @@ DeferredRenderer& DeferredRenderer::operator= (DeferredRenderer&& o)
 
 	programGeoPass = std::move(o.programGeoPass);
 	o.programGeoPass = glmlv::GLProgram();
-
-	textureSampler = o.textureSampler;
-	o.textureSampler = 0;
-
+	
 	uModelViewProjMatrix = o.uModelViewProjMatrix;
 	uModelViewMatrix = o.uModelViewMatrix;
 	uNormalMatrix = o.uNormalMatrix;
@@ -259,12 +253,13 @@ void DeferredRenderer::renderGeoPass(const Scene& scene, const Camera& camera)
 	const auto& meshes = scene.getMeshes();
 	for (const auto& mesh : meshes)
 	{
-		renderGeoPassMesh(mesh, camera);
+		//renderGeoPassMesh(mesh, camera);
+		renderMesh(mesh, camera, uModelViewProjMatrix, uModelViewMatrix, uNormalMatrix);
 	}
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
-
+/*
 void DeferredRenderer::renderGeoPassMesh(const Mesh& mesh, const Camera& camera)
 {
 	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
@@ -325,7 +320,7 @@ void DeferredRenderer::bindMeshMaterial(const Material& material)
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
 }
-
+*/
 void DeferredRenderer::renderComputePass(const Scene& scene, const Camera& camera)
 {
 	programComputePass.use();

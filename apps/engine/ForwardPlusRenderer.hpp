@@ -59,8 +59,6 @@ private:
 	// Shading Pass
 	glmlv::GLProgram programShadingPass; // TODO: change name
 
-	GLuint textureSampler = 0;
-
 	GLint uModelViewProjMatrixForShading;
 	GLint uModelViewMatrixForShading;
 	GLint uNormalMatrixForShading;
@@ -74,17 +72,7 @@ private:
 	GLint uPointLights;
 	GLint uPointLightsNumber;
 	GLint uPoinLightIndexForShading;
-
-	//  Color
-	GLint uKa;
-	GLint uKd;
-	GLint uKs;
-	GLint uShininess;
-	GLint uKaSampler;
-	GLint uKdSampler;
-	GLint uKsSampler;
-	GLint uShininessSampler;
-
+	
 	void initDepthPass();
 	void initDepthDebug(); // TODO : delete
 	void initLightCullingPass();
@@ -95,8 +83,8 @@ private:
 	void renderDepthDebug();
 	void renderLightCullingPass(const Scene& scene, const Camera& camera);
 	void renderShadingPass(const Scene& scene, const Camera& camera);
-	void renderMeshShaddingPass(const Mesh& mesh, const Camera& camera);
-	void bindMeshMaterial(const Material& material);
+	/*void renderMeshShaddingPass(const Mesh& mesh, const Camera& camera);
+	void bindMeshMaterial(const Material& material);*/
 };
 
 }

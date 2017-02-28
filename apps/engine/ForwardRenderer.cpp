@@ -11,31 +11,17 @@ ForwardRenderer::ForwardRenderer(const glmlv::fs::path& shaderDirectory, size_t 
 }
 
 ForwardRenderer::~ForwardRenderer()
-{
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
-}
+{}
 
 ForwardRenderer::ForwardRenderer(ForwardRenderer&& o)
-	:Renderer(o), programForward(std::move(o.programForward)),uModelViewProjMatrix(o.uModelViewProjMatrix), uModelViewMatrix(o.uModelViewMatrix),
+	: programForward(std::move(o.programForward)),uModelViewProjMatrix(o.uModelViewProjMatrix), uModelViewMatrix(o.uModelViewMatrix),
 	uNormalMatrix(o.uNormalMatrix), uViewMatrix(o.uViewMatrix), uDirectionalLights(o.uDirectionalLights), uDirectionalLightsNumber(o.uDirectionalLightsNumber),
-	uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber), uKa(o.uKa), uKd(o.uKd), uKs(o.uKs), uShininess(o.uShininess), uKaSampler(o.uKaSampler),
-	uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler), uShininessSampler(o.uShininessSampler)
-{
-	o.programForward = glmlv::GLProgram();
-
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
-	textureSampler = o.textureSampler;
-	o.textureSampler = 0;
-}
+	uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber)
+{}
 
 ForwardRenderer& ForwardRenderer::operator= (ForwardRenderer&& o)
 {
 	programForward = std::move(o.programForward);
-	o.programForward = glmlv::GLProgram();
-
-	if (textureSampler) glDeleteSamplers(1, &textureSampler);
-	textureSampler = o.textureSampler;
-	o.textureSampler = 0;
 
 	uModelViewProjMatrix = o.uModelViewProjMatrix;
 	uModelViewMatrix = o.uModelViewMatrix;
@@ -85,7 +71,8 @@ void ForwardRenderer::renderScene(const Scene& scene, const Camera& camera)
 
 	for (const auto& mesh : meshes)
 	{
-		renderMesh(mesh, camera);
+		//renderMesh(mesh, camera);
+		renderMesh(mesh, camera, uModelViewProjMatrix, uModelViewMatrix, uNormalMatrix);
 	}
 
 }
@@ -120,7 +107,7 @@ void ForwardRenderer::initUniforms()
 	uKsSampler = glGetUniformLocation(programForward.glId(), "uKsSampler");
 	uShininessSampler = glGetUniformLocation(programForward.glId(), "uShininessSampler");
 }
-
+/*
 void ForwardRenderer::renderMesh(const Mesh& mesh, const Camera& camera)
 {
 	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
@@ -180,3 +167,4 @@ void ForwardRenderer::bindMeshMaterial(const Material& material)
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
 }
+*/

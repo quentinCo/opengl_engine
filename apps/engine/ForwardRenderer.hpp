@@ -21,8 +21,6 @@ public:
 private:
 	glmlv::GLProgram programForward;
 
-	GLuint textureSampler = 0;
-
 	GLint uModelViewProjMatrix;
 	GLint uModelViewMatrix;
 	GLint uNormalMatrix;
@@ -35,20 +33,10 @@ private:
 	GLint uPointLights;
 	GLint uPointLightsNumber;
 
-	//  Color
-	GLint uKa;
-	GLint uKd;
-	GLint uKs;
-	GLint uShininess;
-	GLint uKaSampler;
-	GLint uKdSampler;
-	GLint uKsSampler;
-	GLint uShininessSampler;
-
 	void initUniforms();
 
-	void renderMesh(const Mesh& mesh, const Camera& camera);
-	void bindMeshMaterial(const Material& material);
+	/*void renderMesh(const Mesh& mesh, const Camera& camera);
+	void bindMeshMaterial(const Material& material);*/
 };
 
 }
