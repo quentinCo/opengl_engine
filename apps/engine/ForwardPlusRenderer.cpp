@@ -424,7 +424,9 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	glUniformMatrix4fv(uViewMatrixForShading, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
 	glUniform2fv(uWindowDimForShading, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
-	Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+	if(directionalLights.size() > 0)
+		Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+	
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 
 	if (pointLights.size() > 0)
