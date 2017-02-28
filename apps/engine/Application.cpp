@@ -31,7 +31,17 @@ int Application::run()
 			else if (currentRenderer == FORWARD_PLUS)
 				renderer = &forwardPlus;
 		}
-
+		/*
+		glm::vec3 positionCamera = glm::inverse(camera.getViewMatrix())[3];
+		auto& meshes = scene.getMeshes();
+		for (auto& mesh : meshes)
+		{
+			glm::vec3 meshPosition = mesh.getModelMatrix()[3];
+			glm::vec3 normal = glm::vec3(0, 0, -1);
+			float angle = acos(dot((positionCamera - meshPosition), normal) / (normal.length() *  (positionCamera - meshPosition).length()));
+			mesh.setRotation(angle, glm::vec3(0, 0, 1));
+		}
+		*/
 		renderer->renderScene(scene, camera);
 
         // GUI code:
@@ -49,6 +59,14 @@ int Application::run()
 		{
 			camera.updateViewController(float(ellapsedTime));
         }
+		/*
+		for (auto& mesh : meshes)
+		{
+			glm::vec3 meshPosition = mesh.getModelMatrix()[3];
+			glm::vec3 normal = glm::vec3(0, 0, -1);
+			float angle = acos(dot((positionCamera - meshPosition), normal) / (normal.length() *  (positionCamera - meshPosition).length()));
+			mesh.setRotation(angle, glm::vec3(0, 0, 1));
+		}*/
     }
 
     return 0;
@@ -65,10 +83,14 @@ Application::Application(int argc, char** argv):
 
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
+
+	std::vector<qc::Mesh>& meshes = scene.getMeshes();
+	meshes[1].setPosition(glm::vec3(500, 100, 0));
+
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
 	//scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
-	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	/*for (size_t i = 0; i < 50; ++i) // 3500
+	/*std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	for (size_t i = 0; i < 3500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;
@@ -78,23 +100,27 @@ Application::Application(int argc, char** argv):
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
-		float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
-		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
+		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		float radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}*/
-	/*scene.addParticules(qc::Particule(200, glm::vec3(400, 0, 0), glm::vec3(1, 0, 1), 300));
+
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));*/
+	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
+
+	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
+	for(auto& it : pointLights)
+		scene.addParticules(qc::Particule(&it));
 
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
 //---------------------------------
-	float radius = 100;
+	/*float radius = 100;
 	std::vector<glmlv::Vertex3f3f2f> vertices;
 	std::vector<uint32_t> index;
 	/*
@@ -108,7 +134,7 @@ Application::Application(int argc, char** argv):
 		index.push_back(0);
 		index.push_back(i + 1);
 	}
-	index.push_back(1);*/
+	index.push_back(1);
 	glmlv::SimpleGeometry sp = glmlv::makeSphere(radius);
 	vertices = sp.vertexBuffer;
 	index = sp.indexBuffer;
@@ -125,11 +151,9 @@ Application::Application(int argc, char** argv):
 	particuleShape.setRotation(90, glm::vec3(0, 1, 0));
 	scene.addObj(particuleShape);
 
-	std::vector<qc::Mesh>& meshes = scene.getMeshes();
-	meshes[1].setPosition(glm::vec3(500, 100, 0));
-
+	*/
 //---------------------------------	
-	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
+	camera = qc::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
