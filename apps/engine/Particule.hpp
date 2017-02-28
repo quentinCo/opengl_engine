@@ -1,37 +1,34 @@
 #pragma once
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-
 #include "PointLight.hpp"
 #include "Mesh.hpp"
 
 namespace qc
 {
 
-class Particule : public PointLight
+class Particule : public Mesh
 {
 
 public:
-	Particule(const float radiusAttenuation = 1, const glm::vec3& position = glm::vec3(0), const glm::vec3& color = glm::vec3(1), float intensity = 1.f)
-		:PointLight(radiusAttenuation, position, color, intensity), particuleShape()
+	Particule(PointLight* pointLight = nullptr)
+		:Mesh(), pointLight(pointLight)
 	{initShape();}
-	
+	/*
 	Particule(const Particule& o)
-		:PointLight(o)
+		:Mesh(), pointLight(o.pointLight)
 	{initShape();}
 
 	Particule& operator= (const Particule& o);
-
+	*/
 	Particule(Particule&& o) = default;
 	Particule& operator= (Particule&& o) = default;
 
 	//void setPosition(const glm::vec4& position);
-	void setRotation(float angle, const glm::vec3& axis);
 	
 private:
-	Mesh particuleShape;
-	
+	PointLight* pointLight;
+	glm::vec3 normal;
+
 	void initShape();
 	
 };

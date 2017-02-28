@@ -1,5 +1,4 @@
 #pragma once
-#define NOMINMAX
 
 #include <vector>
 
@@ -43,7 +42,7 @@ public:
 	const std::vector<Particule>& getParticules() const
 		{return particules;}
 
-	// TODO : delete
+	// TODO : delete or not
 	std::vector<PointLight>& getPointLights()
 		{return pointLights;}
 
@@ -77,10 +76,11 @@ public:
 	void addDirectionalLight(const DirectionalLight& light)
 		{directionalLights.push_back(light);}
 
-	void addParticules(const Particule& particule)
+	void addParticules(Particule& particule)
 	{
 //		particules.push_back(particule);
-		pointLights.push_back(static_cast<PointLight>(particule));
+		meshes.push_back(std::move(particule));
+//		pointLights.push_back(static_cast<PointLight>(particule));
 	}
 
 private:

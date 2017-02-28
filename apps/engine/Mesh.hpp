@@ -48,7 +48,7 @@ public:
 	const std::vector<Material>& getMaterials() const
 		{return materials;}
 	
-	void setPosition(const glm::vec3& position)
+	virtual void setPosition(const glm::vec3& position)
 		{modelMatrix = glm::translate(modelMatrix, position);}
 
 	void setRotation(const float angle, const glm::vec3& axis)
@@ -59,6 +59,9 @@ public:
 
 	void setMaterials(std::vector<Material>& mat)
 		{materials = std::move(mat);}
+
+protected:
+	void initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices);
 
 private:
 
@@ -71,8 +74,6 @@ private:
 	glm::mat4 modelMatrix = glm::mat4();
 
 	std::vector<Material> materials;
-
-	void initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices);
 };
 
 } // namespace qc
