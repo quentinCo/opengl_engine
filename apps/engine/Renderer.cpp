@@ -1,3 +1,5 @@
+#include <functional>
+
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Renderer.hpp"
@@ -18,7 +20,7 @@ Renderer::~Renderer()
 Renderer::Renderer(Renderer&& o)
 	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight), uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),
 	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler), uShininessSampler(o.uShininessSampler),
-	emissivePass (std::move(o.emissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass), uMVMatrixEmissivePass(o.uMVMatrixEmissivePass), uKe(o.uKe)
+	programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass), uMVMatrixEmissivePass(o.uMVMatrixEmissivePass), uKe(o.uKe)
 {
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
 	textureSampler = o.textureSampler;
@@ -40,7 +42,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	uKsSampler = o.uKsSampler;
 	uShininessSampler = o.uShininessSampler;
 
-	emissivePass = std::move(o.emissivePass);
+	programEmissivePass = std::move(o.programEmissivePass);
 	uMVPMatrixEmissivePass = o.uMVPMatrixEmissivePass;
 	uMVMatrixEmissivePass = o.uMVMatrixEmissivePass;
 	uKe = o.uKe;
@@ -60,14 +62,17 @@ void Renderer::initOpenGLProperties()
 
 void Renderer::initEmissivePass() 
 {
-	emissivePass = glmlv::compileProgram({ shaderDirectory / "general" / "emissiveElement.vs.glsl" , shaderDirectory / "general" / "emissiveElement.fs.glsl" });
+	programEmissivePass = glmlv::compileProgram({ shaderDirectory / "general" / "emissiveElement.vs.glsl" , shaderDirectory / "general" / "emissiveElement.fs.glsl" });
 
-	uMVPMatrixEmissivePass = glGetUniformLocation(emissivePass.glId(), "uModelViewProjMatrix");
-	uMVMatrixEmissivePass = glGetUniformLocation(emissivePass.glId(), "uModelViewMatrix");
-	uKe = glGetUniformLocation(emissivePass.glId(), "uKe");
+	uMVPMatrixEmissivePass = glGetUniformLocation(programEmissivePass.glId(), "uModelViewProjMatrix");
+	uMVMatrixEmissivePass = glGetUniformLocation(programEmissivePass.glId(), "uModelViewMatrix");
+	uNormalMatrixEmissivePass = -1; // TODO
+
+	uKe = glGetUniformLocation(programEmissivePass.glId(), "uKe");
 }
 
 
+//void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix, MeshRenderType meshRenderType)
 void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix)
 {
 	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
@@ -127,15 +132,42 @@ void Renderer::bindMeshMaterial(const Material& material)
 	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
 }
 
-void Renderer::renderEmissivePass(const Scene& scene)
+void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
 {
-	emissivePass.use();
+	programEmissivePass.use();
 
 	const auto& particules = scene.getParticules();
 
 	for (const auto& particule : particules)
 	{
+		glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
+		camera.computeModelsMatrix(particule.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
 
+		glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
+		glUniformMatrix4fv(uMVMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvMatrix));
+		
+		const auto& materials = particule.getMaterials();
+		const auto& shapes = particule.getShapesData();
+		const auto& defaultMaterial = Mesh::defaultMaterial;
+		const Material* currentMaterial = nullptr;
+
+		glBindVertexArray(particule.getVao().getPointer());
+
+		for (const auto& shape : shapes)
+		{
+			const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
+			if (currentMaterial != &material)
+			{
+				bindEmissiveMaterial(material);
+				currentMaterial = &material;
+			}
+
+			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
+		}
 	}
+}
 
+void Renderer::bindEmissiveMaterial(const Material& material)
+{
+	glUniform3fv(uKe, 1,glm::value_ptr(material.getColor(Material::EMMISIVE_COLOR)));
 }

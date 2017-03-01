@@ -25,7 +25,7 @@ DeferredRenderer::~DeferredRenderer()
 }
 
 DeferredRenderer::DeferredRenderer(DeferredRenderer&& o)
-	: programGeoPass(std::move(o.programGeoPass)), uModelViewProjMatrix(o.uModelViewProjMatrix),
+	: Renderer(std::move(o)), programGeoPass(std::move(o.programGeoPass)), uModelViewProjMatrix(o.uModelViewProjMatrix),
 	uModelViewMatrix(o.uModelViewMatrix), uNormalMatrix(o.uNormalMatrix), fbo(o.fbo),
 	programShadingPass(std::move(o.programShadingPass)), screenVao(o.screenVao), screenVbo(o.screenVbo), uScreenTexture(o.uScreenTexture),
 	programComputePass(std::move(o.programComputePass)), screenTexture(o.screenTexture), uDirectionalLights(o.uDirectionalLights),
@@ -51,6 +51,8 @@ DeferredRenderer::DeferredRenderer(DeferredRenderer&& o)
 
 DeferredRenderer& DeferredRenderer::operator= (DeferredRenderer&& o)
 {
+	Renderer::operator=(std::move(o));
+
 	shaderDirectory = o.shaderDirectory;
 	windowWidth = o.windowWidth;
 	windowHeight = o.windowHeight;

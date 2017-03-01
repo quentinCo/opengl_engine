@@ -78,9 +78,8 @@ public:
 
 	void addParticules(Particule& particule)
 	{
-//		particules.push_back(particule);
-		meshes.push_back(std::move(particule));
-//		pointLights.push_back(static_cast<PointLight>(particule));
+		particules.push_back(std::move(particule));
+//		meshes.push_back(std::move(particule));
 	}
 
 private:

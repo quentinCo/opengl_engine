@@ -1,6 +1,6 @@
 #version 330
 
-in vec3 viewSpacePosition;
+//in vec3 viewSpacePosition;
 
 uniform vec3 uKe;
 

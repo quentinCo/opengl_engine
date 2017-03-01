@@ -10,7 +10,12 @@ namespace qc
 {
 
 class Renderer
-{
+{/*
+	enum MeshRenderType
+	{
+		RENDER_CLASSIC_MESH,
+		RENDER_EMISSIVE_MESH
+	};*/
 
 public:
 	Renderer() {}
@@ -55,9 +60,10 @@ protected:
 	GLint uKsSampler;
 	GLint uShininessSampler;
 
-	glmlv::GLProgram emissivePass;
+	glmlv::GLProgram programEmissivePass;
 	GLint uMVPMatrixEmissivePass;
 	GLint uMVMatrixEmissivePass;
+	GLint uNormalMatrixEmissivePass;
 
 	GLint uKe;
 
@@ -66,7 +72,9 @@ protected:
 	virtual void initEmissivePass();
 	virtual void renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix);
 	virtual void bindMeshMaterial(const Material& material);
-	virtual void renderEmissivePass(const Scene& scene);
+
+	virtual void renderEmissivePass(const Scene& scene, const Camera& camera);
+	virtual void bindEmissiveMaterial(const Material& material);
 	/*
 	template<typename T>
 	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)

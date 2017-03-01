@@ -11,6 +11,8 @@ ForwardPlusRenderer::ForwardPlusRenderer(const glmlv::fs::path& shaderDirectory,
 	//initDepthDebug();
 	initLightCullingPass();
 	initShadingPass();
+
+	initEmissivePass();
 }
 
 ForwardPlusRenderer::~ForwardPlusRenderer()
@@ -20,7 +22,7 @@ ForwardPlusRenderer::~ForwardPlusRenderer()
 }
 
 ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
-	:programDepthPass(std::move(o.programDepthPass)), fboDepth(o.fboDepth), depthMap(o.depthMap), uDepthModelViewProjMatrix(o.uDepthModelViewProjMatrix),
+	:Renderer(std::move(o)), programDepthPass(std::move(o.programDepthPass)), fboDepth(o.fboDepth), depthMap(o.depthMap), uDepthModelViewProjMatrix(o.uDepthModelViewProjMatrix),
 	programLightCullingPass(std::move(o.programLightCullingPass)), nbComputeBlock(o.nbComputeBlock), pointLightsIndex(pointLightsIndex), uPoinLightIndexForShading(o.uPoinLightIndexForShading),
 	uWindowDimForShading(o.uWindowDimForShading),
 	ssboPointLightsIndex(std::move(o.ssboPointLightsIndex)),/* ssboDebug(std::move(o.ssboDebug)), debugLight(o.debugLight), uDebugOutput(o.uDebugOutput), */uPointLightsForCulling(o.uPointLightsForCulling), uPointLightsNumberForCulling(o.uPointLightsNumberForCulling),
@@ -58,6 +60,7 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 
 ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 {
+	Renderer::operator=(std::move(o));
 	shaderDirectory = o.shaderDirectory;
 	windowWidth = o.windowWidth;
 	windowHeight = o.windowHeight;
@@ -140,6 +143,7 @@ void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 	renderLightCullingPass(scene, camera);
 	//renderDepthDebug();
 	renderShadingPass(scene, camera);
+	renderEmissivePass(scene, camera);
 }
 
 void ForwardPlusRenderer::initDepthPass()

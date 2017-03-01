@@ -14,13 +14,15 @@ ForwardRenderer::~ForwardRenderer()
 {}
 
 ForwardRenderer::ForwardRenderer(ForwardRenderer&& o)
-	: programForward(std::move(o.programForward)),uModelViewProjMatrix(o.uModelViewProjMatrix), uModelViewMatrix(o.uModelViewMatrix),
+	: Renderer(std::move(o)), programForward(std::move(o.programForward)),uModelViewProjMatrix(o.uModelViewProjMatrix), uModelViewMatrix(o.uModelViewMatrix),
 	uNormalMatrix(o.uNormalMatrix), uViewMatrix(o.uViewMatrix), uDirectionalLights(o.uDirectionalLights), uDirectionalLightsNumber(o.uDirectionalLightsNumber),
 	uPointLights(o.uPointLights), uPointLightsNumber(o.uPointLightsNumber)
 {}
 
 ForwardRenderer& ForwardRenderer::operator= (ForwardRenderer&& o)
 {
+	Renderer::operator=(std::move(o));
+
 	programForward = std::move(o.programForward);
 
 	uModelViewProjMatrix = o.uModelViewProjMatrix;

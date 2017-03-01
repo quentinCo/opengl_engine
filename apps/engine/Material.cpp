@@ -24,13 +24,13 @@ Material::Material(const Material& o)
 	: shininess(o.shininess)
 {
 	for (size_t i = 0; i < NB_COLOR; ++i)
-		colors[i] = std::move(o.colors[i]);
+		colors[i] = o.colors[i];
 }
 
 Material& Material::operator= (const Material& o)
 {
 	for (size_t i = 0; i < NB_COLOR; ++i)
-		colors[i] = std::move(o.colors[i]);
+		colors[i] = o.colors[i];
 
 	shininess = o.shininess;
 

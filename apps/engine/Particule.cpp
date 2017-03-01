@@ -14,7 +14,7 @@ void Particule::setPosition(const glm::vec4& position)
 
 void Particule::initShape()
 {
-	float radius = 10;
+	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 10;
 	std::vector<glmlv::Vertex3f3f2f> vertices;
 	std::vector<uint32_t> index;
 
@@ -46,7 +46,7 @@ void Particule::initShape()
 	std::vector<Material> materials = { mat };
 	setMaterials(materials);
 
-	ShapeData shapeData = ShapeData(index.size());
+	ShapeData shapeData = ShapeData(index.size(), 0, 0);
 	std::vector<ShapeData> shapes = { shapeData };
 	setShapesData(shapes);
 }
