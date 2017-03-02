@@ -1,12 +1,12 @@
 #version 330
 
+layout(location = 0) out vec3 fEmissive;
+
 //in vec3 viewSpacePosition;
 
 uniform vec3 uKe;
 
-out vec3 fColor;
-
 void main()
 {
-	fColor = uKe;
+	fEmissive = uKe;
 }

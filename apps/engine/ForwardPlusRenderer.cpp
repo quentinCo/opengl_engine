@@ -13,6 +13,8 @@ ForwardPlusRenderer::ForwardPlusRenderer(const glmlv::fs::path& shaderDirectory,
 	initShadingPass();
 
 	initEmissivePass();
+	initBlurPass();
+	initGatherPass();
 }
 
 ForwardPlusRenderer::~ForwardPlusRenderer()
@@ -139,11 +141,13 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 
 void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 {
-	renderDepthPass(scene, camera);
-	renderLightCullingPass(scene, camera);
+//	renderDepthPass(scene, camera);
+//	renderLightCullingPass(scene, camera);
 	//renderDepthDebug();
-	renderShadingPass(scene, camera);
+//	renderShadingPass(scene, camera);
 	renderEmissivePass(scene, camera);
+	postProcessBlurPass(bufferTexEmissivePass);
+	renderGatherPass(bufferBlurredTex);
 }
 
 void ForwardPlusRenderer::initDepthPass()
