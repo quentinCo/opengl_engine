@@ -44,6 +44,13 @@ int Application::run()
 		*/
 		renderer->renderScene(scene, camera);
 
+		/*auto& particules = scene.getParticules();
+		for (auto& particule : particules)
+		{
+			particule.updateOrientation();
+		}*/
+
+
         // GUI code:
 		drawGUI(clearColor);
 
@@ -117,7 +124,7 @@ Application::Application(int argc, char** argv):
 
 	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
 	for(auto& it : pointLights)
-		scene.addParticules(qc::Particule(&it));
+		scene.addParticules(qc::Particule(&camera, &it));
 
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
