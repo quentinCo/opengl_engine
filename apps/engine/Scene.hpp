@@ -43,6 +43,9 @@ public:
 		{return particules;}
 
 	// TODO : delete or not
+	std::vector<Particule>& getParticules()
+		{return particules;}
+	
 	std::vector<PointLight>& getPointLights()
 		{return pointLights;}
 
