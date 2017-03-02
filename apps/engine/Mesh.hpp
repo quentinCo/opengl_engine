@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+
 #include <glmlv/simple_geometry.hpp>
 
 #include "BufferObject.hpp"
@@ -47,12 +49,17 @@ public:
 
 	const std::vector<Material>& getMaterials() const
 		{return materials;}
-	
-	virtual void setPosition(const glm::vec3& position)
-		{modelMatrix = glm::translate(modelMatrix, position);}
 
-	void setRotation(const float angle, const glm::vec3& axis)
+	virtual glm::vec3 getPosition() const
+		{return modelMatrix[3];}
+
+	virtual void setPosition(const glm::vec3& position);
+
+	virtual void setRotation(const float angle, const glm::vec3& axis)
 		{modelMatrix = glm::rotate(modelMatrix, angle, axis);}
+
+	virtual void setScale(const glm::vec3& scale)
+		{modelMatrix = glm::scale(modelMatrix, scale);}
 
 	void setShapesData(const std::vector<ShapeData>& shapesData)
 		{this->shapesData = shapesData;}
