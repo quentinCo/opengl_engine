@@ -25,6 +25,15 @@ public:
 	const glm::vec3& getPosition() const
 		{return position;}
 
+	const glm::vec3& getUpVector() const
+		{return upVector;}
+
+	const glm::vec3& getLeftVector() const
+		{return leftVector;}
+
+	const glm::vec3& getFrontVector() const
+		{return frontVector;}
+
 	void setViewPortSize(const glm::ivec2& viewportSize);
 	void setFovY(float fovy);
 	void setNearPlan(float nearPlan);
