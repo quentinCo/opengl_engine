@@ -27,20 +27,16 @@ void main()
 		{
 			for(int i = 1; i < uFilterSize; ++i)
 			{
-				int indexPlus = int(pixelGlobalPosition.x + i);
-				int indexMinus = int(pixelGlobalPosition.x - i);
-				fColor += texelFetch(uInitTex, ivec2(indexPlus, pixelGlobalPosition.y), 0) * blurFilter[i];				
-				fColor += texelFetch(uInitTex, ivec2(indexMinus, pixelGlobalPosition.y), 0) * blurFilter[i];
+				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x + i, pixelGlobalPosition.y), 0) * blurFilter[i];				
+				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x - i, pixelGlobalPosition.y), 0) * blurFilter[i];
 			}
 		}
 		else if(uDirection == 1)
 		{
 			for(int i = 1; i < uFilterSize; ++i)
 			{
-				int indexPlus = int(pixelGlobalPosition.y + i);
-				int indexMinus = int(pixelGlobalPosition.y - i);
-				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x, indexPlus), 0) * blurFilter[i];
-				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x, indexMinus), 0) * blurFilter[i];
+				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x, pixelGlobalPosition.y + i), 0) * blurFilter[i];
+				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x, pixelGlobalPosition.y - i), 0) * blurFilter[i];
 			}
 		}
 
