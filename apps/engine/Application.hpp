@@ -12,8 +12,6 @@
 #include "Camera.hpp"
 #include "Scene.hpp"
 #include "Renderer.hpp"
-#include "DeferredRenderer.hpp"
-#include "ForwardRenderer.hpp"
 #include "ForwardPlusRenderer.hpp"
 
 class Application
@@ -50,8 +48,6 @@ private:
 	int chosenRenderer = FORWARD_PLUS;
 	int currentRenderer = FORWARD_PLUS;
 
-	qc::DeferredRenderer deferred;
-	qc::ForwardRenderer forward;
 	qc::ForwardPlusRenderer forwardPlus;
     
 	// Some initialisation functions

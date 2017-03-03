@@ -21,35 +21,7 @@ int Application::run()
     {
         const auto seconds = glfwGetTime();
 
-		if (chosenRenderer != currentRenderer)
-		{
-			currentRenderer = chosenRenderer;
-			if (currentRenderer == DEFERRED)
-				renderer = &deferred;
-			else if (currentRenderer == FORWARD)
-				renderer = &forward;
-			else if (currentRenderer == FORWARD_PLUS)
-				renderer = &forwardPlus;
-		}
-		/*
-		glm::vec3 positionCamera = glm::inverse(camera.getViewMatrix())[3];
-		auto& meshes = scene.getMeshes();
-		for (auto& mesh : meshes)
-		{
-			glm::vec3 meshPosition = mesh.getModelMatrix()[3];
-			glm::vec3 normal = glm::vec3(0, 0, -1);
-			float angle = acos(dot((positionCamera - meshPosition), normal) / (normal.length() *  (positionCamera - meshPosition).length()));
-			mesh.setRotation(angle, glm::vec3(0, 0, 1));
-		}
-		*/
 		renderer->renderScene(scene, camera);
-
-		/*auto& particules = scene.getParticules();
-		for (auto& particule : particules)
-		{
-			particule.updateOrientation();
-		}*/
-
 
         // GUI code:
 		drawGUI(clearColor);
@@ -66,14 +38,7 @@ int Application::run()
 		{
 			camera.updateViewController(float(ellapsedTime));
         }
-		/*
-		for (auto& mesh : meshes)
-		{
-			glm::vec3 meshPosition = mesh.getModelMatrix()[3];
-			glm::vec3 normal = glm::vec3(0, 0, -1);
-			float angle = acos(dot((positionCamera - meshPosition), normal) / (normal.length() *  (positionCamera - meshPosition).length()));
-			mesh.setRotation(angle, glm::vec3(0, 0, 1));
-		}*/
+
 		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
 			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
     }
@@ -128,43 +93,8 @@ Application::Application(int argc, char** argv):
 
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
-//---------------------------------
-	/*float radius = 100;
-	std::vector<glmlv::Vertex3f3f2f> vertices;
-	std::vector<uint32_t> index;
-	/*
-	vertices.emplace_back(glm::vec3(0), glm::vec3(0, 0, 1), glm::vec2(0));
-	for (int i = 0; i < 20; ++i)
-	{
-		float x = static_cast<float>(radius * std::cos(i * 2 * M_PI / 10));
-		float y = static_cast<float>(radius * std::sin(i * 2 * M_PI / 10));
-		vertices.emplace_back(glm::vec3(x, y, 0), glm::vec3(0, 0, -1), glm::vec2(-1));
-		if (i > 0) index.push_back(i + 1);
-		index.push_back(0);
-		index.push_back(i + 1);
-	}
-	index.push_back(1);
-	glmlv::SimpleGeometry sp = glmlv::makeSphere(radius);
-	vertices = sp.vertexBuffer;
-	index = sp.indexBuffer;
-	qc::Material mat = qc::Material();
-	mat.setColor(qc::Material::DIFFUSE_COLOR, glm::vec3(1,0,1)); // TODO : change for white ?
-	std::vector<qc::Material> materials;
-	materials.emplace_back(std::move(mat));
 
-	qc::ShapeData shapeData = qc::ShapeData(index.size(),0,0);
-	std::vector<qc::ShapeData> shapes = { shapeData };
-
-	qc::Mesh particuleShape = qc::Mesh(vertices, index, shapes, glm::vec3(-500,2*radius,0));
-	particuleShape.setMaterials(materials);
-	particuleShape.setRotation(90, glm::vec3(0, 1, 0));
-	scene.addObj(particuleShape);
-
-	*/
-//---------------------------------	
 	camera = qc::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
-	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
-	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
 
@@ -182,9 +112,6 @@ void Application::drawGUI(float* clearColor)
 			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
 		}
 
-		ImGui::RadioButton("Deferred", &chosenRenderer, DEFERRED); ImGui::SameLine();
-		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD); ImGui::SameLine();
-		ImGui::RadioButton("Forward Plus", &chosenRenderer, FORWARD_PLUS);
 /*
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
 		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
