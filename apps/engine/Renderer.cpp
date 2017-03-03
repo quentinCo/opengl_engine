@@ -28,8 +28,7 @@ Renderer::Renderer(Renderer&& o)
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
 	uMVMatrixEmissivePass(o.uMVMatrixEmissivePass), uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
-	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur), gaussianFilter(o.gaussianFilter),
-	blurFilter (std::move(o.blurFilter)), uBlurFilter(o.uBlurFilter), uFilterSize (o.uFilterSize),
+	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
 	if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
@@ -97,10 +96,6 @@ Renderer& Renderer::operator=(Renderer&& o)
 	uInitTex = o.uInitTex;
 	uWindowDimBlur = o.uWindowDimBlur;
 	uDirectionBlur = o.uDirectionBlur;
-	gaussianFilter = o.gaussianFilter;
-	blurFilter = std::move(o.blurFilter);
-	uBlurFilter = o.uBlurFilter;
-	uFilterSize = o.uFilterSize;
 
 	programGatherPass = std::move(o.programGatherPass);
 	screenVaoGather = o.screenVaoGather;
@@ -180,13 +175,6 @@ void Renderer::initBlurPass()
 	uInitTex = glGetUniformLocation(programBlurPass.glId(), "uInitTex");
 	uWindowDimBlur = glGetUniformLocation(programBlurPass.glId(), "uWindowDim");
 	uDirectionBlur = glGetUniformLocation(programBlurPass.glId(), "uDirection");
-	
-	computeGaussian(gaussianFilter, 10);
-	blurFilter = BufferObject<float>(gaussianFilter, GL_SHADER_STORAGE_BUFFER);
-	//bindSsbos(gaussianFilter, 2, uBlurFilter, programBlurPass, blurFilter, GL_STREAM_DRAW);
-
-	uBlurFilter = glGetProgramResourceIndex(programBlurPass.glId(), GL_SHADER_STORAGE_BLOCK, "uBlurFilter");
-	uFilterSize = glGetUniformLocation(programBlurPass.glId(), "uFilterSize");
 }
 
 void Renderer::initGatherPass(int nbTexPass)
@@ -344,9 +332,6 @@ void Renderer::postProcessBlurPass(GLuint tex)
 	programBlurPass.use();
 
 	glUniform2fv(uWindowDimBlur, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
-	bindSsbos(gaussianFilter, 2, uBlurFilter, programBlurPass, blurFilter, GL_STREAM_DRAW);
-
-	glUniform1i(uFilterSize, (GLint)gaussianFilter.size());
 
 	glBindImageTexture(0, bufferBlurredTexPass1, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glActiveTexture(GL_TEXTURE0);
@@ -395,10 +380,11 @@ void Renderer::renderGatherPass()
 	}
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
-
+/*
 void Renderer::computeGaussian(std::vector<float>& gaussian, float sigma)
 {
-	gaussian = std::vector<float>(15);
+	gaussian = std::vector<float>(25);
 	for (int i = 0; i < gaussian.size(); ++i)
 			gaussian[i] = static_cast<float>(std::exp(-(i * i) / (2 * sigma * sigma)) / std::sqrt(2 * 3.14 * sigma * sigma));
 }
+*/
