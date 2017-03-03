@@ -47,7 +47,7 @@ void Particule::updateOrientation()
 */
 void Particule::initShape()
 {
-	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 10;
+	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 5;
 
 	glmlv::SimpleGeometry sp = glmlv::makeSphere(10);
 	std::vector<glmlv::Vertex3f3f2f> vertices = sp.vertexBuffer;
