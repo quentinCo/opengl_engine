@@ -5,7 +5,7 @@ layout(rgba32f, binding = 0) uniform image2D imgOutput;
 
 struct Light
 {
-	vec4 position; // vec4 necessary cause std140 gap on vec4. If vec3, memory offset -> bug 
+	vec4 position;
 	vec3 color;
 	float intensity;
 };

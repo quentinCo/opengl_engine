@@ -43,6 +43,9 @@ public:
 
 	virtual void renderScene(const Scene& scene, const Camera& camera) = 0;
 
+	void setTexCompositingLayer(int numLayer, GLuint *tex)
+	{if(numLayer < 10) compositingTextures[numLayer] = tex; }
+
 protected:
 	glmlv::fs::path shaderDirectory;
 	GLsizei windowWidth;
@@ -76,29 +79,35 @@ protected:
 	//  Blur
 	glmlv::GLProgram programBlurPass;
 
+	std::vector<float> gaussianFilter1;
+	std::vector<float> gaussianFilter2;
+	BufferObject<float> blurFilter;
+	GLint uBlurFilter;
+	GLuint uFilterSize;
+
 	GLuint bufferBlurredTexPass1 = 0;
-	GLuint bufferBlurredTex = 0;
 	GLuint uInitTex;
 	GLuint uWindowDimBlur;
 	GLuint uDirectionBlur;
-	//GLuint fboBlur = 0; // No fbo in compute
 
+	//  Particules
+	GLuint bufferParticulesCoreTex = 0;
+	GLuint bufferParticulesCrownTex = 0;
+	
 	// Final Pass
 	glmlv::GLProgram programGatherPass;
 
-	/*GLuint fboGather;
-	std::vector<GLuint> bufferRenderedPass;*/
-
 	GLuint screenVaoGather = 0;
 	GLuint screenVboGather = 0;
-	GLuint uTexScreen = 0;
-
+	GLuint* compositingTextures[10];
+	GLuint uCompositingTextures[10];
 
 	void initOpenGLProperties();
 
 	virtual void initEmissivePass();
+	virtual void initParticulePostProcess();
 	void initBlurPass();
-	void initGatherPass();
+	void initGatherPass(int nbTexPass);
 
 	virtual void renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix);
 	virtual void bindMeshMaterial(const Material& material);
@@ -106,22 +115,23 @@ protected:
 	virtual void renderEmissivePass(const Scene& scene, const Camera& camera);
 	virtual void bindEmissiveMaterial(const Material& material);
 	
-	void postProcessBlurPass(GLuint tex/*, GLuint texRes*/);
+	virtual void postProcessParticulePass(GLuint tex);
+	void postProcessBlurPass(GLuint tex, const std::vector<float>& filter, GLuint resTex);
 	void postProcessDirectionalBlurPass(int direction);
 
-	virtual void renderGatherPass(GLuint tex);
+	virtual void renderGatherPass();
 
-	/*
+	
 	template<typename T>
-	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo)
+	static void bindUbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ubo, GLenum usage)
 	{
 		glUniformBlockBinding(program.glId(), uniform, bindingIndex);
 
 		glBindBuffer(GL_UNIFORM_BUFFER, ubo.getPointer());
-		glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(T), data.data(), GL_STREAM_DRAW);
+		if (usage != GL_STREAM_READ) glBufferData(GL_UNIFORM_BUFFER, data.size() * sizeof(T), data.data(), usage);
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingIndex, ubo.getPointer(), 0, sizeof(T) * data.size());
 	}
-	*/
+	
 	template<typename T>
 	static void bindSsbos(const std::vector<T>& data, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ssbo, GLenum usage)
 	{
@@ -131,6 +141,9 @@ protected:
 		if(usage != GL_STREAM_READ) glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), usage);
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * data.size());
 	}
+
+private:
+	void computeGaussian(std::vector<float>& gaussian, float sigma);
 };
 
 }
