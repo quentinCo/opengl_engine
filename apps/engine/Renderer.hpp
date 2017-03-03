@@ -79,11 +79,6 @@ protected:
 	//  Blur
 	glmlv::GLProgram programBlurPass;
 
-	std::vector<float> gaussianFilter;
-	BufferObject<float> blurFilter;
-	GLint uBlurFilter;
-	GLuint uFilterSize;
-
 	GLuint bufferBlurredTexPass1 = 0;
 	GLuint bufferBlurred = 0;
 	GLuint uInitTex;
@@ -135,9 +130,9 @@ protected:
 		if(usage != GL_STREAM_READ) glBufferData(GL_SHADER_STORAGE_BUFFER, data.size() * sizeof(T), data.data(), usage);
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * data.size());
 	}
-
+/*
 private:
-	void computeGaussian(std::vector<float>& gaussian, float sigma);
+	void computeGaussian(std::vector<float>& gaussian, float sigma);*/
 };
 
 }
