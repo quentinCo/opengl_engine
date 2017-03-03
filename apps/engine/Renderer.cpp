@@ -19,19 +19,18 @@ Renderer::~Renderer()
 	if (fboEmissivePass) glDeleteFramebuffers(1, &fboEmissivePass);
 	if (screenVboGather) glDeleteBuffers(1, &screenVboGather);
 	if (screenVaoGather) glDeleteBuffers(1, &screenVaoGather);
+	if (bufferBlurred) glDeleteTextures(1, &bufferBlurred);
+	if (bufferBlurredTexPass1) glDeleteTextures(1, &bufferBlurred);
 }
 
 Renderer::Renderer(Renderer&& o)
 	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight), fboEmissivePass(o.fboEmissivePass),
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
-	uMVMatrixEmissivePass(o.uMVMatrixEmissivePass), uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), bufferBlurredTexPass1(o.bufferBlurredTexPass1),
-	bufferParticulesCoreTex(o.bufferParticulesCoreTex), bufferParticulesCrownTex(o.bufferParticulesCrownTex),
-	uInitTex (o.uInitTex), uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur), gaussianFilter1(o.gaussianFilter1), gaussianFilter2(o.gaussianFilter2),
+	uMVMatrixEmissivePass(o.uMVMatrixEmissivePass), uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
+	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur), gaussianFilter(o.gaussianFilter),
 	blurFilter (std::move(o.blurFilter)), uBlurFilter(o.uBlurFilter), uFilterSize (o.uFilterSize),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
-	//uNbCompositingTexures(o.uNbCompositingTexures)
-	//uTexScreen (o.uTexScreen)
 {
 	if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
 	bufferTexEmissivePass = o.bufferTexEmissivePass;
@@ -42,6 +41,14 @@ Renderer::Renderer(Renderer&& o)
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
 	textureSampler = o.textureSampler;
 	o.textureSampler = 0;
+
+	if (bufferBlurred) glDeleteTextures(1, &bufferBlurred);
+	bufferBlurred = o.bufferBlurred;
+	o.bufferBlurred = 0;
+
+	if (bufferBlurredTexPass1) glDeleteTextures(1, &bufferBlurredTexPass1);
+	bufferBlurredTexPass1 = o.bufferBlurredTexPass1;
+	o.bufferBlurredTexPass1 = 0;
 
 	for (int i = 0; i < 10; ++i)
 	{
@@ -79,14 +86,18 @@ Renderer& Renderer::operator=(Renderer&& o)
 	uKe = o.uKe;
 
 	programBlurPass = std::move(o.programBlurPass);
+	if (bufferBlurred) glDeleteTextures(1, &bufferBlurred);
+	bufferBlurred = o.bufferBlurred;
+	o.bufferBlurred = 0;
+
+	if (bufferBlurredTexPass1) glDeleteTextures(1, &bufferBlurredTexPass1);
 	bufferBlurredTexPass1 = o.bufferBlurredTexPass1;
-	bufferParticulesCoreTex = o.bufferParticulesCoreTex;
-	bufferParticulesCrownTex = o.bufferParticulesCrownTex;
+	o.bufferBlurredTexPass1 = 0;
+
 	uInitTex = o.uInitTex;
 	uWindowDimBlur = o.uWindowDimBlur;
 	uDirectionBlur = o.uDirectionBlur;
-	gaussianFilter1 = o.gaussianFilter1;
-	gaussianFilter2 = o.gaussianFilter2;
+	gaussianFilter = o.gaussianFilter;
 	blurFilter = std::move(o.blurFilter);
 	uBlurFilter = o.uBlurFilter;
 	uFilterSize = o.uFilterSize;
@@ -100,8 +111,6 @@ Renderer& Renderer::operator=(Renderer&& o)
 		uCompositingTextures[i] = o.uCompositingTextures[i];
 		o.compositingTextures[i] = 0;
 	}
-	//uNbCompositingTexures = o.uNbCompositingTexures;
-	//uTexScreen = o.uTexScreen;
 
 	return *this;
 }
@@ -146,28 +155,6 @@ void Renderer::initEmissivePass()
 	uKe = glGetUniformLocation(programEmissivePass.glId(), "uKe");
 }
 
-void Renderer::initParticulePostProcess()
-{
-	glGenTextures(1, &bufferParticulesCoreTex);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, bufferParticulesCoreTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	glBindImageTexture(0, bufferParticulesCoreTex, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-
-	glGenTextures(1, &bufferParticulesCrownTex);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, bufferParticulesCrownTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	glBindImageTexture(0, bufferParticulesCrownTex, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
 void Renderer::initBlurPass()
 {
 	programBlurPass = glmlv::compileProgram({ shaderDirectory / "postProcess" / "blur.cs.glsl" });
@@ -181,13 +168,23 @@ void Renderer::initBlurPass()
 	glBindImageTexture(0, bufferBlurredTexPass1, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	glGenTextures(1, &bufferBlurred);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, bufferBlurred);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glBindImageTexture(0, bufferBlurred, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
 	uInitTex = glGetUniformLocation(programBlurPass.glId(), "uInitTex");
 	uWindowDimBlur = glGetUniformLocation(programBlurPass.glId(), "uWindowDim");
 	uDirectionBlur = glGetUniformLocation(programBlurPass.glId(), "uDirection");
 	
-	computeGaussian(gaussianFilter1, 25);
-	computeGaussian(gaussianFilter2, 10);
-	blurFilter = BufferObject<float>(gaussianFilter1, GL_SHADER_STORAGE_BUFFER);
+	computeGaussian(gaussianFilter, 10);
+	blurFilter = BufferObject<float>(gaussianFilter, GL_SHADER_STORAGE_BUFFER);
+	//bindSsbos(gaussianFilter, 2, uBlurFilter, programBlurPass, blurFilter, GL_STREAM_DRAW);
+
 	uBlurFilter = glGetProgramResourceIndex(programBlurPass.glId(), GL_SHADER_STORAGE_BLOCK, "uBlurFilter");
 	uFilterSize = glGetUniformLocation(programBlurPass.glId(), "uFilterSize");
 }
@@ -342,21 +339,14 @@ void Renderer::bindEmissiveMaterial(const Material& material)
 	glUniform3fv(uKe, 1,glm::value_ptr(material.getColor(Material::EMMISIVE_COLOR)));
 }
 
-
-void Renderer::postProcessParticulePass(GLuint tex)
-{
-	postProcessBlurPass(tex, gaussianFilter1, bufferParticulesCrownTex);
-	postProcessBlurPass(tex, gaussianFilter2, bufferParticulesCoreTex);
-}
-
-void Renderer::postProcessBlurPass(GLuint tex, const std::vector<float>& filter, GLuint resTex)
+void Renderer::postProcessBlurPass(GLuint tex)
 {
 	programBlurPass.use();
 
 	glUniform2fv(uWindowDimBlur, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
-	bindSsbos(filter, 2, uBlurFilter, programBlurPass, blurFilter, GL_STREAM_DRAW);
+	bindSsbos(gaussianFilter, 2, uBlurFilter, programBlurPass, blurFilter, GL_STREAM_DRAW);
 
-	glUniform1i(uFilterSize, (GLint)filter.size());
+	glUniform1i(uFilterSize, (GLint)gaussianFilter.size());
 
 	glBindImageTexture(0, bufferBlurredTexPass1, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glActiveTexture(GL_TEXTURE0);
@@ -364,7 +354,7 @@ void Renderer::postProcessBlurPass(GLuint tex, const std::vector<float>& filter,
 	glUniform1i(uInitTex, 0);
 	postProcessDirectionalBlurPass(0); // TODO enum;
 
-	glBindImageTexture(0, resTex, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+	glBindImageTexture(0, bufferBlurred, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glBindTexture(GL_TEXTURE_2D, bufferBlurredTexPass1);
 
 	postProcessDirectionalBlurPass(1);
@@ -394,19 +384,21 @@ void Renderer::renderGatherPass()
 
 	for (int i = 0; i < 10; ++i)
 	{
+		glActiveTexture(GL_TEXTURE0 + i);
+
 		if (compositingTextures[i] != nullptr)
-		{
-			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_2D, *compositingTextures[i]);
-			glUniform1i(uCompositingTextures[i], i);
-		}
+		else
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+		glUniform1i(uCompositingTextures[i], i);
 	}
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 void Renderer::computeGaussian(std::vector<float>& gaussian, float sigma)
 {
-	gaussian = std::vector<float>(20);
+	gaussian = std::vector<float>(15);
 	for (int i = 0; i < gaussian.size(); ++i)
 			gaussian[i] = static_cast<float>(std::exp(-(i * i) / (2 * sigma * sigma)) / std::sqrt(2 * 3.14 * sigma * sigma));
 }

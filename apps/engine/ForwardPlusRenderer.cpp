@@ -13,7 +13,6 @@ ForwardPlusRenderer::ForwardPlusRenderer(const glmlv::fs::path& shaderDirectory,
 	initShadingPass();
 
 	initEmissivePass();
-	initParticulePostProcess();
 	initBlurPass();
 	initGatherPass(2);
 }
@@ -147,10 +146,9 @@ void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 	//renderDepthDebug();
 //	renderShadingPass(scene, camera);
 	renderEmissivePass(scene, camera);
-//	setTexCompositingLayer(0, &bufferTexEmissivePass); // TODO: move it in a function.
-	postProcessParticulePass(bufferTexEmissivePass);
-//	setTexCompositingLayer(0, &bufferParticulesCrownTex); // TODO: move it in a function.
-	setTexCompositingLayer(1, &bufferParticulesCoreTex); // TODO: move it in a function.
+	postProcessBlurPass(bufferTexEmissivePass);
+	setTexCompositingLayer(0, &bufferBlurred); // TODO: move it in a function.
+//	setTexCompositingLayer(0, &bufferTexEmissivePass);
 	renderGatherPass();
 }
 

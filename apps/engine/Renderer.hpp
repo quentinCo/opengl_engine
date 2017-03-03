@@ -79,20 +79,16 @@ protected:
 	//  Blur
 	glmlv::GLProgram programBlurPass;
 
-	std::vector<float> gaussianFilter1;
-	std::vector<float> gaussianFilter2;
+	std::vector<float> gaussianFilter;
 	BufferObject<float> blurFilter;
 	GLint uBlurFilter;
 	GLuint uFilterSize;
 
 	GLuint bufferBlurredTexPass1 = 0;
+	GLuint bufferBlurred = 0;
 	GLuint uInitTex;
 	GLuint uWindowDimBlur;
 	GLuint uDirectionBlur;
-
-	//  Particules
-	GLuint bufferParticulesCoreTex = 0;
-	GLuint bufferParticulesCrownTex = 0;
 	
 	// Final Pass
 	glmlv::GLProgram programGatherPass;
@@ -105,7 +101,6 @@ protected:
 	void initOpenGLProperties();
 
 	virtual void initEmissivePass();
-	virtual void initParticulePostProcess();
 	void initBlurPass();
 	void initGatherPass(int nbTexPass);
 
@@ -115,8 +110,7 @@ protected:
 	virtual void renderEmissivePass(const Scene& scene, const Camera& camera);
 	virtual void bindEmissiveMaterial(const Material& material);
 	
-	virtual void postProcessParticulePass(GLuint tex);
-	void postProcessBlurPass(GLuint tex, const std::vector<float>& filter, GLuint resTex);
+	void postProcessBlurPass(GLuint tex);
 	void postProcessDirectionalBlurPass(int direction);
 
 	virtual void renderGatherPass();

@@ -27,8 +27,8 @@ void main()
 		{
 			for(int i = 1; i < uFilterSize; ++i)
 			{
-				int indexPlus = int(max(0, pixelGlobalPosition.x + i));
-				int indexMinus = int(min(uWindowDim.x - 1, pixelGlobalPosition.x + i));
+				int indexPlus = int(pixelGlobalPosition.x + i);
+				int indexMinus = int(pixelGlobalPosition.x - i);
 				fColor += texelFetch(uInitTex, ivec2(indexPlus, pixelGlobalPosition.y), 0) * blurFilter[i];				
 				fColor += texelFetch(uInitTex, ivec2(indexMinus, pixelGlobalPosition.y), 0) * blurFilter[i];
 			}
@@ -37,8 +37,8 @@ void main()
 		{
 			for(int i = 1; i < uFilterSize; ++i)
 			{
-				int indexPlus = int(max(0, pixelGlobalPosition.y + i));
-				int indexMinus = int(min(uWindowDim.y - 1, pixelGlobalPosition.y + i));
+				int indexPlus = int(pixelGlobalPosition.y + i);
+				int indexMinus = int(pixelGlobalPosition.y - i);
 				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x, indexPlus), 0) * blurFilter[i];
 				fColor += texelFetch(uInitTex, ivec2(pixelGlobalPosition.x, indexMinus), 0) * blurFilter[i];
 			}
