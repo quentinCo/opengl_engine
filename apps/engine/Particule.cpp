@@ -22,7 +22,7 @@ void Particule::setPosition(const glm::vec4& position)
 
 void Particule::initShape()
 {
-	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 5;
+	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 1;
 
 	// TODO : change for Billboard Particules
 	// init shape and buffers
