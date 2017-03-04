@@ -68,6 +68,14 @@ public:
 	*/
 	void computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatrix, glm::mat4& mvpMatrix, glm::mat4& normalMatrix) const;
 
+
+	//-- COMPUTE MODEL VIEW PROJ MATRIX -----------------------
+	/*
+		Compute : Model View Matrix for a specific model.
+	*/
+	void computeMVPMatrix(const glm::mat4& modelMatrix, glm::mat4& mvpMatrix) const
+		{mvpMatrix = projMatrix * viewMatrix * modelMatrix;}
+
 private:
 	//-- Pointer to the window for the event gestion
 	GLFWwindow* window;

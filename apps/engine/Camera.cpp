@@ -72,7 +72,6 @@ void Camera::computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatr
 	normalMatrix = glm::transpose(glm::inverse(mvMatrix));
 }
 
-
 //-- COMPUTE DIRECTIONS VECTOR ---------
 
 void Camera::computeDirectionsVector()
