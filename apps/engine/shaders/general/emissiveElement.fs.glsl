@@ -7,7 +7,7 @@ uniform sampler2D uDepthMap;
 
 void main()
 {
-	if(gl_FragCoord.z <= texture(uDepthMap, gl_FragCoord.xy).x)
+	if(gl_FragCoord.z < texture(uDepthMap, gl_FragCoord.xy).x)
 		fEmissive = uKe;
 	else
 		fEmissive = vec3(0);

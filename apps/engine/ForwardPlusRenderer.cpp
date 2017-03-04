@@ -209,7 +209,7 @@ void ForwardPlusRenderer::initLightCullingPass()
 {
 	programLightCullingPass = glmlv::compileProgram({ shaderDirectory / "forwardPlus" / "forwardPlusPointLightCulling.cs.glsl"});
 
-	nbComputeBlock = glm::vec3((GLuint)ceil(windowWidth / 32.f), (GLuint)ceil(windowHeight / 32.f), 1);
+	nbComputeBlock = glm::vec3((GLuint)ceil(windowWidth / 16.f), (GLuint)ceil(windowHeight / 16.f), 1);
 
 	pointLightsIndex = std::vector<int>(static_cast<int>(nbComputeBlock.x * nbComputeBlock.y * 200)); // TODO : find a better solution.
 	ssboPointLightsIndex = BufferObject<int>(pointLightsIndex, GL_SHADER_STORAGE_BUFFER);
@@ -459,9 +459,4 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	setTexCompositingLayer(0, &(shadingRenderedTexture[0]));
-	/*
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, fboShadingPass);
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);*/
 }

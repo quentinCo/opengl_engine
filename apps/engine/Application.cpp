@@ -36,7 +36,7 @@ Application::Application(int argc, char** argv):
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
 	/* Create Point Lights for Particules */
-	/*std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
 	for (size_t i = 0; i < 3500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
@@ -52,14 +52,14 @@ Application::Application(int argc, char** argv):
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
-	}*/
-
+	}
+	/*
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
 	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
-
+	*/
 	/* Link Particules and Point Lights */
 	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
 	for(auto& it : pointLights)

@@ -1,7 +1,7 @@
 #version 430
 
 #define MAX_LIGHTS 200
-#define TILE_SIZE 32
+#define TILE_SIZE 16
 
 layout(location = 0) out vec3 fColor;
 
@@ -64,15 +64,9 @@ vec3 computeFragColor()
 {
     vec3 position = vViewSpacePosition;
 
-
-	//ATTENTION-----------------------------------------------------------------------------------------------
 	vec3 ka = uKa * vec3(texture(uKaSampler, vTexCoords));
     vec3 kd = uKd * vec3(texture(uKdSampler, vTexCoords));
     vec3 ks = uKs * vec3(texture(uKsSampler, vTexCoords));
-	//ATTENTION-----------------------------------------------------------------------------------------------
-	//vec3 ka = uKa;
-    //vec3 kd = uKd;
-    //vec3 ks = uKs;
 
     float shininess = uShininess * vec3(texture(uShininessSampler, vTexCoords)).x;
 
@@ -92,12 +86,10 @@ vec3 computeFragColor()
 		lightIntensity = directionalLights[i].color * directionalLights[i].intensity;
 		diffuseDirectionalLightIntensity += lightIntensity * max(0.f, dot(normal, lightCoords));
 
-		hLight = normalize(eyeDir + lightCoords);
-		dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, hLight)); 
+		dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, normalize(eyeDir + lightCoords))); 
 		if (shininess != 1.f && shininess != 0.f)
-		{
 			dothLight = pow(dothLight, shininess);
-		}
+
 		specularDirectionalLightIntensity += lightIntensity * dothLight;
 	}	
 
@@ -125,12 +117,10 @@ vec3 computeFragColor()
 		dirToPointLight = (lightCoords - position) / distToPointLight;
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
-		hLight = normalize(eyeDir + dirToPointLight);
-		dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, hLight));
+		dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, normalize(eyeDir + dirToPointLight)));
 		if (shininess != 1.f && shininess != 0.f)
-		{
 			dothLight = pow(dothLight, shininess);
-		}
+
 		specularPointLightIntensity += lightIntensity * dothLight;
 	}
 
@@ -142,18 +132,18 @@ vec3 computeFragColor()
 	//{
 	//	fColor = vec3(0.5);
 	//}
-	//if(count > 50)
-	//{
-	//	fColor += vec3(0.5, 0, 0);
-	//}
-	//else if(count > 25)
-	//{
-	//	fColor += vec3(0, 0.5, 0);
-	//}
-	//else if(count > 10)
-	//{
-	//	fColor += vec3(0, 0, 0.5);
-	//}
+	if(count > 50)
+	{
+		fColor += vec3(0.5, 0, 0);
+	}
+	else if(count > 25)
+	{
+		fColor += vec3(0, 0.5, 0);
+	}
+	else if(count > 10)
+	{
+		fColor += vec3(0, 0, 0.5);
+	}
 
 	return fColor;
 }

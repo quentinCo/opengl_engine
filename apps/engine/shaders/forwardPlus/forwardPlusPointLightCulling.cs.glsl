@@ -1,7 +1,7 @@
 #version 430
 
 #define MAX_LIGHTS 200
-#define TILE_SIZE 32 //16
+#define TILE_SIZE 16 //16
 
 layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE, local_size_z = 1) in;
 
@@ -48,7 +48,6 @@ shared uint depthMinInt;
 shared uint depthMaxInt;
 shared float depthMinFloat;
 shared float depthMaxFloat;
-//shared float nearPlan;
 
 //shared int debugIndex;
 
@@ -97,21 +96,9 @@ void initFrustum(vec2 pixelGlobalPosition, vec2 pixelLocalPosition, vec2 tilePos
 	depthMaxFloat = (2 * uintBitsToFloat(depthMaxInt) - 1);
 	depthMinFloat = clipSpaceToViewSpace(vec4(0, 0, depthMinFloat, 1)).z;
 	depthMaxFloat = clipSpaceToViewSpace(vec4(0, 0, depthMaxFloat, 1)).z;
-	//nearPlan = clipSpaceToViewSpace(vec4(0, 0, 0, 1)).z; // if transparence
 		
 	frustumPlanes[4] = vec4(0, 0, -1, depthMinFloat);
 	frustumPlanes[5] = vec4(0, 0, 1, depthMaxFloat);
-
-	//for(int i = 0; i < 4; ++i)
-	//{
-	//	frustumPlanes[i] = uViewProjMatrix * frustumPlanes[i];
-	//	frustumPlanes[i] /= length(frustumPlanes[i].xyz);
-	//}
-	//for(int i = 4; i < 6; ++i)
-	//{
-	//	frustumPlanes[i] = uViewMatrix * frustumPlanes[i];
-	//	frustumPlanes[i] /= length(frustumPlanes[i].xyz);
-	//}
 }
 
 void lightCulling(int threadIndex)

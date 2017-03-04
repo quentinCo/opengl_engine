@@ -292,8 +292,10 @@ void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera, cons
 	programEmissivePass.use();
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboEmissivePass);
-	glClear(GL_COLOR_BUFFER_BIT);
-
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	/*glDepthMask(GL_FALSE);
+	glStencilFunc(GL_LESS, 60, *depthMap);
+	*/
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, *depthMap);
 	glUniform1i(uDepthMapForEmissive, 0);
