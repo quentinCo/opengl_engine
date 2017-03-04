@@ -28,7 +28,7 @@ Renderer::Renderer(Renderer&& o)
 	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight), fboEmissivePass(o.fboEmissivePass),
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
-	uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
+	uKe(o.uKe), uDepthMapForEmissive(o.uDepthMapForEmissive), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
 	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
@@ -83,6 +83,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	programEmissivePass = std::move(o.programEmissivePass);
 	uMVPMatrixEmissivePass = o.uMVPMatrixEmissivePass;
 	uKe = o.uKe;
+	uDepthMapForEmissive = o.uDepthMapForEmissive;
 
 	programBlurPass = std::move(o.programBlurPass);
 	if (bufferBlurred) glDeleteTextures(1, &bufferBlurred);
@@ -151,6 +152,7 @@ void Renderer::initEmissivePass()
 	uMVPMatrixEmissivePass = glGetUniformLocation(programEmissivePass.glId(), "uModelViewProjMatrix");
 
 	uKe = glGetUniformLocation(programEmissivePass.glId(), "uKe");
+	uDepthMapForEmissive = glGetUniformLocation(programEmissivePass.glId(), "uDepthMap");
 }
 
 
@@ -285,12 +287,16 @@ void Renderer::bindMeshMaterial(const Material& material)
 
 //-- RENDER EMISSIVE PASS --------------
 
-void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
+void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera, const GLuint* depthMap)
 {
 	programEmissivePass.use();
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboEmissivePass);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, *depthMap);
+	glUniform1i(uDepthMapForEmissive, 0);
 
 	const auto& particules = scene.getParticules();
 

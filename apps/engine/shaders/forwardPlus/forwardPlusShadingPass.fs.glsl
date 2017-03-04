@@ -3,6 +3,8 @@
 #define MAX_LIGHTS 200
 #define TILE_SIZE 32
 
+layout(location = 0) out vec3 fColor;
+
 struct Light
 {
 	vec4 position; // vec4 necessary cause std140 gap on vec4. If vec3, memory offset -> bug 
@@ -57,8 +59,6 @@ uniform sampler2D uKaSampler;
 uniform sampler2D uKdSampler;
 uniform sampler2D uKsSampler;
 uniform sampler2D uShininessSampler;
-
-out vec3 fColor;
 
 vec3 computeFragColor()
 {

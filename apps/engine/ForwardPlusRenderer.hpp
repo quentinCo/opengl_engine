@@ -75,6 +75,9 @@ private:
 	//---- Shading Pass Program
 	glmlv::GLProgram programShadingPass; // TODO: change name
 
+	GLuint fboShadingPass = 0;
+	GLuint shadingRenderedTexture[2];
+
 	//---- Matrix
 	GLint uModelViewProjMatrixForShading;
 	GLint uModelViewMatrixForShading;

@@ -21,6 +21,8 @@ ForwardPlusRenderer::~ForwardPlusRenderer()
 {
 	if (fboDepth) glDeleteFramebuffers(1, &fboDepth);
 	if (depthMap) glDeleteSamplers(1, &depthMap);
+	if (fboShadingPass) glDeleteFramebuffers(1, &fboShadingPass);
+	if (shadingRenderedTexture) glDeleteSamplers(2, shadingRenderedTexture);
 }
 
 ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
@@ -59,6 +61,16 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	o.programLightCullingPass = glmlv::GLProgram();
 
 	o.programShadingPass = glmlv::GLProgram();
+
+	if (fboShadingPass) glDeleteFramebuffers(1, &fboShadingPass);
+	fboShadingPass = o.fboShadingPass;
+	o.fboShadingPass = 0;
+
+	if (shadingRenderedTexture) glDeleteSamplers(2, shadingRenderedTexture);
+	shadingRenderedTexture[0] = o.shadingRenderedTexture[0];
+	shadingRenderedTexture[1] = o.shadingRenderedTexture[1];
+	o.shadingRenderedTexture[0] = 0;
+	o.shadingRenderedTexture[1] = 0;
 }
 
 ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
@@ -115,6 +127,16 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 
 	programShadingPass = std::move(o.programShadingPass);
 	o.programShadingPass = glmlv::GLProgram();
+
+	if (fboShadingPass) glDeleteFramebuffers(1, &fboShadingPass);
+	fboShadingPass = o.fboShadingPass;
+	o.fboShadingPass = 0;
+
+	if (shadingRenderedTexture) glDeleteSamplers(2, shadingRenderedTexture);
+	shadingRenderedTexture[0] = o.shadingRenderedTexture[0];
+	shadingRenderedTexture[1] = o.shadingRenderedTexture[1];
+	o.shadingRenderedTexture[0] = 0;
+	o.shadingRenderedTexture[1] = 0;
 
 	uModelViewProjMatrixForShading = o.uModelViewProjMatrixForShading;
 	uModelViewMatrixForShading = o.uModelViewMatrixForShading;
@@ -215,6 +237,27 @@ void ForwardPlusRenderer::initShadingPass()
 {
 	programShadingPass = glmlv::compileProgram({ shaderDirectory / "general" / "geometryPass.vs.glsl" , shaderDirectory / "forwardPlus" / "forwardPlusShadingPass.fs.glsl" });
 
+	glGenTextures(2, shadingRenderedTexture);
+	glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[0]);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, windowWidth, windowHeight);
+	glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[1]);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32F, windowWidth, windowHeight);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glGenFramebuffers(1, &fboShadingPass);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboShadingPass);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadingRenderedTexture[0], 0);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadingRenderedTexture[1], 0);	
+
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, drawBuffers);
+
+	GLenum res = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+	if (res != GL_FRAMEBUFFER_COMPLETE)
+		std::cerr << "Error check shading frame buffer : " << res << std::endl;
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
 	glGenSamplers(1, &textureSampler);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glSamplerParameteri(textureSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -268,18 +311,22 @@ void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& came
 {
 	if ((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
 	{
-		renderEmissivePass(scene, camera);
+		renderEmissivePass(scene, camera, &(shadingRenderedTexture[1]));
+		setTexCompositingLayer(1, &bufferTexEmissivePass);
 		if ((renderPostProcess & RENDER_BLUR) == RENDER_BLUR)
 		{
 			postProcessBlurPass(bufferTexEmissivePass);
-			setTexCompositingLayer(0, &bufferBlurred);
+			setTexCompositingLayer(2, &bufferBlurred);
 		}
 		else
-			setTexCompositingLayer(0, &bufferTexEmissivePass);
+			setTexCompositingLayer(2, 0);
 	}
 	else
-		setTexCompositingLayer(0, 0);
-
+	{
+		setTexCompositingLayer(1, 0);
+		setTexCompositingLayer(2, 0);
+	}
+		
 	renderGatherPass();	
 }
 
@@ -377,6 +424,8 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 {
 	programShadingPass.use();
 
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboShadingPass);
+	glViewport(0, 0, windowWidth, windowHeight);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glUniformMatrix4fv(uViewMatrixForShading, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
@@ -406,4 +455,13 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	const auto& meshes = scene.getMeshes();
 	for (const auto& mesh : meshes)
 		renderMesh(mesh, camera, uModelViewProjMatrixForShading, uModelViewMatrixForShading, uNormalMatrixForShading);
+
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	setTexCompositingLayer(0, &(shadingRenderedTexture[0]));
+	/*
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fboShadingPass);
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);*/
 }

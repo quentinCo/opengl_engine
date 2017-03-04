@@ -33,7 +33,7 @@ Application::Application(int argc, char** argv):
 	meshes[1].setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
+	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
 	/* Create Point Lights for Particules */
 	/*std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
