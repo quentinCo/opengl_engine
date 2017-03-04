@@ -43,6 +43,9 @@ public:
 	Material(Material&& o);
 	Material& operator= (Material&& o);
 
+
+	//-- GETTERS ---------------------------
+	
 	const glm::vec3& getColor(const MATERIALS_COLOR& color) const
 		{return colors[color];}
 
@@ -51,6 +54,9 @@ public:
 
 	GLuint getMap(const MATERIALS_TEXTURE& map) const
 		{return textures[map];}
+	
+	
+	//-- SETTERS --------------------------
 	
 	void setColor(const MATERIALS_COLOR& color, const glm::vec3& value)
 	{
@@ -64,12 +70,16 @@ public:
 	void setMap(const MATERIALS_TEXTURE& map, const glmlv::Image2DRGBA& tex);
 
 private:
+	//-- material colors
 	glm::vec3 colors[NB_COLOR];
+
 	float shininess;
+	
+	//-- material textures
 	GLuint textures[NB_TEXTURE];
 
+	//-- GENERATE TEXTURES -----------------
 	static void generateTexture(GLuint& texture, const glmlv::Image2DRGBA& tex);
-
 };
 
-} // namespace qc
+} //! namespace qc

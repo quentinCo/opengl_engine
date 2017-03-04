@@ -14,10 +14,10 @@ public:
 		this->computeAttenuationCoeff();
 	}
 
-	const float getRadiusAttenuation() const
-	{
-		return radiusAttenuation;
-	}
+	//-- GETTER ----------------------------
+
+	float getRadiusAttenuation() const
+		{return radiusAttenuation;}
 
 	/*TODO : delete after test*/
 	float& getRadiusAttenuation()
@@ -27,21 +27,17 @@ public:
 	}
 
 	float& getConstantAttenuation()
-	{
-		return constantAttenuation;
-	}
+		{return constantAttenuation;}
 
 	float& getLinearAttenuation()
-	{
-		return linearAttenuation;
-	}
+		{return linearAttenuation;}
 
 	float& getQuadraticAttenuation()
-	{
-		return quadraticAttenuation;
-	}
+		{return quadraticAttenuation;}
 	/* ---------------------- */
-
+	
+	//-- SETTERS --------------------------
+	
 	void setRadiusAttenuation(float radius)
 	{
 		radiusAttenuation = radius;
@@ -54,6 +50,10 @@ private:
 	float linearAttenuation = 1;
 	float quadraticAttenuation = 1;
 
+	//-- COMPUTE ATTENUATION COEFF-----------------
+	/*
+		Compute the attenuations coefficient according to the radius
+	*/
 	void computeAttenuationCoeff()
 	{
 		constantAttenuation = 1;
@@ -62,4 +62,4 @@ private:
 	}
 
 };
-}
+}//! namespace qc

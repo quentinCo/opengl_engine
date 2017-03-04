@@ -9,24 +9,23 @@ namespace qc
 
 template <typename T>
 
+//! NOT COPYABLE CLASS
 class ArrayObject
 {
 
 public:
+	//-- Alias 
 	using VBO = const BufferObject<T>&;
 	using IBO = const BufferObject<uint32_t>&;
+
 
 	ArrayObject() {}
 
 	ArrayObject(VBO vbo, IBO ibo)
-	{
-		initArrayObject(vbo, ibo);
-	}
+		{initArrayObject(vbo, ibo);}
 
 	~ArrayObject()
-	{
-		if (pointer) glDeleteBuffers(1, &pointer);
-	}
+		{if (pointer) glDeleteBuffers(1, &pointer);}
 
 	ArrayObject(const ArrayObject<T>& o) = delete;
 	ArrayObject<T>& operator= (const ArrayObject<T>& o) = delete;
@@ -46,12 +45,18 @@ public:
 		return *this;
 	}
 
+	//-- GETTERS ----------------------------
 	GLuint getPointer() const
 		{return pointer;}
 
 private:
+	//-- Pointer to the buffer (vao) 
 	GLuint pointer;
 
+	//-- INIT ARRAY OBJECT ------------------
+	/*
+		Initialition of the array object
+	*/
 	void initArrayObject(VBO vbo, IBO ibo)
 	{
 		glGenVertexArrays(1, &pointer);
@@ -79,4 +84,4 @@ private:
 	}
 };
 
-}
+} // namespace qc

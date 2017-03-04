@@ -110,6 +110,8 @@ Renderer& Renderer::operator=(Renderer&& o)
 	return *this;
 }
 
+//-- INIT OPENGL PROPERTIES ------------
+
 void Renderer::initOpenGLProperties()
 {
 	glEnable(GL_DEPTH_TEST);
@@ -119,6 +121,9 @@ void Renderer::initOpenGLProperties()
 	glCullFace(GL_FRONT);
 	glFrontFace(GL_CW);
 }
+
+
+//-- INIT EMISSIVE PASS ----------------
 
 void Renderer::initEmissivePass() 
 {
@@ -150,6 +155,9 @@ void Renderer::initEmissivePass()
 	uKe = glGetUniformLocation(programEmissivePass.glId(), "uKe");
 }
 
+
+//-- INIT BLUR PASS -----------------
+
 void Renderer::initBlurPass()
 {
 	programBlurPass = glmlv::compileProgram({ shaderDirectory / "postProcess" / "blur.cs.glsl" });
@@ -176,6 +184,9 @@ void Renderer::initBlurPass()
 	uWindowDimBlur = glGetUniformLocation(programBlurPass.glId(), "uWindowDim");
 	uDirectionBlur = glGetUniformLocation(programBlurPass.glId(), "uDirection");
 }
+
+
+//-- INIT GATHER PASS ------------------
 
 void Renderer::initGatherPass(int nbTexPass)
 {
@@ -212,12 +223,11 @@ void Renderer::initGatherPass(int nbTexPass)
 	uCompositingTextures[7] = glGetUniformLocation(programGatherPass.glId(), "uLayer7");
 	uCompositingTextures[8] = glGetUniformLocation(programGatherPass.glId(), "uLayer8");
 	uCompositingTextures[9] = glGetUniformLocation(programGatherPass.glId(), "uLayer9");
-
-//	uNbCompositingTexures = glGetUniformLocation(programGatherPass.glId(), "uNbCompositingTextures");
-//	uTexScreen = glGetUniformLocation(programGatherPass.glId(), "uScreenTexture");
 }
 
-//void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix, MeshRenderType meshRenderType)
+
+//-- RENDER MESH -----------------------
+
 void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix)
 {
 	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
@@ -260,6 +270,9 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMat
 		glBindSampler(i, 0);
 }
 
+
+//-- BIND MESH MATERIAL -------------------
+
 void Renderer::bindMeshMaterial(const Material& material)
 {
 	glUniform3fv(uKa, 1, glm::value_ptr(material.getColor(Material::AMBIENT_COLOR)));
@@ -277,6 +290,9 @@ void Renderer::bindMeshMaterial(const Material& material)
 	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
 }
 
+
+//-- RENDER EMISSIVE PASS --------------
+
 void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
 {
 	programEmissivePass.use();
@@ -287,32 +303,7 @@ void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
 	const auto& particules = scene.getParticules();
 
 	for (const auto& particule : particules)
-	{
-		glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
-		camera.computeModelsMatrix(particule.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
-
-		glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
-		glUniformMatrix4fv(uMVMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvMatrix));
-		
-		const auto& materials = particule.getMaterials();
-		const auto& shapes = particule.getShapesData();
-		const auto& defaultMaterial = Mesh::defaultMaterial;
-		const Material* currentMaterial = nullptr;
-
-		glBindVertexArray(particule.getVao().getPointer());
-
-		for (const auto& shape : shapes)
-		{
-			const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
-			if (currentMaterial != &material)
-			{
-				bindEmissiveMaterial(material);
-				currentMaterial = &material;
-			}
-
-			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
-		}
-	}
+		renderEmissiveMesh(particule, camera);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
@@ -322,10 +313,47 @@ void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);*/
 }
 
+
+//-- RENDER EMISSIVE MESH --------------
+
+void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
+{
+	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
+	camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
+
+	glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
+	glUniformMatrix4fv(uMVMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvMatrix));
+
+	const auto& materials = mesh.getMaterials();
+	const auto& shapes = mesh.getShapesData();
+	const auto& defaultMaterial = Mesh::defaultMaterial;
+	const Material* currentMaterial = nullptr;
+
+	glBindVertexArray(mesh.getVao().getPointer());
+
+	for (const auto& shape : shapes)
+	{
+		const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
+		if (currentMaterial != &material)
+		{
+			bindEmissiveMaterial(material);
+			currentMaterial = &material;
+		}
+
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
+	}
+}
+
+
+//-- BIND EMISSIVE MATERIAL ------------
+
 void Renderer::bindEmissiveMaterial(const Material& material)
 {
 	glUniform3fv(uKe, 1,glm::value_ptr(material.getColor(Material::EMMISIVE_COLOR)));
 }
+
+
+//-- POST PROCESS BLUR PASS ------------
 
 void Renderer::postProcessBlurPass(GLuint tex)
 {
@@ -345,6 +373,9 @@ void Renderer::postProcessBlurPass(GLuint tex)
 	postProcessDirectionalBlurPass(1);
 }
 
+
+//-- POST PROCESS DIRECTION BLUR PASS -
+
 void Renderer::postProcessDirectionalBlurPass(int direction)
 {
 	glUniform1i(uDirectionBlur, direction);
@@ -353,6 +384,9 @@ void Renderer::postProcessDirectionalBlurPass(int direction)
 	GLenum err = glGetError();
 	assert(err == GL_NO_ERROR);
 }
+
+
+//-- RENDER GATHER PASS ------------
 
 void Renderer::renderGatherPass()
 {
@@ -380,11 +414,3 @@ void Renderer::renderGatherPass()
 	}
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
-/*
-void Renderer::computeGaussian(std::vector<float>& gaussian, float sigma)
-{
-	gaussian = std::vector<float>(15);
-	for (int i = 0; i < gaussian.size(); ++i)
-			gaussian[i] = static_cast<float>(std::exp(-(i * i) / (2 * sigma * sigma)) / std::sqrt(2 * 3.14 * sigma * sigma));
-}
-*/

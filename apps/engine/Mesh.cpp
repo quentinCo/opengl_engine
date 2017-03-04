@@ -11,11 +11,17 @@ Mesh::Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<u
 	initBuffers(vertices, indices);
 }
 
+
+//-- SETTER ----------------------------
+
 void Mesh::setPosition(const glm::vec3& position)
 {
 	glm::vec3 delta = position - glm::vec3(modelMatrix[3]);
 	modelMatrix = glm::translate(modelMatrix, delta);
 }
+
+
+//-- INIT BUFFERS ----------------------
 
 void Mesh::initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices)
 {

@@ -9,6 +9,8 @@
 
 using namespace qc;
 
+//-- SETTER ---------------------------
+
 void Scene::setSsboDirectionalLights()
 {
 	std::vector<Light> directionalPointLights;
@@ -17,6 +19,9 @@ void Scene::setSsboDirectionalLights()
 
 	ssboDirectionalLights = BufferObject<Light>(directionalPointLights, GL_SHADER_STORAGE_BUFFER); // TODO : revoir
 }
+
+
+//-- ADD OBJ ---------------------------
 
 void Scene::addObj(const glmlv::fs::path& pathfile)
 {

@@ -11,35 +11,25 @@ class Particule : public Mesh
 {
 
 public:
-	Particule(Camera* camera, PointLight* pointLight = nullptr)
-		:Mesh(), camera(camera), pointLight(pointLight)
-	{
-		assert(camera);
-		initShape();
-	}
-	/*
-	Particule(const Particule& o)
-		:Mesh(), pointLight(o.pointLight)
+	Particule(PointLight* pointLight = nullptr)
+		:Mesh(), pointLight(pointLight)
 	{initShape();}
 
-	Particule& operator= (const Particule& o);
-	*/
 	Particule(Particule&& o) = default;
 	Particule& operator= (Particule&& o) = default;
+	
+	//-- SETTERS ---------------------------
 
 	virtual void setPosition(const glm::vec4& position);
-	virtual void setRotation(const float angle, const glm::vec3& axis);
 
-	//void updateOrientation();
-	
 private:
+	//-- pointer to a pointlight if lighted particule
 	PointLight* pointLight;
-	Camera* camera;
-
-	glm::vec3 upVector = glm::vec3(0, 1, 0);
-	glm::vec3 leftVector = glm::vec3(1, 0, 0);
-	glm::vec3 normal = glm::vec3(0, 0, -1);
-
+	
+	//-- INIT SHAPE ------------------------
+	/*
+		Init the vbo, ibo, vao, shape and material for the particule
+	*/
 	void initShape();
 	
 };

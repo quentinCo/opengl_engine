@@ -26,12 +26,14 @@ public:
 	Scene(Scene&& o) = default;
 	Scene& operator= (Scene&& o) = default;
 
+
+	//-- GETTERS ---------------------------
+
 	const std::vector<Mesh>& getMeshes() const
 		{return meshes;}
 
 	std::vector<Mesh>& getMeshes()
 		{return meshes;}
-
 
 	const std::vector<PointLight>& getPointLights() const
 		{return pointLights;}
@@ -62,28 +64,39 @@ public:
 	const BufferObject<Light>& getSsboDirectionalLights() const
 		{return ssboDirectionalLights;}
 
+
+	//-- SETTERS ---------------------------
+
 	void setSsboPointLights()
 		{ssboPointLights = BufferObject<PointLight>(pointLights, GL_SHADER_STORAGE_BUFFER);}
 
 	void setSsboDirectionalLights();
 
+
+	//-- ADD OBJ ---------------------------
+	/*
+		Load and add an obj to the scene
+	*/
 	void addObj(const glmlv::fs::path& pathfile );
 	void addObj(Mesh& mesh)
 	{
 		meshes.push_back(std::move(mesh));
 	}
 
+
+	//-- ADD POINT LIGHT -------------------
 	void addPointLight(const PointLight& light)
 		{pointLights.push_back(light);}
 
+
+	//-- ADD DIRECTIONAL LIGHT -------------
 	void addDirectionalLight(const DirectionalLight& light)
 		{directionalLights.push_back(light);}
 
+
+	//-- ADD PARTICULES --------------------
 	void addParticules(Particule& particule)
-	{
-		particules.push_back(std::move(particule));
-//		meshes.push_back(std::move(particule));
-	}
+		{particules.push_back(std::move(particule));}
 
 private:
 	std::vector<Mesh> meshes;
@@ -99,4 +112,4 @@ private:
 
 };
 
-}
+}//! namespace qc

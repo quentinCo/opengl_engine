@@ -2,6 +2,9 @@
 
 using namespace qc;
 
+
+//-- COMPUTE DIRECTION -----------------
+
 glm::vec4 DirectionalLight::computeDirection(float phi, float theta)
 {
 	float phiRadian = glm::radians(phi);

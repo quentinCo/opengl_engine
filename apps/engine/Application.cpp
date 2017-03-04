@@ -13,38 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 
-int Application::run()
-{
-    float clearColor[3] = { 0, 0, 0 };
-    // Loop until the user closes the window
-    for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
-    {
-        const auto seconds = glfwGetTime();
-
-		renderer->renderScene(scene, camera);
-
-        // GUI code:
-		drawGUI(clearColor);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-
-        /* Swap front and back buffers*/
-        m_GLFWHandle.swapBuffers();
-
-        auto ellapsedTime = glfwGetTime() - seconds;
-        auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
-        if (!guiHasFocus)
-		{
-			camera.updateViewController(float(ellapsedTime));
-        }
-
-		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
-			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
-    }
-
-    return 0;
-}
+/*-------------------- APPLICATION  CONSTRUCTOR ----------------------------------*/
 
 Application::Application(int argc, char** argv):
     m_AppPath { glmlv::fs::path{ argv[0] } },
@@ -53,16 +22,20 @@ Application::Application(int argc, char** argv):
     m_ShadersRootPath { m_AppPath.parent_path() / "shaders" },
     m_AssetsRootPath { m_AppPath.parent_path() / "assets" }
 {
-    ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
+    ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str();
 
+	/* Loading obj in main scene */
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
+	/* Move Maya mesh */
 	std::vector<qc::Mesh>& meshes = scene.getMeshes();
 	meshes[1].setPosition(glm::vec3(500, 100, 0));
 
+	/* Create Lights */
 	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 1.f));
-	//scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), 0.2f));
+	
+	/* Create Point Lights for Particules */
 	/*std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
 	for (size_t i = 0; i < 3500; ++i) // 3500
 	{
@@ -87,13 +60,16 @@ Application::Application(int argc, char** argv):
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
 	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
 
+	/* Link Particules and Point Lights */
 	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
 	for(auto& it : pointLights)
-		scene.addParticules(qc::Particule(&camera, &it));
+		scene.addParticules(qc::Particule(&it));
 
+	/* Set scene lights ssbo */
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
 
+	/* Init camera and renderer */
 	camera = qc::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
@@ -101,7 +77,49 @@ Application::Application(int argc, char** argv):
     std::cout << "End INIT" << std::endl;
 }
 
-void Application::drawGUI(float* clearColor)
+
+/*-------------------------------  RUN  ------------------------------------------*/
+
+int Application::run()
+{
+	float clearColor[3] = { 0, 0, 0 };
+
+	for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
+	{
+		const auto seconds = glfwGetTime();
+
+		/* Render Scene */
+		renderer->render(scene, camera);
+
+		/* Poll for and process events */
+		glfwPollEvents();
+
+		/* Render GUI */
+		renderGUI(clearColor);
+
+		/* Swap front and back buffers */
+		m_GLFWHandle.swapBuffers();
+
+		/* Update camera */
+		auto ellapsedTime = glfwGetTime() - seconds;
+		auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+		if (!guiHasFocus)
+		{
+			camera.updateViewController(float(ellapsedTime));
+		}
+
+		/* Event "key escape" - Quite */
+		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
+			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
+	}
+
+	return 0;
+}
+
+
+/*---------------------------  RENDER GUI  ---------------------------------------*/
+
+void Application::renderGUI(float* clearColor)
 {
 	ImGui_ImplGlfwGL3_NewFrame();
 	{

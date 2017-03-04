@@ -13,6 +13,9 @@ public:
 		this->setPosition(this->computeDirection(phi, theta));
 	}
 
+
+	//-- GETTERS ----------------------------
+
 	float getPhiAngle() const
 		{return phiAngle;}
 
@@ -30,6 +33,9 @@ public:
 		{return thetaAngle;}
 	/* ---------------------- */
 
+
+	//-- SETTERS ---------------------------
+
 	void setPhiAngle(float phi)
 	{
 		phiAngle = phi;
@@ -46,9 +52,14 @@ public:
 		{this->setPosition(this->computeDirection(phi, theta));}
 
 private:
+	//-- Orientation angles
 	float phiAngle;
 	float thetaAngle;
 
+	//-- COMPUTE DIRECTION -----------------
+	/*
+		Compute the directionnal light vector according to phi and theta.
+	*/
 	static glm::vec4 computeDirection(float phi, float theta);
 };
-}
+}//! namespace qc

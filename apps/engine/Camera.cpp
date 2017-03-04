@@ -18,6 +18,9 @@ Camera::Camera(glmlv::GLFWHandle& glfwHandle, glm::vec3& position, glm::vec3& fr
 	viewMatrix = glm::lookAt(position, position + frontVector, upVector);
 }
 
+
+//-- SETTERS -----------------------------
+
 void Camera::setViewPortSize(const glm::ivec2& viewportSize)
 {
 	this->viewportSize = viewportSize;
@@ -29,6 +32,7 @@ void Camera::setFovY(float fovy)
 	fovY = fovy;
 	computeProjMatrix();
 }
+
 void Camera::setNearPlan(float nearPlan)
 {
 	this->nearPlan = nearPlan;
@@ -40,6 +44,9 @@ void Camera::setFarPlan(float farPlan)
 	this->farPlan = farPlan;
 	computeProjMatrix();
 }
+
+
+//-- UPDATE VIEW CONTROLLER ------------
 
 void Camera::updateViewController(float time)
 {
@@ -55,6 +62,9 @@ void Camera::updateViewController(float time)
 		viewMatrix = glm::lookAt(position, position + frontVector, upVector);
 }
 
+
+//-- COMPUTE MODELS MATRIX --------------
+
 void Camera::computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatrix, glm::mat4& mvpMatrix, glm::mat4& normalMatrix) const
 {
 	mvMatrix = viewMatrix * modelMatrix;
@@ -62,12 +72,18 @@ void Camera::computeModelsMatrix(const glm::mat4& modelMatrix, glm::mat4& mvMatr
 	normalMatrix = glm::transpose(glm::inverse(mvMatrix));
 }
 
+
+//-- COMPUTE DIRECTIONS VECTOR ---------
+
 void Camera::computeDirectionsVector()
 {
 	frontVector = glm::vec3(std::cos(theta)*std::sin(phi), std::sin(theta), std::cos(theta)*std::cos(phi));
 	leftVector = glm::vec3(std::sin(phi + M_PI * 0.5), 0, std::cos(phi + M_PI * 0.5));
 	upVector = glm::cross(frontVector, leftVector);
 }
+
+
+//-- MOVING -----------------------------
 
 bool Camera::moving(float time)
 {
@@ -95,6 +111,9 @@ bool Camera::moving(float time)
 	}
 	return false;
 }
+
+
+//-- ROTATION ----------------------------
 
 bool Camera::rotation(float time)
 {
