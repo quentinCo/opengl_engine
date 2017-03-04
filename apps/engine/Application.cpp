@@ -130,7 +130,48 @@ void Application::renderGUI(float* clearColor)
 			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
 		}
 
-/*
+		std::string titleButton = "";
+
+		if (ImGui::Button("Render All Post Process Pass"))
+		{
+			postProcessPass = RenderPostProcessPass::RENDER_ALL;
+			renderer->setRenderPostProcess(postProcessPass);
+		}
+
+		if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+			titleButton = "Dont Render Emissive";
+		else
+			titleButton = "Render Emissive";
+
+		if (ImGui::Button(titleButton.c_str()))
+		{
+			if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+				postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass & ~(RenderPostProcessPass::RENDER_EMISSIVE | RenderPostProcessPass::RENDER_BLUR));
+			else
+				postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass | RenderPostProcessPass::RENDER_EMISSIVE);
+
+			renderer->setRenderPostProcess(postProcessPass);
+		}
+
+		if ((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+			titleButton = "Dont Render Blur";
+		else
+			titleButton = "Render Blur";
+
+		if (ImGui::Button(titleButton.c_str()))
+		{
+			if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+			{
+				if ((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+					postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass & ~RenderPostProcessPass::RENDER_BLUR);
+				else
+					postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass | RenderPostProcessPass::RENDER_BLUR);
+			}
+
+			renderer->setRenderPostProcess(postProcessPass);
+		}
+
+/*		
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
 		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
 		ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();

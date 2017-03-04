@@ -17,6 +17,7 @@
 class Application
 {
 public:
+	using RenderPostProcessPass = qc::Renderer::RenderPostProcessPass;
 
     Application(int argc, char** argv);
 
@@ -48,6 +49,7 @@ private:
 	//-- Renderers 
 	qc::Renderer* renderer = nullptr;
 	qc::ForwardPlusRenderer forwardPlus;
+	RenderPostProcessPass postProcessPass = RenderPostProcessPass::RENDER_ALL;
     
 
 	//-- RENDER GUI ----------------------

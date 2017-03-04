@@ -12,6 +12,14 @@ namespace qc
 class Renderer
 {
 public:
+	enum RenderPostProcessPass
+	{
+		DONT_RENDER = 0x00,
+		RENDER_EMISSIVE = 0x01,
+		RENDER_BLUR = 0x02,
+		RENDER_ALL = 0xFF
+	};
+
 	Renderer() {}
 	Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight);
 	~Renderer();
@@ -40,6 +48,9 @@ public:
 	void setTexCompositingLayer(int numLayer, GLuint *tex)
 		{if(numLayer < 10) compositingTextures[numLayer] = tex; }
 
+	void setRenderPostProcess(RenderPostProcessPass pass)
+		{renderPostProcess = pass;}
+
 	//-- RENDER ---------------------------
 	/*
 		Render a scene.
@@ -52,10 +63,14 @@ public:
 	{
 		prePassRendering(scene, camera);
 		renderScene(scene, camera);
-		postProcessPass(scene, camera);
+	
+		/*if(renderPostProcess != DONT_RENDER)
+			postProcessPass(scene, camera);*/
 	}
 
 protected:
+	RenderPostProcessPass renderPostProcess = RENDER_ALL;
+
 	//-- Path to the shader directory
 	glmlv::fs::path shaderDirectory;
 
@@ -86,8 +101,6 @@ protected:
 
 	//---- Matrix
 	GLint uMVPMatrixEmissivePass;
-	GLint uMVMatrixEmissivePass;
-	GLint uNormalMatrixEmissivePass;
 	
 	//-- Post Process Variables
 	//---- Blur Process Varibales
@@ -113,8 +126,8 @@ protected:
 	GLuint screenVboGather = 0;
 
 	//---- Textures to gather
-	GLuint* compositingTextures[10];
-	GLuint uCompositingTextures[10];
+	GLuint* compositingTextures[4];
+	GLuint uCompositingTextures[4];
 
 
 	//-- INIT OPENGL PROPERTIES ------------

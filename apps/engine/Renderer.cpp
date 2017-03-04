@@ -6,6 +6,7 @@
 
 using namespace qc;
 
+
 Renderer::Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)
 	: shaderDirectory(shaderDirectory), windowWidth(static_cast<GLsizei>(windowWidth)), windowHeight(static_cast<GLsizei>(windowHeight))
 {
@@ -27,7 +28,7 @@ Renderer::Renderer(Renderer&& o)
 	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight), fboEmissivePass(o.fboEmissivePass),
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
-	uMVMatrixEmissivePass(o.uMVMatrixEmissivePass), uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
+	uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
 	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
@@ -49,7 +50,7 @@ Renderer::Renderer(Renderer&& o)
 	bufferBlurredTexPass1 = o.bufferBlurredTexPass1;
 	o.bufferBlurredTexPass1 = 0;
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		compositingTextures[i] = o.compositingTextures[i];
 		uCompositingTextures[i] = o.uCompositingTextures[i];
@@ -81,7 +82,6 @@ Renderer& Renderer::operator=(Renderer&& o)
 
 	programEmissivePass = std::move(o.programEmissivePass);
 	uMVPMatrixEmissivePass = o.uMVPMatrixEmissivePass;
-	uMVMatrixEmissivePass = o.uMVMatrixEmissivePass;
 	uKe = o.uKe;
 
 	programBlurPass = std::move(o.programBlurPass);
@@ -100,7 +100,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	programGatherPass = std::move(o.programGatherPass);
 	screenVaoGather = o.screenVaoGather;
 	screenVboGather = o.screenVboGather;
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		compositingTextures[i] = o.compositingTextures[i];
 		uCompositingTextures[i] = o.uCompositingTextures[i];
@@ -149,8 +149,6 @@ void Renderer::initEmissivePass()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 	uMVPMatrixEmissivePass = glGetUniformLocation(programEmissivePass.glId(), "uModelViewProjMatrix");
-	uMVMatrixEmissivePass = glGetUniformLocation(programEmissivePass.glId(), "uModelViewMatrix");
-	uNormalMatrixEmissivePass = -1; // TODO
 
 	uKe = glGetUniformLocation(programEmissivePass.glId(), "uKe");
 }
@@ -217,12 +215,6 @@ void Renderer::initGatherPass(int nbTexPass)
 	uCompositingTextures[1] = glGetUniformLocation(programGatherPass.glId(), "uLayer1");
 	uCompositingTextures[2] = glGetUniformLocation(programGatherPass.glId(), "uLayer2");
 	uCompositingTextures[3] = glGetUniformLocation(programGatherPass.glId(), "uLayer3");
-	uCompositingTextures[4] = glGetUniformLocation(programGatherPass.glId(), "uLayer4");
-	uCompositingTextures[5] = glGetUniformLocation(programGatherPass.glId(), "uLayer5");
-	uCompositingTextures[6] = glGetUniformLocation(programGatherPass.glId(), "uLayer6");
-	uCompositingTextures[7] = glGetUniformLocation(programGatherPass.glId(), "uLayer7");
-	uCompositingTextures[8] = glGetUniformLocation(programGatherPass.glId(), "uLayer8");
-	uCompositingTextures[9] = glGetUniformLocation(programGatherPass.glId(), "uLayer9");
 }
 
 
@@ -306,11 +298,6 @@ void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
 		renderEmissiveMesh(particule, camera);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-	/*glBindFramebuffer(GL_READ_FRAMEBUFFER, fboEmissivePass);
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, windowWidth, windowHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);*/
 }
 
 
@@ -318,11 +305,10 @@ void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera)
 
 void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
 {
-	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
-	camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
+	glm::mat4 mvpMatrix;
+	camera.computeMVPMatrix(mesh.getModelMatrix(), mvpMatrix);
 
 	glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
-	glUniformMatrix4fv(uMVMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvMatrix));
 
 	const auto& materials = mesh.getMaterials();
 	const auto& shapes = mesh.getShapesData();
@@ -395,22 +381,20 @@ void Renderer::renderGatherPass()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindVertexArray(screenVaoGather);
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
-		glActiveTexture(GL_TEXTURE0 + i);
-
 		if (compositingTextures[i] != nullptr)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_2D, *compositingTextures[i]);
-		else
-			glBindTexture(GL_TEXTURE_2D, 0);
-
-		glUniform1i(uCompositingTextures[i], i);
+			glUniform1i(uCompositingTextures[i], i);
+		}
 	}
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }

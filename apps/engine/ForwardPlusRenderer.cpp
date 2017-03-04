@@ -128,15 +128,6 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 	uPointLights = o.uPointLights;
 	uPointLightsNumber = o.uPointLightsNumber;
 
-	uKa = o.uKa;
-	uKd = o.uKd;
-	uKs = o.uKs;
-	uShininess = o.uShininess;
-	uKaSampler = o.uKaSampler;
-	uKdSampler = o.uKdSampler;
-	uKsSampler = o.uKsSampler;
-	uShininessSampler = o.uShininessSampler;
-
 	return *this;
 }
 
@@ -259,8 +250,8 @@ void ForwardPlusRenderer::initShadingPass()
 //-- RENDER DEPTH PASS ------------------
 void ForwardPlusRenderer::prePassRendering(const Scene& scene, const Camera& camera)
 {
-	//renderDepthPass(scene, camera);
-	//	renderLightCullingPass(scene, camera);
+	renderDepthPass(scene, camera);
+	renderLightCullingPass(scene, camera);
 	//renderDepthDebug();
 }
 
@@ -275,11 +266,21 @@ void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 //-- RENDER DEPTH PASS ------------------
 void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& camera)
 {
-	renderEmissivePass(scene, camera);
-	postProcessBlurPass(bufferTexEmissivePass);
-	setTexCompositingLayer(0, &bufferBlurred); // TODO: move it in a function.
-//	setTexCompositingLayer(0, &bufferTexEmissivePass);
-	renderGatherPass();
+	if ((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
+	{
+		renderEmissivePass(scene, camera);
+		if ((renderPostProcess & RENDER_BLUR) == RENDER_BLUR)
+		{
+			postProcessBlurPass(bufferTexEmissivePass);
+			setTexCompositingLayer(0, &bufferBlurred);
+		}
+		else
+			setTexCompositingLayer(0, &bufferTexEmissivePass);
+	}
+	else
+		setTexCompositingLayer(0, 0);
+
+	renderGatherPass();	
 }
 
 
