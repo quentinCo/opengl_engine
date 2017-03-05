@@ -33,11 +33,11 @@ Application::Application(int argc, char** argv):
 	meshes[1].setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
+	//scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
 	/* Create Point Lights for Particules */
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 500; ++i) // 3500
+	for (size_t i = 0; i < 1500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;
