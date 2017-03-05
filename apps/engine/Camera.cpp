@@ -99,9 +99,9 @@ bool Camera::moving(float time)
 		translation -= speedMove * time * leftVector;
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE))
-		translation += speedMove * time * upVector;
+		translation += speedMove * time * glm::vec3(0, 1, 0);
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-		translation -= speedMove * time * upVector;
+		translation -= speedMove * time * glm::vec3(0, 1, 0);
 
 	if (translation != glm::vec3(0))
 	{
