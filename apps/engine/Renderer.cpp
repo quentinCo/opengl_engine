@@ -16,8 +16,8 @@ Renderer::Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, s
 Renderer::~Renderer()
 {
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
-	if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
-	if (fboEmissivePass) glDeleteFramebuffers(1, &fboEmissivePass);
+/*	if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
+	if (fboEmissivePass) glDeleteFramebuffers(1, &fboEmissivePass);*/
 	if (screenVboGather) glDeleteBuffers(1, &screenVboGather);
 	if (screenVaoGather) glDeleteBuffers(1, &screenVaoGather);
 	if (bufferBlurred) glDeleteTextures(1, &bufferBlurred);
@@ -25,18 +25,18 @@ Renderer::~Renderer()
 }
 
 Renderer::Renderer(Renderer&& o)
-	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight), fboEmissivePass(o.fboEmissivePass),
+	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight), /*fboEmissivePass(o.fboEmissivePass),*/
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
-	uKe(o.uKe), uDepthMapForEmissive(o.uDepthMapForEmissive), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
+	uKe(o.uKe), /*uDepthMapForEmissive(o.uDepthMapForEmissive),*/ programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
 	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
-	if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
+	/*if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
 	bufferTexEmissivePass = o.bufferTexEmissivePass;
 	o.bufferTexEmissivePass = 0;
 
-	o.fboEmissivePass = 0;
+	o.fboEmissivePass = 0;*/
 
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
 	textureSampler = o.textureSampler;
@@ -60,12 +60,12 @@ Renderer::Renderer(Renderer&& o)
 
 Renderer& Renderer::operator=(Renderer&& o)
 {
-	if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
+	/*if (bufferTexEmissivePass) glDeleteTextures(1, &bufferTexEmissivePass);
 	bufferTexEmissivePass = o.bufferTexEmissivePass;
 	o.bufferTexEmissivePass = 0;
 
 	fboEmissivePass = o.fboEmissivePass;
-	o.fboEmissivePass = 0;
+	o.fboEmissivePass = 0;*/
 
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
 	textureSampler = o.textureSampler;
@@ -83,7 +83,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	programEmissivePass = std::move(o.programEmissivePass);
 	uMVPMatrixEmissivePass = o.uMVPMatrixEmissivePass;
 	uKe = o.uKe;
-	uDepthMapForEmissive = o.uDepthMapForEmissive;
+	//uDepthMapForEmissive = o.uDepthMapForEmissive;
 
 	programBlurPass = std::move(o.programBlurPass);
 	if (bufferBlurred) glDeleteTextures(1, &bufferBlurred);
@@ -131,7 +131,7 @@ void Renderer::initEmissivePass()
 	programEmissivePass = glmlv::compileProgram({ shaderDirectory / "general" / "emissiveElement.vs.glsl" , shaderDirectory / "general" / "emissiveElement.fs.glsl" });
 
 	// TODO : create class -> FrameBuffer(size, textures, depth = true);
-	glGenTextures(1, &bufferTexEmissivePass);
+	/*glGenTextures(1, &bufferTexEmissivePass);
 	glBindTexture(GL_TEXTURE_2D, bufferTexEmissivePass);
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, windowWidth, windowHeight);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -147,12 +147,12 @@ void Renderer::initEmissivePass()
 	if (res != GL_FRAMEBUFFER_COMPLETE)
 		std::cerr << "Error check emissive frame buffer : " << res << std::endl;
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);*/
 
 	uMVPMatrixEmissivePass = glGetUniformLocation(programEmissivePass.glId(), "uModelViewProjMatrix");
 
 	uKe = glGetUniformLocation(programEmissivePass.glId(), "uKe");
-	uDepthMapForEmissive = glGetUniformLocation(programEmissivePass.glId(), "uDepthMap");
+	//uDepthMapForEmissive = glGetUniformLocation(programEmissivePass.glId(), "uDepthMap");
 }
 
 
@@ -287,25 +287,23 @@ void Renderer::bindMeshMaterial(const Material& material)
 
 //-- RENDER EMISSIVE PASS --------------
 
-void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera, const GLuint* depthMap)
+void Renderer::renderEmissivePass(const Scene& scene, const Camera& camera/*, const GLuint* depthMap*/)
 {
 	programEmissivePass.use();
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboEmissivePass);
+	/*glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboEmissivePass);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	/*glDepthMask(GL_FALSE);
-	glStencilFunc(GL_LESS, 60, *depthMap);
-	*/
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, *depthMap);
-	glUniform1i(uDepthMapForEmissive, 0);
+	glUniform1i(uDepthMapForEmissive, 0);*/
 
 	const auto& particules = scene.getParticules();
 
 	for (const auto& particule : particules)
 		renderEmissiveMesh(particule, camera);
 
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 

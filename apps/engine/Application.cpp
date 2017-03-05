@@ -37,7 +37,7 @@ Application::Application(int argc, char** argv):
 	
 	/* Create Point Lights for Particules */
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 3500; ++i) // 3500
+	for (size_t i = 0; i < 500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;

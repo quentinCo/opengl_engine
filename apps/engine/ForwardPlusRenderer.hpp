@@ -7,7 +7,14 @@ namespace qc
 //! NOT COPYABLE CLASS 
 class ForwardPlusRenderer : public Renderer
 {
-	
+	enum ShadingTexture
+	{
+		SCENE_TEXTURE = 0,
+		EMISSIVE_TEXTURE,
+		DEPTH_TEXTURE,
+		NB_TEXTURE
+	};
+
 public:
 	ForwardPlusRenderer() {}
 	ForwardPlusRenderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight);
@@ -76,7 +83,7 @@ private:
 	glmlv::GLProgram programShadingPass; // TODO: change name
 
 	GLuint fboShadingPass = 0;
-	GLuint shadingRenderedTexture[2];
+	GLuint shadingRenderedTexture[NB_TEXTURE];
 
 	//---- Matrix
 	GLint uModelViewProjMatrixForShading;

@@ -66,11 +66,12 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 	fboShadingPass = o.fboShadingPass;
 	o.fboShadingPass = 0;
 
-	if (shadingRenderedTexture) glDeleteSamplers(2, shadingRenderedTexture);
-	shadingRenderedTexture[0] = o.shadingRenderedTexture[0];
-	shadingRenderedTexture[1] = o.shadingRenderedTexture[1];
-	o.shadingRenderedTexture[0] = 0;
-	o.shadingRenderedTexture[1] = 0;
+	if (shadingRenderedTexture) glDeleteSamplers(NB_TEXTURE, shadingRenderedTexture);
+	for (int i = 0; i < NB_TEXTURE; ++i)
+	{
+		shadingRenderedTexture[i] = o.shadingRenderedTexture[i];
+		o.shadingRenderedTexture[i] = 0;
+	}
 }
 
 ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
@@ -132,11 +133,12 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 	fboShadingPass = o.fboShadingPass;
 	o.fboShadingPass = 0;
 
-	if (shadingRenderedTexture) glDeleteSamplers(2, shadingRenderedTexture);
-	shadingRenderedTexture[0] = o.shadingRenderedTexture[0];
-	shadingRenderedTexture[1] = o.shadingRenderedTexture[1];
-	o.shadingRenderedTexture[0] = 0;
-	o.shadingRenderedTexture[1] = 0;
+	if (shadingRenderedTexture) glDeleteSamplers(NB_TEXTURE, shadingRenderedTexture);
+	for (int i = 0; i < NB_TEXTURE; ++i)
+	{
+		shadingRenderedTexture[i] = o.shadingRenderedTexture[i];
+		o.shadingRenderedTexture[i] = 0;
+	}
 
 	uModelViewProjMatrixForShading = o.uModelViewProjMatrixForShading;
 	uModelViewMatrixForShading = o.uModelViewMatrixForShading;
@@ -237,20 +239,26 @@ void ForwardPlusRenderer::initShadingPass()
 {
 	programShadingPass = glmlv::compileProgram({ shaderDirectory / "general" / "geometryPass.vs.glsl" , shaderDirectory / "forwardPlus" / "forwardPlusShadingPass.fs.glsl" });
 
-	glGenTextures(2, shadingRenderedTexture);
-	glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[0]);
-	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, windowWidth, windowHeight);
-	glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[1]);
+	glGenTextures(NB_TEXTURE, shadingRenderedTexture);
+	for (int i = 0; i < DEPTH_TEXTURE; ++i)
+	{
+		glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[i]);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, windowWidth, windowHeight);
+	}
+
+	glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[DEPTH_TEXTURE]);
 	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32F, windowWidth, windowHeight);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glGenFramebuffers(1, &fboShadingPass);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboShadingPass);
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, shadingRenderedTexture[0], 0);
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadingRenderedTexture[1], 0);	
+	for(int i = 0; i < DEPTH_TEXTURE; ++i)
+		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, shadingRenderedTexture[i], 0);
+	
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadingRenderedTexture[DEPTH_TEXTURE], 0);	
 
-	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, drawBuffers);
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(2, drawBuffers);
 
 	GLenum res = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
 	if (res != GL_FRAMEBUFFER_COMPLETE)
@@ -309,23 +317,23 @@ void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 //-- RENDER DEPTH PASS ------------------
 void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& camera)
 {
-	if ((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
-	{
-		renderEmissivePass(scene, camera, &(shadingRenderedTexture[1]));
-		setTexCompositingLayer(1, &bufferTexEmissivePass);
+/*	if ((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
+	{*/
+//		renderEmissivePass(scene, camera, &(shadingRenderedTexture[1]));
+//		setTexCompositingLayer(1, &bufferTexEmissivePass);
 		if ((renderPostProcess & RENDER_BLUR) == RENDER_BLUR)
 		{
-			postProcessBlurPass(bufferTexEmissivePass);
+			postProcessBlurPass(shadingRenderedTexture[EMISSIVE_TEXTURE]);
 			setTexCompositingLayer(2, &bufferBlurred);
 		}
 		else
 			setTexCompositingLayer(2, 0);
-	}
+/*	}
 	else
 	{
 		setTexCompositingLayer(1, 0);
 		setTexCompositingLayer(2, 0);
-	}
+	}*/
 		
 	renderGatherPass();	
 }
@@ -456,7 +464,9 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	for (const auto& mesh : meshes)
 		renderMesh(mesh, camera, uModelViewProjMatrixForShading, uModelViewMatrixForShading, uNormalMatrixForShading);
 
+	renderEmissivePass(scene, camera);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	setTexCompositingLayer(0, &(shadingRenderedTexture[0]));
+	setTexCompositingLayer(0, &(shadingRenderedTexture[SCENE_TEXTURE]));
+	setTexCompositingLayer(1, &(shadingRenderedTexture[EMISSIVE_TEXTURE]));
 }

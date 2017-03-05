@@ -4,6 +4,7 @@
 #define TILE_SIZE 16
 
 layout(location = 0) out vec3 fColor;
+layout(location = 1) out vec3 fEmissive;
 
 struct Light
 {
@@ -53,6 +54,7 @@ uniform vec2 uWindowDim;
 uniform vec3 uKa;
 uniform vec3 uKd;
 uniform vec3 uKs;
+//uniform vec3 uKe;
 uniform float uShininess;
 
 uniform sampler2D uKaSampler;
@@ -149,5 +151,8 @@ vec3 computeFragColor()
 }
 void main()
 {
-	fColor = computeFragColor();
+	//if(uKe != vec3(0))
+		fColor = computeFragColor();
+	//else
+		fEmissive = vec3(0);//uKe;
 }
