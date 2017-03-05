@@ -48,7 +48,7 @@ Application::Application(int argc, char** argv):
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
 		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
-		float radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
+		float radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));

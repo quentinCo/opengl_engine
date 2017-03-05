@@ -95,11 +95,6 @@ protected:
 	//---- Emissive Pass Program
 	glmlv::GLProgram programEmissivePass;
 
-	//---- Texture of emissive rendering
-	/*GLuint bufferTexEmissivePass = 0;
-	GLuint fboEmissivePass = 0;
-	GLuint uDepthMapForEmissive;*/
-
 	//---- Matrix
 	GLint uMVPMatrixEmissivePass;
 	
@@ -165,7 +160,7 @@ protected:
 	/*
 		Render emissive mesh it's a simplified renderMesh.
 	*/
-	virtual void renderEmissivePass(const Scene& scene, const Camera& camera/*, const GLuint* depthMap*/);
+	virtual void renderParticules(const Scene& scene, const Camera& camera);
 
 	//-- RENDER EMISSIVE MESH ---------------
 	virtual void renderEmissiveMesh(const Mesh& mesh, const Camera& camera);

@@ -54,7 +54,6 @@ uniform vec2 uWindowDim;
 uniform vec3 uKa;
 uniform vec3 uKd;
 uniform vec3 uKs;
-//uniform vec3 uKe;
 uniform float uShininess;
 
 uniform sampler2D uKaSampler;
@@ -97,7 +96,7 @@ vec3 computeFragColor()
 
 
 	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
-	int count = 0;
+	//int count = 0;
 
 	vec3 diffusePointLightIntensity = vec3(0);
 	vec3 specularPointLightIntensity = vec3(0);
@@ -108,7 +107,7 @@ vec3 computeFragColor()
 	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
 	{
 		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
-		count++;
+		//count++;
 
 		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
 		distToPointLight = length(lightCoords - position);
@@ -130,29 +129,24 @@ vec3 computeFragColor()
 //    fColor += ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
-	//if(mod(int(gl_FragCoord.x), 32) == 0 || mod(int(gl_FragCoord.y), 32) == 0)
+	
+	//if(count > 50)
 	//{
-	//	fColor = vec3(0.5);
+	//	fColor += vec3(0.5, 0, 0);
 	//}
-	if(count > 50)
-	{
-		fColor += vec3(0.5, 0, 0);
-	}
-	else if(count > 25)
-	{
-		fColor += vec3(0, 0.5, 0);
-	}
-	else if(count > 10)
-	{
-		fColor += vec3(0, 0, 0.5);
-	}
+	//else if(count > 25)
+	//{
+	//	fColor += vec3(0, 0.5, 0);
+	//}
+	//else if(count > 10)
+	//{
+	//	fColor += vec3(0, 0, 0.5);
+	//}
 
 	return fColor;
 }
 void main()
 {
-	//if(uKe != vec3(0))
-		fColor = computeFragColor();
-	//else
-		fEmissive = vec3(0);//uKe;
+	fColor = computeFragColor();
+	fEmissive = vec3(0);
 }

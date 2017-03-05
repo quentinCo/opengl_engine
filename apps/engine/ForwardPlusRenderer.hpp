@@ -54,10 +54,6 @@ private:
 	//---- Ssbo to store the lights index.
 	BufferObject<int> ssboPointLightsIndex;
 
-	/*std::vector<float> debugLight;
-	BufferObject<float> ssboDebug; // Debug
-	GLuint uDebugOutput;*/
-
 	//---- Uniform variables for lights
 	//------ Uniform for send point lights to shader
 	GLuint uPointLightsForCulling;
@@ -80,7 +76,7 @@ private:
 
 	//-- Shading Pass Variables
 	//---- Shading Pass Program
-	glmlv::GLProgram programShadingPass; // TODO: change name
+	glmlv::GLProgram programShadingPass;
 
 	GLuint fboShadingPass = 0;
 	GLuint shadingRenderedTexture[NB_TEXTURE];
