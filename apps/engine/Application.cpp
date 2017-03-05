@@ -13,46 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 
-int Application::run()
-{
-    float clearColor[3] = { 0, 0, 0 };
-    // Loop until the user closes the window
-    for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
-    {
-        const auto seconds = glfwGetTime();
-
-		if (chosenRenderer != currentRenderer)
-		{
-			currentRenderer = chosenRenderer;
-			if (currentRenderer == DEFERRED)
-				renderer = &deferred;
-			else if (currentRenderer == FORWARD)
-				renderer = &forward;
-			else if (currentRenderer == FORWARD_PLUS)
-				renderer = &forwardPlus;
-		}
-
-		renderer->renderScene(scene, camera);
-
-        // GUI code:
-		drawGUI(clearColor);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-
-        /* Swap front and back buffers*/
-        m_GLFWHandle.swapBuffers();
-
-        auto ellapsedTime = glfwGetTime() - seconds;
-        auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
-        if (!guiHasFocus)
-		{
-			camera.updateViewController(float(ellapsedTime));
-        }
-    }
-
-    return 0;
-}
+/*-------------------- APPLICATION  CONSTRUCTOR ----------------------------------*/
 
 Application::Application(int argc, char** argv):
     m_AppPath { glmlv::fs::path{ argv[0] } },
@@ -61,46 +22,104 @@ Application::Application(int argc, char** argv):
     m_ShadersRootPath { m_AppPath.parent_path() / "shaders" },
     m_AssetsRootPath { m_AppPath.parent_path() / "assets" }
 {
-    ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str(); // At exit, ImGUI will store its windows positions in this file
+    ImGui::GetIO().IniFilename = m_ImGuiIniFilename.c_str();
 
+	/* Loading obj in main scene */
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
-	scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(0,1,1), /*1*/0.f));
-	scene.addDirectionalLight(qc::DirectionalLight(45.f, 45.f, glm::vec3(1,0,1), /*0.2*/0.f));
+	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
+
+	/* Move Maya mesh */
+	std::vector<qc::Mesh>& meshes = scene.getMeshes();
+	meshes[1].setPosition(glm::vec3(500, 100, 0));
+
+	/* Create Lights */
+	//scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
+	
+	/* Create Point Lights for Particules */
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 250; ++i)
+	for (size_t i = 0; i < 1500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 100;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
 
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
-		float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		float radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
 	}
-	/*scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
+	/*
+	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
 	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::PointLight(3000, glm::vec3(-500, -100, 0), glm::vec3(0, 1, 1), 1000));*/
+	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
+	*/
+	/* Link Particules and Point Lights */
+	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
+	for(auto& it : pointLights)
+		scene.addParticules(qc::Particule(&it));
 
+	/* Set scene lights ssbo */
 	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
-	
-	camera = qc::Camera(m_GLFWHandle, 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
-	deferred = qc::DeferredRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
-	forward = qc::ForwardRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+
+	/* Init camera and renderer */
+	camera = qc::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
 
     std::cout << "End INIT" << std::endl;
 }
 
-void Application::drawGUI(float* clearColor)
+
+/*-------------------------------  RUN  ------------------------------------------*/
+
+int Application::run()
+{
+	float clearColor[3] = { 0, 0, 0 };
+
+	for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
+	{
+		const auto seconds = glfwGetTime();
+
+		/* Render Scene */
+		renderer->render(scene, camera);
+
+		/* Poll for and process events */
+		glfwPollEvents();
+
+		/* Render GUI */
+		renderGUI(clearColor);
+
+		/* Swap front and back buffers */
+		m_GLFWHandle.swapBuffers();
+
+		/* Update camera */
+		auto ellapsedTime = glfwGetTime() - seconds;
+		auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+		if (!guiHasFocus)
+		{
+			camera.updateViewController(float(ellapsedTime));
+		}
+
+		/* Event "key escape" - Quite */
+		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
+			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
+	}
+
+	return 0;
+}
+
+
+/*---------------------------  RENDER GUI  ---------------------------------------*/
+
+void Application::renderGUI(float* clearColor)
 {
 	ImGui_ImplGlfwGL3_NewFrame();
 	{
@@ -111,10 +130,48 @@ void Application::drawGUI(float* clearColor)
 			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
 		}
 
-		ImGui::RadioButton("Deferred", &chosenRenderer, DEFERRED); ImGui::SameLine();
-		ImGui::RadioButton("Forward", &chosenRenderer, FORWARD); ImGui::SameLine();
-		ImGui::RadioButton("Forward Plus", &chosenRenderer, FORWARD_PLUS);
-/*
+		std::string titleButton = "";
+
+		if (ImGui::Button("Render All Post Process Pass"))
+		{
+			postProcessPass = RenderPostProcessPass::RENDER_ALL;
+			renderer->setRenderPostProcess(postProcessPass);
+		}
+
+		if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+			titleButton = "Dont Render Emissive";
+		else
+			titleButton = "Render Emissive";
+
+		if (ImGui::Button(titleButton.c_str()))
+		{
+			if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+				postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass & ~(RenderPostProcessPass::RENDER_EMISSIVE | RenderPostProcessPass::RENDER_BLUR));
+			else
+				postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass | RenderPostProcessPass::RENDER_EMISSIVE);
+
+			renderer->setRenderPostProcess(postProcessPass);
+		}
+
+		if ((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+			titleButton = "Dont Render Blur";
+		else
+			titleButton = "Render Blur";
+
+		if (ImGui::Button(titleButton.c_str()))
+		{
+			if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+			{
+				if ((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+					postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass & ~RenderPostProcessPass::RENDER_BLUR);
+				else
+					postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass | RenderPostProcessPass::RENDER_BLUR);
+			}
+
+			renderer->setRenderPostProcess(postProcessPass);
+		}
+
+/*		
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
 		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
 		ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();

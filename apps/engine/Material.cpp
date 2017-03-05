@@ -24,13 +24,13 @@ Material::Material(const Material& o)
 	: shininess(o.shininess)
 {
 	for (size_t i = 0; i < NB_COLOR; ++i)
-		colors[i] = std::move(o.colors[i]);
+		colors[i] = o.colors[i];
 }
 
 Material& Material::operator= (const Material& o)
 {
 	for (size_t i = 0; i < NB_COLOR; ++i)
-		colors[i] = std::move(o.colors[i]);
+		colors[i] = o.colors[i];
 
 	shininess = o.shininess;
 
@@ -68,6 +68,9 @@ Material& Material::operator= (Material&& o)
 	return *this;
 }
 
+
+//-- SETTER ----------------------------
+
 void Material::setMap(const MATERIALS_TEXTURE& map, const glmlv::Image2DRGBA& tex)
 {
 	GLuint& texture = textures[map];
@@ -77,6 +80,9 @@ void Material::setMap(const MATERIALS_TEXTURE& map, const glmlv::Image2DRGBA& te
 
 	generateTexture(texture, tex);
 }
+
+
+//-- GENERATE TEXTURE -----------------
 
 void Material::generateTexture(GLuint& texture, const glmlv::Image2DRGBA& tex)
 {

@@ -7,6 +7,7 @@ namespace qc
 
 template <typename T>
 
+//! NOT COPYABLE CLASS
 class BufferObject
 {
 
@@ -14,14 +15,10 @@ public:
 	BufferObject() {};
 	BufferObject(const std::vector<T>& data, const GLenum target = GL_ARRAY_BUFFER)
 		: target(target), size(data.size())
-	{
-		initBufferObject(data);
-	}
+	{initBufferObject(data);}
 
 	~BufferObject()
-	{
-		if (pointer) glDeleteBuffers(1, &pointer); 
-	}
+		{if (pointer) glDeleteBuffers(1, &pointer);}
 
 	BufferObject(const BufferObject<T>& o) = delete;
 	BufferObject<T>& operator= (const BufferObject<T>& o) = delete;
@@ -44,6 +41,9 @@ public:
 		return *this;
 	}
 
+
+	//-- GETTERS ----------------------------
+
 	GLuint getPointer() const
 		{return pointer;}
 
@@ -51,10 +51,19 @@ public:
 		{return size;}
 
 private:
+	//-- Pointer to the buffer
 	GLuint pointer;
+
+	//-- Buffer type
 	GLenum target;
+
+	//-- Buffer size
 	size_t size;
 
+	//-- INIT BUFFER OBJECT -----------------
+	/*
+		Initialise the buffer
+	*/
 	void initBufferObject(const std::vector<T>& data)
 	{
 		glGenBuffers(1, &pointer);
@@ -66,4 +75,4 @@ private:
 	}
 };
 
-} // namespace qc
+} //! namespace qc

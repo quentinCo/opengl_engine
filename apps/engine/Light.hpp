@@ -5,14 +5,15 @@
 
 namespace qc
 {
-/*-- Light --*/
 class Light
 {
-
 public:
 	Light(const glm::vec3& position = glm::vec3(0), const glm::vec3& color = glm::vec3(1), float intensity = 1.f)
 		: position(position, 1), color(color), intensity(intensity)
 	{}
+
+
+	//-- GETTERS ----------------------------
 
 	const glm::vec4& getPosition() const
 		{return position;}
@@ -33,6 +34,10 @@ public:
 	float& getIntensity()
 		{return intensity;}
 	/* ---------------------- */
+
+
+	//-- SETTERS ---------------------------
+	
 	void setPosition(const glm::vec4& position)
 		{this->position = position;}
 
@@ -43,112 +48,13 @@ public:
 		{this->intensity = intensity;}
 
 private:
+	//-- position
 	glm::vec4 position;
+
+	//-- light color
 	glm::vec3 color;
+
+	//-- light intensity
 	float intensity;
 };
-
-
-/*-- Directional Light --*/
-
-class DirectionalLight : public Light
-{
-public:
-	DirectionalLight(float phi = 90.f, float theta = 45.f, const glm::vec3& color = glm::vec3(1), float intensity = 1.f)
-		: Light(glm::vec4(0), color, intensity), phiAngle(phi), thetaAngle(theta)
-	{
-		this->setPosition(this->computeDirection(phi, theta));
-	}
-
-	float getPhiAngle() const
-		{return phiAngle;}
-
-	float getThetaAngle() const
-		{return thetaAngle;}
-
-	const glm::vec3& getDirection() const
-		{return this->getPosition();}
-
-	/*TODO : delete after test*/
-	float& getPhiAngle()
-		{return phiAngle;}
-
-	float& getThetaAngle()
-		{return thetaAngle;}
-	/* ---------------------- */
-
-	void setPhiAngle(float phi)
-	{
-		phiAngle = phi;
-		this->setDirection(phi, thetaAngle);
-	}
-
-	void setThetaAngle(float theta)
-	{
-		thetaAngle = theta;
-		this->setDirection(phiAngle, theta);
-	}
-
-	void setDirection(float phi, float theta)
-		{this->setPosition(this->computeDirection(phi, theta));}
-
-private:
-	float phiAngle;
-	float thetaAngle;
-
-	static glm::vec4 computeDirection(float phi, float theta);
-};
-
-class PointLight : public Light
-{
-
-public:
-	PointLight(const float radiusAttenuation = 1, const glm::vec3& position = glm::vec3(0), const glm::vec3& color = glm::vec3(1), float intensity = 1.f)
-		: Light(position, color, intensity), radiusAttenuation(radiusAttenuation)
-	{
-		assert(radiusAttenuation != 0);
-		this->computeAttenuationCoeff();
-	}
-
-	const float getRadiusAttenuation() const
-		{return radiusAttenuation;}
-
-	/*TODO : delete after test*/
-	float& getRadiusAttenuation()
-	{
-		this->computeAttenuationCoeff();
-		return radiusAttenuation;
-	}
-
-	float& getConstantAttenuation()
-		{return constantAttenuation;}
-
-	float& getLinearAttenuation()
-		{return linearAttenuation;}
-
-	float& getQuadraticAttenuation()
-		{return quadraticAttenuation;}
-	/* ---------------------- */
-
-	void setRadiusAttenuation(float radius)
-	{
-		radiusAttenuation = radius;
-		this->computeAttenuationCoeff();
-	}
-
-private:
-	float radiusAttenuation;
-	float constantAttenuation = 1;
-	float linearAttenuation = 1;
-	float quadraticAttenuation = 1;
-
-	void computeAttenuationCoeff()
-	{
-		constantAttenuation = radiusAttenuation;
-		linearAttenuation = getIntensity() / radiusAttenuation;
-		quadraticAttenuation = getIntensity() / (radiusAttenuation * radiusAttenuation);
-	}
-
-};
-
 }

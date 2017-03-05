@@ -1,0 +1,37 @@
+#pragma once
+
+#include "PointLight.hpp"
+#include "Mesh.hpp"
+#include "Camera.hpp"
+
+namespace qc
+{
+
+class Particule : public Mesh
+{
+
+public:
+	Particule(PointLight* pointLight = nullptr)
+		:Mesh(), pointLight(pointLight)
+	{initShape();}
+
+	Particule(Particule&& o) = default;
+	Particule& operator= (Particule&& o) = default;
+	
+	//-- SETTERS ---------------------------
+
+	virtual void setPosition(const glm::vec4& position);
+
+private:
+	//-- pointer to a pointlight if lighted particule
+	PointLight* pointLight;
+	
+	//-- INIT SHAPE ------------------------
+	/*
+		Init the vbo, ibo, vao, shape and material for the particule
+	*/
+	void initShape();
+	
+};
+
+} //!namespace qc

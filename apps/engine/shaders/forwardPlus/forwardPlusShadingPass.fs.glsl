@@ -1,7 +1,10 @@
 #version 430
 
 #define MAX_LIGHTS 200
-#define TILE_SIZE 32
+#define TILE_SIZE 16
+
+layout(location = 0) out vec3 fColor;
+layout(location = 1) out vec3 fEmissive;
 
 struct Light
 {
@@ -58,8 +61,6 @@ uniform sampler2D uKdSampler;
 uniform sampler2D uKsSampler;
 uniform sampler2D uShininessSampler;
 
-out vec3 fColor;
-
 vec3 computeFragColor()
 {
     vec3 position = vViewSpacePosition;
@@ -86,18 +87,16 @@ vec3 computeFragColor()
 		lightIntensity = directionalLights[i].color * directionalLights[i].intensity;
 		diffuseDirectionalLightIntensity += lightIntensity * max(0.f, dot(normal, lightCoords));
 
-		hLight = normalize(eyeDir + lightCoords);
-		dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, hLight)); 
+		dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, normalize(eyeDir + lightCoords))); 
 		if (shininess != 1.f && shininess != 0.f)
-		{
 			dothLight = pow(dothLight, shininess);
-		}
+
 		specularDirectionalLightIntensity += lightIntensity * dothLight;
 	}	
 
 
 	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
-	int count = 0;
+	//int count = 0;
 
 	vec3 diffusePointLightIntensity = vec3(0);
 	vec3 specularPointLightIntensity = vec3(0);
@@ -108,7 +107,7 @@ vec3 computeFragColor()
 	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
 	{
 		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
-		count++;
+		//count++;
 
 		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
 		distToPointLight = length(lightCoords - position);
@@ -119,12 +118,10 @@ vec3 computeFragColor()
 		dirToPointLight = (lightCoords - position) / distToPointLight;
 		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
 
-		hLight = normalize(eyeDir + dirToPointLight);
-		dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, hLight));
+		dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, normalize(eyeDir + dirToPointLight)));
 		if (shininess != 1.f && shininess != 0.f)
-		{
 			dothLight = pow(dothLight, shininess);
-		}
+
 		specularPointLightIntensity += lightIntensity * dothLight;
 	}
 
@@ -132,10 +129,7 @@ vec3 computeFragColor()
 //    fColor += ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
-	//if(mod(int(gl_FragCoord.x), 32) == 0 || mod(int(gl_FragCoord.y), 32) == 0)
-	//{
-	//	fColor = vec3(0.5);
-	//}
+	
 	//if(count > 50)
 	//{
 	//	fColor += vec3(0.5, 0, 0);
@@ -154,4 +148,5 @@ vec3 computeFragColor()
 void main()
 {
 	fColor = computeFragColor();
+	fEmissive = vec3(0);
 }
