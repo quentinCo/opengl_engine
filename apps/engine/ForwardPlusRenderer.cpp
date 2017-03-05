@@ -259,7 +259,6 @@ void ForwardPlusRenderer::initShadingPass()
 	uKa = glGetUniformLocation(programShadingPass.glId(), "uKa");
 	uKd = glGetUniformLocation(programShadingPass.glId(), "uKd");
 	uKs = glGetUniformLocation(programShadingPass.glId(), "uKs");
-	uKe = glGetUniformLocation(programShadingPass.glId(), "uKe");
 	uShininess = glGetUniformLocation(programShadingPass.glId(), "uShininess");
 
 	uKaSampler = glGetUniformLocation(programShadingPass.glId(), "uKaSampler");

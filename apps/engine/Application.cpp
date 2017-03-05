@@ -29,8 +29,8 @@ Application::Application(int argc, char** argv):
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
 	/* Move Maya mesh */
-	std::vector<qc::Mesh>& meshes = scene.getMeshes();
-	meshes[1].setPosition(glm::vec3(500, 100, 0));
+	qc::Mesh& mesh = scene.getMeshes().back();
+	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
 	//scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));

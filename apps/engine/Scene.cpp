@@ -54,6 +54,7 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 			glm::vec3 diffuseColor = (it.Kd == glm::vec3(0)) ? glm::vec3(1) : it.Kd;
 			material.setColor(qc::Material::DIFFUSE_COLOR, it.Kd);
 			material.setColor(qc::Material::SPECULAR_COLOR, it.Ks);
+			material.setColor(qc::Material::EMMISIVE_COLOR, it.Ke);
 
 			if (it.KaTextureId >= 0) material.setMap(qc::Material::AMBIENT_TEXTURE, data.textures[it.KaTextureId]);
 			if (it.KdTextureId >= 0) material.setMap(qc::Material::DIFFUSE_TEXTURE, data.textures[it.KdTextureId]);
