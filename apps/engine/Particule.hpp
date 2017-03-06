@@ -11,9 +11,9 @@ class Particule : public Mesh
 {
 
 public:
-	Particule(PointLight* pointLight = nullptr)
+	Particule(std::shared_ptr<Material> mat, PointLight* pointLight = nullptr)
 		:Mesh(), pointLight(pointLight)
-	{initShape();}
+	{initShape(mat);}
 
 	Particule(Particule&& o) = default;
 	Particule& operator= (Particule&& o) = default;
@@ -26,11 +26,13 @@ private:
 	//-- pointer to a pointlight if lighted particule
 	PointLight* pointLight;
 	
+	static std::shared_ptr<Material> defaultMaterial;
+
 	//-- INIT SHAPE ------------------------
 	/*
 		Init the vbo, ibo, vao, shape and material for the particule
 	*/
-	void initShape();
+	void initShape(std::shared_ptr<Material> mat);
 	
 };
 

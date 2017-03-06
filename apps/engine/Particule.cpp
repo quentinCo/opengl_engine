@@ -20,7 +20,7 @@ void Particule::setPosition(const glm::vec4& position)
 
 //-- INIT SHAPE -------------------------
 
-void Particule::initShape()
+void Particule::initShape(std::shared_ptr<Material> mat)
 {
 	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 1;
 
@@ -34,18 +34,13 @@ void Particule::initShape()
 
 	// init materials
 	std::vector<std::shared_ptr<Material>> materials;
-	materials.push_back(std::make_unique<Material>());
-
-	auto& mat = materials.back();
-	if (pointLight != nullptr)
+	materials.push_back(mat);
+	setMaterials(materials);
+	if (pointLight)
 	{
 		setPosition(pointLight->getPosition());
-		mat->setColor(Material::EMMISIVE_COLOR, pointLight->getColor());
+		pointLight->setColor(mat->getColor(Material::EMMISIVE_COLOR));
 	}
-	else
-		mat->setColor(Material::EMMISIVE_COLOR, glm::vec3(1));
-
-	setMaterials(materials);
 
 	// init shape object
 	ShapeData shapeData = ShapeData(index.size(), 0, mat);

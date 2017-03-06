@@ -39,8 +39,14 @@ void Mesh::initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const s
 	vao = std::make_unique<Vao>(*vbo, *ibo);
 }
 
+
+//-- SORT SHAPE -----------------------
+
 void Mesh::sortShape()
 {
+	if (shapesData.size() < 2)
+		return;
+
 	std::sort(shapesData.begin(), shapesData.end(), [](ShapeData& a, ShapeData& b) {
 		return a.materialPointer < b.materialPointer;
 	});

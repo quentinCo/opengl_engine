@@ -256,14 +256,16 @@ void Renderer::renderParticules(const Scene& scene, const Camera& camera)
 
 	const auto& particules = scene.getParticules();
 
+	SharedMaterial currentMaterial = nullptr;
+
 	for (const auto& particule : particules)
-		renderEmissiveMesh(particule, camera);
+		renderParticule(particule, camera, currentMaterial);
 }
 
 
 //-- RENDER EMISSIVE MESH --------------
 
-void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
+void Renderer::renderParticule(const Mesh& mesh, const Camera& camera, SharedMaterial& currentMaterial)
 {
 	glm::mat4 mvpMatrix;
 	camera.computeMVPMatrix(mesh.getModelMatrix(), mvpMatrix);
@@ -272,7 +274,6 @@ void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
 
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;
-	SharedMaterial currentMaterial = nullptr;
 
 	glBindVertexArray(mesh.getVao()->getPointer());
 

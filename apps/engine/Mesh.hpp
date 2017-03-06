@@ -106,6 +106,10 @@ private:
 	std::vector<SharedMaterial> materials;
 	std::vector<SharedTexture> textures;
 
+	//-- SORT SHAPE -----------------------
+	/*
+		Sort the shape in function of the material.
+	*/
 	void sortShape();
 };
 

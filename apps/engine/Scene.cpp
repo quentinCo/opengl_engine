@@ -81,3 +81,13 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 		std::cerr << "Error during the loading." << std::endl;
 	}	
 }
+
+
+//-- SORT PARTICULES -------------------
+
+void Scene::sortParticules()
+{
+	std::sort(particules.begin(), particules.end(), [](Particule& a, Particule& b) {
+		return a.getMaterials()[0] < b.getMaterials()[0];
+	});
+}
