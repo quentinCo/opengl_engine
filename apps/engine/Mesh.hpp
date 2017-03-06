@@ -76,8 +76,7 @@ public:
 	virtual void setScale(const glm::vec3& scale)
 		{modelMatrix = glm::scale(modelMatrix, scale);}
 
-	void setShapesData(const std::vector<ShapeData>& shapesData)
-		{this->shapesData = std::move(shapesData);}
+	void setShapesData(const std::vector<ShapeData>& shapesData);
 
 	void setMaterials(std::vector<SharedMaterial>& mat)
 		{materials = std::move(mat);}
@@ -106,6 +105,8 @@ private:
 	//-- Mesh materials
 	std::vector<SharedMaterial> materials;
 	std::vector<SharedTexture> textures;
+
+	void sortShape();
 };
 
 } // namespace qc

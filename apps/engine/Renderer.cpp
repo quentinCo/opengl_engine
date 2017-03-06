@@ -205,7 +205,6 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMat
 	glUniform1i(uKsSampler, 2);
 	glUniform1i(uShininessSampler, 3);
 
-	const auto& materials = mesh.getMaterials();
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;
 	SharedMaterial currentMaterial = nullptr;
@@ -271,7 +270,6 @@ void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
 
 	glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
 
-	const auto& materials = mesh.getMaterials();
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;
 	SharedMaterial currentMaterial = nullptr;

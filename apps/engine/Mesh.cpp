@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "Mesh.hpp"
 
 using namespace qc;
@@ -8,6 +10,7 @@ Mesh::Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<u
 	: shapesData(shapesData)
 {
 	modelMatrix = glm::translate(modelMatrix, position);
+	sortShape();
 	initBuffers(vertices, indices);
 }
 
@@ -21,6 +24,12 @@ void Mesh::setPosition(const glm::vec3& position)
 }
 
 
+void Mesh::setShapesData(const std::vector<ShapeData>& shapesData)
+{
+	this->shapesData = std::move(shapesData);
+	sortShape();
+}
+
 //-- INIT BUFFERS ----------------------
 
 void Mesh::initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices)
@@ -28,4 +37,11 @@ void Mesh::initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const s
 	vbo = std::make_unique<Vbo>(vertices);
 	ibo = std::make_unique<Ibo>(indices);
 	vao = std::make_unique<Vao>(*vbo, *ibo);
+}
+
+void Mesh::sortShape()
+{
+	std::sort(shapesData.begin(), shapesData.end(), [](ShapeData& a, ShapeData& b) {
+		return a.materialPointer < b.materialPointer;
+	});
 }
