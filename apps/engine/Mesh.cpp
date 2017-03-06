@@ -2,7 +2,7 @@
 
 using namespace qc;
 
-const Material Mesh::defaultMaterial = Material();
+const Mesh::SharedMaterial Mesh::defaultMaterial = std::make_unique<Material>();
 
 Mesh::Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices, const std::vector<ShapeData> shapesData, const glm::vec3& position)
 	: shapesData(shapesData)
@@ -25,7 +25,7 @@ void Mesh::setPosition(const glm::vec3& position)
 
 void Mesh::initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices)
 {
-	vbo = BufferObject<glmlv::Vertex3f3f2f>(vertices);
-	ibo = BufferObject<uint32_t>(indices);
-	vao = ArrayObject<glmlv::Vertex3f3f2f>(vbo, ibo);
+	vbo = std::make_unique<Vbo>(vertices);
+	ibo = std::make_unique<Ibo>(indices);
+	vao = std::make_unique<Vao>(*vbo, *ibo);
 }

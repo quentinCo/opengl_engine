@@ -33,20 +33,22 @@ void Particule::initShape()
 	initBuffers(vertices, index);
 
 	// init materials
-	Material mat = Material();
+	std::vector<std::shared_ptr<Material>> materials;
+	materials.push_back(std::make_unique<Material>());
+
+	auto& mat = materials.back();
 	if (pointLight != nullptr)
 	{
 		setPosition(pointLight->getPosition());
-		mat.setColor(Material::EMMISIVE_COLOR, pointLight->getColor());
+		mat->setColor(Material::EMMISIVE_COLOR, pointLight->getColor());
 	}
 	else
-		mat.setColor(Material::EMMISIVE_COLOR, glm::vec3(1));
+		mat->setColor(Material::EMMISIVE_COLOR, glm::vec3(1));
 
-	std::vector<Material> materials = { mat };
 	setMaterials(materials);
 
 	// init shape object
-	ShapeData shapeData = ShapeData(index.size(), 0, 0);
+	ShapeData shapeData = ShapeData(index.size(), 0, mat);
 	std::vector<ShapeData> shapes = { shapeData };
 	setShapesData(shapes);
 

@@ -52,7 +52,7 @@ public:
 
 private:
 	//-- Pointer to the buffer
-	GLuint pointer;
+	GLuint pointer = 0;
 
 	//-- Buffer type
 	GLenum target;

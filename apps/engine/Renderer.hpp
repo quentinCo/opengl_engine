@@ -12,6 +12,8 @@ namespace qc
 class Renderer
 {
 public:
+	using SharedMaterial = std::shared_ptr<Material>;
+
 	enum RenderPostProcessPass
 	{
 		DONT_RENDER = 0x00,
@@ -154,7 +156,7 @@ protected:
 	virtual void renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMatrix, GLint& uMVMatrix, GLint& uNormalMatrix);
 	
 	//-- BIND MESH MATERIAL ----------------
-	virtual void bindMeshMaterial(const Material& material);
+	virtual void bindMeshMaterial(const SharedMaterial& material);
 
 	//-- RENDER EMISSIVE PASS --------------
 	/*
@@ -166,7 +168,7 @@ protected:
 	virtual void renderEmissiveMesh(const Mesh& mesh, const Camera& camera);
 	
 	//-- BIND EMISSIVE MATERIAL ------------
-	virtual void bindEmissiveMaterial(const Material& material);
+	virtual void bindEmissiveMaterial(const SharedMaterial& material);
 	
 	//-- POST PROCESS BLUR PASS ------------
 	void postProcessBlurPass(GLuint tex);

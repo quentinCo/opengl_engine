@@ -15,11 +15,11 @@ struct ShapeData
 {
 	size_t shapeSize = 0;
 	size_t shapeIndex = 0;
-	int materialIndex = -1;
+	std::shared_ptr<Material> materialPointer = nullptr;
 
 	ShapeData() {}
-	ShapeData(size_t size, size_t index = 0, int mat = -1)
-		: shapeSize(size), shapeIndex(index), materialIndex(mat)
+	ShapeData(size_t size, size_t index = 0, std::shared_ptr<Material> mat = nullptr)
+		: shapeSize(size), shapeIndex(index), materialPointer(mat)
 	{}
 };
 
@@ -27,7 +27,13 @@ class Mesh
 {
 //: NOT COPYABLE CLASS
 public:
-	static const Material defaultMaterial;
+	using Vbo = BufferObject<glmlv::Vertex3f3f2f>;
+	using Ibo = BufferObject<uint32_t>;
+	using Vao = ArrayObject<glmlv::Vertex3f3f2f>;
+	using SharedMaterial = std::shared_ptr<Material>;
+	using SharedTexture = std::shared_ptr<Texture>;
+
+	static const SharedMaterial defaultMaterial;
 
 	Mesh(){}
 	Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices, const std::vector<ShapeData> shapesData, const glm::vec3& position = glm::vec3(0));
@@ -41,7 +47,7 @@ public:
 
 	//-- GETTERS ---------------------------
 	
-	const ArrayObject<glmlv::Vertex3f3f2f>& getVao() const
+	const std::unique_ptr<Vao>& getVao() const
 		{return vao;}
 
 	const std::vector<ShapeData>& getShapesData() const
@@ -50,8 +56,11 @@ public:
 	const glm::mat4& getModelMatrix() const
 		{return modelMatrix;}
 
-	const std::vector<Material>& getMaterials() const
+	const std::vector<SharedMaterial>& getMaterials() const
 		{return materials;}
+
+	const std::vector<SharedTexture>& getTextures() const
+		{return textures;}
 
 	virtual glm::vec3 getPosition() const
 		{return modelMatrix[3];}
@@ -68,10 +77,13 @@ public:
 		{modelMatrix = glm::scale(modelMatrix, scale);}
 
 	void setShapesData(const std::vector<ShapeData>& shapesData)
-		{this->shapesData = shapesData;}
+		{this->shapesData = std::move(shapesData);}
 
-	void setMaterials(std::vector<Material>& mat)
+	void setMaterials(std::vector<SharedMaterial>& mat)
 		{materials = std::move(mat);}
+
+	void setTextures(std::vector<SharedTexture>& tex)
+		{textures = std::move(tex);}
 
 protected:
 	//-- INIT BUFFERS ----------------------
@@ -82,9 +94,9 @@ protected:
 
 private:
 
-	BufferObject<glmlv::Vertex3f3f2f> vbo;
-	BufferObject<uint32_t> ibo;
-	ArrayObject<glmlv::Vertex3f3f2f> vao;
+	std::unique_ptr<Vbo> vbo;
+	std::unique_ptr<Ibo> ibo;
+	std::unique_ptr<Vao> vao;
 
 	//-- Information about the different shape and material that compose the mesh object
 	std::vector<ShapeData> shapesData;
@@ -92,7 +104,8 @@ private:
 	glm::mat4 modelMatrix = glm::mat4();
 
 	//-- Mesh materials
-	std::vector<Material> materials;
+	std::vector<SharedMaterial> materials;
+	std::vector<SharedTexture> textures;
 };
 
 } // namespace qc
