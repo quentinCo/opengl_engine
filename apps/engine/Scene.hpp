@@ -28,6 +28,11 @@ public:
 
 
 	//-- GETTERS ---------------------------
+	const glm::vec3& getBboxMin() const
+		{return bboxMin;}
+
+	const glm::vec3& getBboxMax() const
+		{return bboxMax;}
 
 	const std::vector<Mesh>& getMeshes() const
 		{return meshes;}

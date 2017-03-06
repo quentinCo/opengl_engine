@@ -37,11 +37,14 @@ Application::Application(int argc, char** argv):
 	
 	/* Create Point Lights for Particules */
 	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	const glm::vec3& bboxMin = scene.getBboxMin();
+	const glm::vec3& bboxMax = scene.getBboxMax();
+	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
 	for (size_t i = 0; i < 1500; ++i) // 3500
 	{
-		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;
-		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
+		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
+		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
 
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
