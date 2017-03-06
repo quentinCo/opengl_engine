@@ -2,7 +2,7 @@
 
 #include "Mesh.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 const Mesh::SharedMaterial Mesh::defaultMaterial = std::make_unique<Material>();
 

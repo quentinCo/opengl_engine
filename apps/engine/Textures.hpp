@@ -6,6 +6,9 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
 
 class Texture
 {
@@ -38,4 +41,6 @@ private:
 
 };
 
-}
+}//! namespace graphic
+
+}//! namespace qc

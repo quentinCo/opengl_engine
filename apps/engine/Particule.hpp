@@ -6,6 +6,9 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
 
 class Particule : public Mesh
 {
@@ -35,5 +38,7 @@ private:
 	void initShape(std::shared_ptr<Material> mat);
 	
 };
+
+} //! namespace graphic
 
 } //!namespace qc

@@ -4,6 +4,10 @@
 
 namespace qc
 {
+
+namespace graphic
+{
+
 //! NOT COPYABLE CLASS 
 class ForwardPlusRenderer : public Renderer
 {
@@ -138,4 +142,6 @@ private:
 	void renderShadingPass(const Scene& scene, const Camera& camera);
 };
 
-}
+} //! namespace graphic
+
+} //! namespace qc

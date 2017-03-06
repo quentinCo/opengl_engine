@@ -10,6 +10,9 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
 
 struct ShapeData
 {
@@ -113,4 +116,6 @@ private:
 	void sortShape();
 };
 
-} // namespace qc
+} //! namespace graphic
+
+} //! namespace qc

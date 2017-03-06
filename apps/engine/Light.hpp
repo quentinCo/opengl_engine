@@ -5,6 +5,10 @@
 
 namespace qc
 {
+
+namespace graphic
+{
+
 class Light
 {
 public:
@@ -57,4 +61,5 @@ private:
 	//-- light intensity
 	float intensity;
 };
-}
+} //! namespace graphic
+} //! namespace qc

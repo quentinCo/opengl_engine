@@ -6,7 +6,7 @@
 
 #include "Particule.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 //-- SETTER ----------------------------
 
@@ -26,7 +26,8 @@ void Particule::initShape(std::shared_ptr<Material> mat)
 
 	// TODO : change for Billboard Particules
 	// init shape and buffers
-	glmlv::SimpleGeometry sp = glmlv::makeSphere(6);
+	glmlv::SimpleGeometry sp = glmlv::makeSphere(4);
+//	glmlv::SimpleGeometry sp = glmlv::makeCube();
 	std::vector<glmlv::Vertex3f3f2f> vertices = sp.vertexBuffer;
 	std::vector<uint32_t> index = sp.indexBuffer;
 

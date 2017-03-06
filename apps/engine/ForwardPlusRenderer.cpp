@@ -2,7 +2,7 @@
 
 #include "ForwardPlusRenderer.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 ForwardPlusRenderer::ForwardPlusRenderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)
 	: Renderer(shaderDirectory, windowWidth, windowHeight)

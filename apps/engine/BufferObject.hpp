@@ -5,6 +5,9 @@
 namespace qc
 {
 
+namespace graphic
+{
+
 template <typename T>
 
 //! NOT COPYABLE CLASS
@@ -74,5 +77,7 @@ private:
 		glBindBuffer(target, 0);
 	}
 };
+
+} //! namespace graphic
 
 } //! namespace qc

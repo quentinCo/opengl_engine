@@ -29,24 +29,24 @@ Application::Application(int argc, char** argv):
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
 	/* Move Maya mesh */
-	qc::Mesh& mesh = scene.getMeshes().back();
+	qc::graphic::Mesh& mesh = scene.getMeshes().back();
 	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	//scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
+	//scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
 	/* Create Pre-def Material*/
-	std::vector<std::shared_ptr<qc::Material>> preDefMaterials;
+	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
 	for (int i = 0; i < 15; ++i)
 	{
-		preDefMaterials.push_back(std::make_shared<qc::Material>());
+		preDefMaterials.push_back(std::make_shared<qc::graphic::Material>());
 		auto& material = preDefMaterials.back();
 
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
-		material->setColor(qc::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
+		material->setColor(qc::graphic::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
 	}
 
 	/* Create Point Lights for Particules */
@@ -64,21 +64,21 @@ Application::Application(int argc, char** argv):
 		float radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
-		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
+		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
 	}
 	/*
-	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
-	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
-	scene.addPointLight(qc::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
-	scene.addPointLight(qc::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
+	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
+	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
+	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
+	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
+	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
 	*/
 	/* Link Particules and Point Lights */
-	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
+	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
 	for (auto& it : pointLights)
 	{
-		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * preDefMaterials.size());
-		scene.addParticules(qc::Particule(preDefMaterials[indexMat], &it));
+		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
+		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], &it));
 	}
 	scene.sortParticules();
 
@@ -87,8 +87,8 @@ Application::Application(int argc, char** argv):
 	scene.setSsboPointLights();
 
 	/* Init camera and renderer */
-	camera = qc::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
-	forwardPlus = qc::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
+	forwardPlus = qc::graphic::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
 
     std::cout << "End INIT" << std::endl;

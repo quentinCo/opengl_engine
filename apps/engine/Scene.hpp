@@ -14,6 +14,9 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
 
 class Scene
 {
@@ -124,5 +127,7 @@ private:
 	BufferObject<Light> ssboDirectionalLights;
 
 };
+
+}//! namespace graphic
 
 }//! namespace qc

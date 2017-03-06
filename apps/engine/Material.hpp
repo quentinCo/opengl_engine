@@ -13,6 +13,9 @@
 namespace qc
 {
 
+namespace graphic
+{
+
 class Material
 {
 
@@ -76,5 +79,7 @@ private:
 	SharedTexture texturePointers[NB_TEXTURE];
 	static SharedTexture defaultTex;
 };
+
+} //!namespace graphic
 
 } //! namespace qc

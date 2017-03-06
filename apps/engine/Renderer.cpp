@@ -4,7 +4,7 @@
 
 #include "Renderer.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 
 Renderer::Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)

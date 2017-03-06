@@ -4,6 +4,10 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
+
 class DirectionalLight : public Light
 {
 public:
@@ -62,4 +66,7 @@ private:
 	*/
 	static glm::vec4 computeDirection(float phi, float theta);
 };
+
+} //! namespace graphic
+
 }//! namespace qc
