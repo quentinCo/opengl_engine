@@ -259,7 +259,6 @@ void ForwardPlusRenderer::initShadingPass()
 	uKa = glGetUniformLocation(programShadingPass.glId(), "uKa");
 	uKd = glGetUniformLocation(programShadingPass.glId(), "uKd");
 	uKs = glGetUniformLocation(programShadingPass.glId(), "uKs");
-	uKe = glGetUniformLocation(programShadingPass.glId(), "uKe");
 	uShininess = glGetUniformLocation(programShadingPass.glId(), "uShininess");
 
 	uKaSampler = glGetUniformLocation(programShadingPass.glId(), "uKaSampler");
@@ -321,7 +320,7 @@ void ForwardPlusRenderer::renderDepthPass(const Scene& scene, const Camera& came
 		
 		const auto& shapes = mesh.getShapesData();
 
-		glBindVertexArray(mesh.getVao().getPointer());
+		glBindVertexArray(mesh.getVao()->getPointer());
 
 		for (const auto& shape : shapes)
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));

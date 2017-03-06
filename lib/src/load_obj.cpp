@@ -148,6 +148,7 @@ void loadObj(const fs::path & objPath, const fs::path & mtlBaseDir, ObjData & da
         newMaterial.Ka = glm::vec3(material.ambient[0], material.ambient[1], material.ambient[2]);
         newMaterial.Kd = glm::vec3(material.diffuse[0], material.diffuse[1], material.diffuse[2]);
         newMaterial.Ks = glm::vec3(material.specular[0], material.specular[1], material.specular[2]);
+		newMaterial.Ke = glm::vec3(material.emission[0], material.emission[1], material.emission[2]);
         newMaterial.shininess = material.shininess;
 
         if (!material.ambient_texname.empty()) {

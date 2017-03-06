@@ -1,13 +1,16 @@
+#include <algorithm>
+
 #include "Mesh.hpp"
 
 using namespace qc;
 
-const Material Mesh::defaultMaterial = Material();
+const Mesh::SharedMaterial Mesh::defaultMaterial = std::make_unique<Material>();
 
 Mesh::Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices, const std::vector<ShapeData> shapesData, const glm::vec3& position)
 	: shapesData(shapesData)
 {
 	modelMatrix = glm::translate(modelMatrix, position);
+	sortShape();
 	initBuffers(vertices, indices);
 }
 
@@ -21,11 +24,30 @@ void Mesh::setPosition(const glm::vec3& position)
 }
 
 
+void Mesh::setShapesData(const std::vector<ShapeData>& shapesData)
+{
+	this->shapesData = std::move(shapesData);
+	sortShape();
+}
+
 //-- INIT BUFFERS ----------------------
 
 void Mesh::initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices)
 {
-	vbo = BufferObject<glmlv::Vertex3f3f2f>(vertices);
-	ibo = BufferObject<uint32_t>(indices);
-	vao = ArrayObject<glmlv::Vertex3f3f2f>(vbo, ibo);
+	vbo = std::make_unique<Vbo>(vertices);
+	ibo = std::make_unique<Ibo>(indices);
+	vao = std::make_unique<Vao>(*vbo, *ibo);
+}
+
+
+//-- SORT SHAPE -----------------------
+
+void Mesh::sortShape()
+{
+	if (shapesData.size() < 2)
+		return;
+
+	std::sort(shapesData.begin(), shapesData.end(), [](ShapeData& a, ShapeData& b) {
+		return a.materialPointer < b.materialPointer;
+	});
 }

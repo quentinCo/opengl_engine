@@ -205,20 +205,19 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMat
 	glUniform1i(uKsSampler, 2);
 	glUniform1i(uShininessSampler, 3);
 
-	const auto& materials = mesh.getMaterials();
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;
-	const Material* currentMaterial = nullptr;
+	SharedMaterial currentMaterial = nullptr;
 
-	glBindVertexArray(mesh.getVao().getPointer());
+	glBindVertexArray(mesh.getVao()->getPointer());
 
 	for (const auto& shape : shapes)
 	{
-		const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
-		if (currentMaterial != &material)
+		auto& material = (shape.materialPointer != nullptr) ? shape.materialPointer : defaultMaterial;
+		if (currentMaterial != material)
 		{
 			bindMeshMaterial(material);
-			currentMaterial = &material;
+			currentMaterial = material;
 		}
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
@@ -231,21 +230,21 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMat
 
 //-- BIND MESH MATERIAL -------------------
 
-void Renderer::bindMeshMaterial(const Material& material)
+void Renderer::bindMeshMaterial(const SharedMaterial& material)
 {
-	glUniform3fv(uKa, 1, glm::value_ptr(material.getColor(Material::AMBIENT_COLOR)));
-	glUniform3fv(uKd, 1, glm::value_ptr(material.getColor(Material::DIFFUSE_COLOR)));
-	glUniform3fv(uKs, 1, glm::value_ptr(material.getColor(Material::SPECULAR_COLOR)));
-	glUniform1f(uShininess, material.getShininess());
+	glUniform3fv(uKa, 1, glm::value_ptr(material->getColor(Material::AMBIENT_COLOR)));
+	glUniform3fv(uKd, 1, glm::value_ptr(material->getColor(Material::DIFFUSE_COLOR)));
+	glUniform3fv(uKs, 1, glm::value_ptr(material->getColor(Material::SPECULAR_COLOR)));
+	glUniform1f(uShininess, material->getShininess());
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::AMBIENT_TEXTURE));
+	glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::AMBIENT_TEXTURE)->getPointer());
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::DIFFUSE_TEXTURE));
+	glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::DIFFUSE_TEXTURE)->getPointer());
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_TEXTURE));
+	glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::SPECULAR_TEXTURE)->getPointer());
 	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, material.getMap(Material::SPECULAR_HIGHT_LIGHT_TEXTURE));
+	glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::SPECULAR_HIGHT_LIGHT_TEXTURE)->getPointer());
 }
 
 
@@ -257,34 +256,34 @@ void Renderer::renderParticules(const Scene& scene, const Camera& camera)
 
 	const auto& particules = scene.getParticules();
 
+	SharedMaterial currentMaterial = nullptr;
+
 	for (const auto& particule : particules)
-		renderEmissiveMesh(particule, camera);
+		renderParticule(particule, camera, currentMaterial);
 }
 
 
 //-- RENDER EMISSIVE MESH --------------
 
-void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
+void Renderer::renderParticule(const Mesh& mesh, const Camera& camera, SharedMaterial& currentMaterial)
 {
 	glm::mat4 mvpMatrix;
 	camera.computeMVPMatrix(mesh.getModelMatrix(), mvpMatrix);
 
 	glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
 
-	const auto& materials = mesh.getMaterials();
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;
-	const Material* currentMaterial = nullptr;
 
-	glBindVertexArray(mesh.getVao().getPointer());
+	glBindVertexArray(mesh.getVao()->getPointer());
 
 	for (const auto& shape : shapes)
 	{
-		const auto& material = (shape.materialIndex >= 0) ? materials[shape.materialIndex] : defaultMaterial;
-		if (currentMaterial != &material)
+		auto& material = (shape.materialPointer >= 0) ?shape.materialPointer : defaultMaterial;
+		if (currentMaterial != material)
 		{
 			bindEmissiveMaterial(material);
-			currentMaterial = &material;
+			currentMaterial = material;
 		}
 
 		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
@@ -294,9 +293,9 @@ void Renderer::renderEmissiveMesh(const Mesh& mesh, const Camera& camera)
 
 //-- BIND EMISSIVE MATERIAL ------------
 
-void Renderer::bindEmissiveMaterial(const Material& material)
+void Renderer::bindEmissiveMaterial(const SharedMaterial& material)
 {
-	glUniform3fv(uKe, 1,glm::value_ptr(material.getColor(Material::EMMISIVE_COLOR)));
+	glUniform3fv(uKe, 1,glm::value_ptr(material->getColor(Material::EMMISIVE_COLOR)));
 }
 
 

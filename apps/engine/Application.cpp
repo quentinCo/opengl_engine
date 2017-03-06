@@ -29,29 +29,42 @@ Application::Application(int argc, char** argv):
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
 	/* Move Maya mesh */
-	std::vector<qc::Mesh>& meshes = scene.getMeshes();
-	meshes[1].setPosition(glm::vec3(500, 100, 0));
+	qc::Mesh& mesh = scene.getMeshes().back();
+	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
 	//scene.addDirectionalLight(qc::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
-	/* Create Point Lights for Particules */
-	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	for (size_t i = 0; i < 1500; ++i) // 3500
+	/* Create Pre-def Material*/
+	std::vector<std::shared_ptr<qc::Material>> preDefMaterials;
+	for (int i = 0; i < 15; ++i)
 	{
-		float x = static_cast<float>(std::rand()) / RAND_MAX * 2500 - 1250;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * 1000;// +100;
-		float z = static_cast<float>(std::rand()) / RAND_MAX * 1000 - 500;
+		preDefMaterials.push_back(std::make_shared<qc::Material>());
+		auto& material = preDefMaterials.back();
 
 		float r = static_cast<float>(std::rand()) / RAND_MAX;
 		float v = static_cast<float>(std::rand()) / RAND_MAX;
 		float b = static_cast<float>(std::rand()) / RAND_MAX;
 
+		material->setColor(qc::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
+	}
+
+	/* Create Point Lights for Particules */
+	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	const glm::vec3& bboxMin = scene.getBboxMin();
+	const glm::vec3& bboxMax = scene.getBboxMax();
+	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
+	for (size_t i = 0; i < 1500; ++i) // 3500
+	{
+		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
+		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
+
 		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
 		float radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
-		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(r,v,b), intensity));
+		scene.addPointLight(qc::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
 	}
 	/*
 	scene.addPointLight(qc::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
@@ -62,8 +75,12 @@ Application::Application(int argc, char** argv):
 	*/
 	/* Link Particules and Point Lights */
 	std::vector<qc::PointLight>& pointLights = scene.getPointLights();
-	for(auto& it : pointLights)
-		scene.addParticules(qc::Particule(&it));
+	for (auto& it : pointLights)
+	{
+		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * preDefMaterials.size());
+		scene.addParticules(qc::Particule(preDefMaterials[indexMat], &it));
+	}
+	scene.sortParticules();
 
 	/* Set scene lights ssbo */
 	scene.setSsboDirectionalLights();

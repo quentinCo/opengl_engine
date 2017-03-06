@@ -28,6 +28,11 @@ public:
 
 
 	//-- GETTERS ---------------------------
+	const glm::vec3& getBboxMin() const
+		{return bboxMin;}
+
+	const glm::vec3& getBboxMax() const
+		{return bboxMax;}
 
 	const std::vector<Mesh>& getMeshes() const
 		{return meshes;}
@@ -98,10 +103,18 @@ public:
 	void addParticules(Particule& particule)
 		{particules.push_back(std::move(particule));}
 
+
+	//-- SORT PARTICULES -------------------
+	/*
+		Sort particules according the materials.
+		To avoid to change again and again the material and earn some frame.
+	*/
+	void sortParticules();
+
 private:
 	std::vector<Mesh> meshes;
 	std::vector<PointLight> pointLights;
-	std::vector<DirectionalLight> directionalLights; // TODO : revoir passer DirectionalLight -> Light
+	std::vector<DirectionalLight> directionalLights; // TODO : revoir passer DirectionalLight -> Light or change for cast to light
 	std::vector<Particule> particules;
 
 	glm::vec3 bboxMin = glm::vec3(std::numeric_limits<float>::max());

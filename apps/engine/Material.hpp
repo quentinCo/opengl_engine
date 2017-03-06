@@ -8,6 +8,8 @@
 
 #include <map>
 
+#include "Textures.hpp"
+
 namespace qc
 {
 
@@ -15,6 +17,8 @@ class Material
 {
 
 public:
+	using SharedTexture = std::shared_ptr<Texture>;
+
 	enum MATERIALS_COLOR
 	{
 		AMBIENT_COLOR = 0,
@@ -34,14 +38,6 @@ public:
 	};
 
 	Material();
-	
-	~Material();
-
-	Material(const Material& o);
-	Material& operator= (const Material& o);
-
-	Material(Material&& o);
-	Material& operator= (Material&& o);
 
 
 	//-- GETTERS ---------------------------
@@ -52,8 +48,8 @@ public:
 	float getShininess() const
 		{return shininess;}
 
-	GLuint getMap(const MATERIALS_TEXTURE& map) const
-		{return textures[map];}
+	SharedTexture getTexture(const MATERIALS_TEXTURE& map) const
+		{return (texturePointers[map]) ? texturePointers[map] : defaultTex;}
 	
 	
 	//-- SETTERS --------------------------
@@ -67,7 +63,8 @@ public:
 	void setShininess(float shininess)
 		{this->shininess = shininess;}
 
-	void setMap(const MATERIALS_TEXTURE& map, const glmlv::Image2DRGBA& tex);
+	void setTexture(const MATERIALS_TEXTURE& map, SharedTexture texIndex)
+		{texturePointers[map] = texIndex;}
 
 private:
 	//-- material colors
@@ -76,10 +73,8 @@ private:
 	float shininess;
 	
 	//-- material textures
-	GLuint textures[NB_TEXTURE];
-
-	//-- GENERATE TEXTURES -----------------
-	static void generateTexture(GLuint& texture, const glmlv::Image2DRGBA& tex);
+	SharedTexture texturePointers[NB_TEXTURE];
+	static SharedTexture defaultTex;
 };
 
 } //! namespace qc

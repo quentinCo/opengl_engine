@@ -14,6 +14,7 @@ namespace glmlv
             glm::vec3 Ka = glm::vec3(0); // Ambient multiplier
             glm::vec3 Kd = glm::vec3(0); // Diffuse multiplier
             glm::vec3 Ks = glm::vec3(0); // Glossy multiplier
+			glm::vec3 Ke = glm::vec3(0); // Emissive multiplier
             float shininess = 0.f; // Glossy exponent
 
             // Indices in the textures vector:

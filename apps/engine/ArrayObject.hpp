@@ -51,7 +51,7 @@ public:
 
 private:
 	//-- Pointer to the buffer (vao) 
-	GLuint pointer;
+	GLuint pointer = 0;
 
 	//-- INIT ARRAY OBJECT ------------------
 	/*
