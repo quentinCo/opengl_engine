@@ -13,6 +13,7 @@
 #include "Scene.hpp"
 #include "Renderer.hpp"
 #include "ForwardPlusRenderer.hpp"
+#include "PhysicalSystem.hpp"
 
 class Application
 {
@@ -51,6 +52,11 @@ private:
 	qc::graphic::ForwardPlusRenderer forwardPlus;
 	RenderPostProcessPass postProcessPass = RenderPostProcessPass::RENDER_ALL;
     
+	//-- Physic
+	qc::physic::PhysicalSystem physicSystem;
+	//std::map<qc::graphic::Particule*, qc::physic::PhysicalObject*> linkPhysicGraphic; // TODO : check why PhysicalObject* set at wtf value with insert
+	std::map<qc::graphic::Particule*, int> linkPhysicGraphic;
+	float discretizationFrequency = 100.f;
 
 	//-- RENDER GUI ----------------------
 	/*

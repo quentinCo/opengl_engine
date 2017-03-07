@@ -54,7 +54,7 @@ Application::Application(int argc, char** argv):
 	const glm::vec3& bboxMin = scene.getBboxMin();
 	const glm::vec3& bboxMax = scene.getBboxMax();
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	for (size_t i = 0; i < 1500; ++i) // 3500
+	/*for (size_t i = 0; i < 1500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
@@ -65,14 +65,14 @@ Application::Application(int argc, char** argv):
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
-	}
-	/*
+	}*/
+	
 	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
 	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
 	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
 	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
 	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
-	*/
+	
 	/* Link Particules and Point Lights */
 	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
 	for (auto& it : pointLights)
@@ -81,6 +81,19 @@ Application::Application(int argc, char** argv):
 		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], &it));
 	}
 	scene.sortParticules();
+
+	/* Physic */
+	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
+	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
+	auto& particules = scene.getParticules();
+	/*qc::physic::PhysicalObject* temp = physicSystem.addObject(particules[0].getPosition(), 1, 1, 2);
+	linkPhysicGraphic.insert(std::make_pair(&particules[0], temp));*/
+	int temp;
+	for (auto& it : particules)
+	{
+		temp = physicSystem.addObject(it.getPosition(), 1, 1, 2);
+		linkPhysicGraphic.insert(std::make_pair(&it, temp));
+	}
 
 	/* Set scene lights ssbo */
 	scene.setSsboDirectionalLights();
@@ -107,6 +120,14 @@ int Application::run()
 
 		/* Render Scene */
 		renderer->render(scene, camera);
+
+		/* Update Physic */
+		physicSystem.update(1 / discretizationFrequency);
+		for (auto& it : linkPhysicGraphic)
+		{
+			const auto& physicalObject = physicSystem.getPhysicalObject(it.second);
+			it.first->setPosition(glm::vec4(physicalObject.getPosition(), 1));
+		}
 
 		/* Poll for and process events */
 		glfwPollEvents();
@@ -187,6 +208,8 @@ void Application::renderGUI(float* clearColor)
 
 			renderer->setRenderPostProcess(postProcessPass);
 		}
+
+		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 1.f, 1000.f);
 
 /*		
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
