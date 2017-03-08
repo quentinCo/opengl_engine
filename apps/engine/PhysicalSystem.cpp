@@ -90,7 +90,7 @@ void PhysicalSystem::update(float h)
 			if (position[i] > bboxMax[i] || position[i] < bboxMin[i])
 			{
 				changeDirection = true;
-				celerity[i] = -celerity[i] / 2;
+				celerity[i] = -celerity[i] * 0.5;
 				position[i] = std::min(bboxMax[i], std::max(bboxMin[i], position[0]));
 			}
 		}
