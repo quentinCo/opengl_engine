@@ -1,4 +1,4 @@
-#include <iostream>
+#include <algorithm>
 
 #include "PhysicalSystem.hpp"
 
@@ -80,7 +80,26 @@ void PhysicalSystem::update(float h)
 	updatesListe.pop_front();
 
 	for (auto& it : objects)
+	{
 		it.update(h);
+		glm::vec3 position = it.getPosition();
+		glm::vec3 celerity = it.getCelerity();
+		bool changeDirection = false;
+		for (int i = 0; i < 3; ++i)
+		{
+			if (position[i] > bboxMax[i] || position[i] < bboxMin[i])
+			{
+				changeDirection = true;
+				celerity[i] = -celerity[i] / 2;
+				position[i] = std::min(bboxMax[i], std::max(bboxMin[i], position[0]));
+			}
+		}
+		if (changeDirection)
+		{
+			it.setCelerity(celerity);
+			it.setPosition(position);
+		}
+	}
 }
 
 Link* PhysicalSystem::getPhysicalLink()

@@ -26,7 +26,7 @@ Application::Application(int argc, char** argv):
 	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
+	//scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
 	/* Create Pre-def Material*/
 	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
@@ -43,11 +43,11 @@ Application::Application(int argc, char** argv):
 	}
 
 	/* Create Point Lights for Particules */
-	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	//std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
 	const glm::vec3& bboxMin = scene.getBboxMin();
 	const glm::vec3& bboxMax = scene.getBboxMax();
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	/*for (size_t i = 0; i < 1500; ++i) // 3500
+	for (size_t i = 0; i < 500; ++i) // 3500
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
@@ -58,14 +58,15 @@ Application::Application(int argc, char** argv):
 		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
 
 		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
-	}*/
-	
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
-	
+	}
+
+	/*
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(200, 100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(-200, 100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(200, -100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(-200, -100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(1), 300));
+	*/
 	/* Link Particules and Point Lights */
 	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
 	for (auto& it : pointLights)
@@ -78,6 +79,8 @@ Application::Application(int argc, char** argv):
 	/* Physic */
 	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
 	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
+	physicSystem.setBboxMax(scene.getBboxMax());
+	physicSystem.setBboxMin(scene.getBboxMin());
 	auto& particules = scene.getParticules();
 	for (auto& it : particules)
 	{
@@ -202,7 +205,7 @@ void Application::renderGUI(float* clearColor)
 			renderer->setRenderPostProcess(postProcessPass);
 		}
 
-		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 1.f, 1000.f);
+		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 10.f, 1000.f);
 
 /*		
 		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();

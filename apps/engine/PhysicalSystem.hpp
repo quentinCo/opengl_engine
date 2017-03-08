@@ -43,6 +43,18 @@ public:
 	const PhysicalObject& getPhysicalObject(int index) const
 		{return objects[index];}
 
+	const glm::vec3& getBboxMin() const
+		{return bboxMin;}
+
+	const glm::vec3& getBboxMax() const
+		{return bboxMax;}
+
+	void setBboxMin(const glm::vec3& min)
+		{bboxMin = min;}
+
+	void setBboxMax(const glm::vec3& max)
+		{bboxMax = max;}
+
 	// return index of physical particule
 	//PhysicalObject* addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
 	int addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
@@ -55,6 +67,9 @@ private:
 
 	PhysicType physicalType;
 	std::deque<PhysicalObject*> updatesListe;
+
+	glm::vec3 bboxMin = glm::vec3(std::numeric_limits<float>::max());
+	glm::vec3 bboxMax = glm::vec3(std::numeric_limits<float>::lowest());
 
 	Link* getPhysicalLink();
 
