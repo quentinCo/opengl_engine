@@ -45,6 +45,9 @@ public:
 	void setForce(const glm::vec3& force)
 		{this->force = force;}
 
+	void addToForce(const glm::vec3& force)
+		{this->force += force;}
+
 	virtual void update(float h);
 
 private:
