@@ -1,17 +1,56 @@
+#include <iostream>
+
 #include "PhysicalSystem.hpp"
 
 using namespace qc::physic;
 
 PhysicalSystem::PhysicalSystem(PhysicType physicType)
+	:physicalType(physicType)
 {
-	/*
-	switch(physicType)
-	{
-		case GRAVITATIONAL:
-			link = new GravitationalLink();
-			break;
-	}
-	*/
+	physicalLink = getPhysicalLink();	
+}
+
+PhysicalSystem::PhysicalSystem(const PhysicalSystem& o)
+	: objects(o.objects), physicalType(o.physicalType)
+{
+	if (physicalLink != nullptr)
+		delete physicalLink;
+
+	physicalLink = getPhysicalLink();
+}
+
+PhysicalSystem PhysicalSystem::operator= (const PhysicalSystem& o)
+{
+	objects = o.objects;
+	if (physicalLink != nullptr)
+		delete physicalLink;
+
+	physicalType = o.physicalType;
+	physicalLink = getPhysicalLink();
+	
+	return *this;
+}
+
+PhysicalSystem::PhysicalSystem(PhysicalSystem&& o)
+	: objects(std::move(o.objects)), physicalType(o.physicalType)
+{
+	if (physicalLink != nullptr)
+		delete physicalLink;
+
+	physicalLink = o.physicalLink;
+	o.physicalLink = 0;
+}
+
+PhysicalSystem PhysicalSystem::operator=(PhysicalSystem&& o)
+{
+	objects = std::move(o.objects);
+	if (physicalLink != nullptr)
+		delete physicalLink;
+
+	physicalLink = o.physicalLink;
+	o.physicalLink = 0;
+
+	return *this;
 }
 
 // return index of physical particule
@@ -26,5 +65,31 @@ int PhysicalSystem::addObject(const glm::vec3& position, float mass, float radiu
 void PhysicalSystem::update(float h)
 {
 	for (auto& it : objects)
+		updatesListe.push_back(&it);
+
+	while (updatesListe.size() != 1)
+	{
+		physicalLink->setObject1(updatesListe.front());
+		for (int i = 1; i < updatesListe.size(); ++i)
+		{
+			physicalLink->setObject2(updatesListe[i]);
+			physicalLink->update(h);
+		}
+		updatesListe.pop_front();
+	}
+	updatesListe.pop_front();
+
+	for (auto& it : objects)
 		it.update(h);
+}
+
+Link* PhysicalSystem::getPhysicalLink()
+{
+	switch (physicalType)
+	{
+		case GRAVITATIONAL:
+			return new GravitationalLink();
+			break;
+	}
+	return nullptr;
 }

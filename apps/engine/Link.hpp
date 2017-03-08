@@ -33,11 +33,15 @@ public:
 	void setObject2(PhysicalObject* object)
 		{object2 = object;}
 
-	virtual void update(float h) = 0;
+//	virtual void update(float h) = 0;
+	virtual void update(float h)
+	{
+		int i = 4;
+	}
 
 protected:
-	PhysicalObject* object1;
-	PhysicalObject* object2;
+	PhysicalObject* object1 = nullptr;
+	PhysicalObject* object2 = nullptr;
 
 };
 

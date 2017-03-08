@@ -1,4 +1,5 @@
 #include <vector>
+#include <deque>
 
 #include <glm/glm.hpp>
 
@@ -27,6 +28,15 @@ public:
 
 	PhysicalSystem(PhysicType physicType);
 
+	~PhysicalSystem()
+		{if(physicalLink != nullptr) delete physicalLink;}
+
+	PhysicalSystem(const PhysicalSystem& o);
+	PhysicalSystem operator= (const PhysicalSystem& o);
+
+	PhysicalSystem(PhysicalSystem&& o);
+	PhysicalSystem operator=(PhysicalSystem&& o);
+
 	const std::vector<PhysicalObject>& getPhysicalObjects() const
 		{return objects;}
 
@@ -41,7 +51,12 @@ public:
 
 private:
 	std::vector<PhysicalObject> objects;
-	//Link
+	Link* physicalLink = nullptr;
+
+	PhysicType physicalType;
+	std::deque<PhysicalObject*> updatesListe;
+
+	Link* getPhysicalLink();
 
 };
 

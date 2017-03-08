@@ -20,7 +20,7 @@ public:
 		: Link(object1, object2)
 	{}
 
-	virtual void update();
+	virtual void update(float);
 
 private:
 	//-- Gravitational constant
