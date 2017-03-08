@@ -26,7 +26,7 @@ Application::Application(int argc, char** argv):
 	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	//scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
+	scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
 	
 	/* Create Pre-def Material*/
 	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
@@ -71,7 +71,7 @@ Application::Application(int argc, char** argv):
 	for (auto& it : pointLights)
 	{
 		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], &it));
+		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &it));
 	}
 	scene.sortParticules();
 
@@ -81,7 +81,10 @@ Application::Application(int argc, char** argv):
 	auto& particules = scene.getParticules();
 	for (auto& it : particules)
 	{
-		int temp = physicSystem.addObject(it.getPosition(), 1, 1, 500);
+		float mass = it.getIntensity() * it.getRadiusAttenuation();
+		float radius = it.getRadius();
+		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
+		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
 	}
 

@@ -22,8 +22,6 @@ void Particule::setPosition(const glm::vec4& position)
 
 void Particule::initShape(std::shared_ptr<Material> mat)
 {
-	float radius = /*(pointLight != nullptr) ? (100 * pointLight->getRadiusAttenuation() / pointLight->getIntensity()) :*/ 1;
-
 	// TODO : change for Billboard Particules
 	// init shape and buffers
 	glmlv::SimpleGeometry sp = glmlv::makeSphere(4);
