@@ -2,8 +2,6 @@
 
 #include <glmlv/filesystem.hpp>
 #include <glmlv/GLFWHandle.hpp>
-#include <glmlv/GLProgram.hpp>
-#include <glmlv/simple_geometry.hpp>
 
 #include <glm/glm.hpp>
 

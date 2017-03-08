@@ -1,17 +1,10 @@
 #include "Application.hpp"
 
 #include <iostream>
-#include <math.h>  
-#include <unordered_set>
+#include <math.h> 
 
 #include <imgui.h>
-#include <glmlv/imgui_impl_glfw_gl3.hpp>
-#include <glmlv/Image2DRGBA.hpp>
-#include <glmlv/load_obj.hpp>
-
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/io.hpp>
 
 /*-------------------- APPLICATION  CONSTRUCTOR ----------------------------------*/
 
@@ -86,12 +79,9 @@ Application::Application(int argc, char** argv):
 	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
 	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
 	auto& particules = scene.getParticules();
-	/*qc::physic::PhysicalObject* temp = physicSystem.addObject(particules[0].getPosition(), 1, 1, 2);
-	linkPhysicGraphic.insert(std::make_pair(&particules[0], temp));*/
-	int temp;
 	for (auto& it : particules)
 	{
-		temp = physicSystem.addObject(it.getPosition(), 1, 1, 2);
+		int temp = physicSystem.addObject(it.getPosition(), 1, 1, 500);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
 	}
 
