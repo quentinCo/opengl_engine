@@ -7,7 +7,7 @@
 
 #include "Scene.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 //-- SETTER ---------------------------
 

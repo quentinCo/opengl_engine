@@ -4,6 +4,10 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
+
 class PointLight : public Light
 {
 public:
@@ -62,4 +66,7 @@ private:
 	}
 
 };
+
+} //! namespace graphic
+
 }//! namespace qc

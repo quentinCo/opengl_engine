@@ -1,6 +1,6 @@
 #include "Material.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 Material::SharedTexture Material::defaultTex = std::make_shared<Texture>();
 

@@ -1,6 +1,6 @@
 #include "DirectionalLight.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 
 //-- COMPUTE DIRECTION -----------------

@@ -8,6 +8,9 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
 
 class Renderer
 {
@@ -217,5 +220,7 @@ protected:
 	}
 
 };
+
+}//! namespace graphic
 
 }//! namespace qc

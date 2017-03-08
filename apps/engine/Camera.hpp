@@ -9,6 +9,9 @@
 
 namespace qc
 {
+	
+namespace graphic
+{
 
 class Camera
 {
@@ -141,5 +144,7 @@ private:
 	*/
 	bool rotation(float time);
 };
+
+} //!namespace graphic
 
 } //! namespace qc

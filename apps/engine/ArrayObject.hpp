@@ -7,6 +7,9 @@
 namespace qc
 {
 
+namespace graphic
+{
+
 template <typename T>
 
 //! NOT COPYABLE CLASS
@@ -83,5 +86,7 @@ private:
 		glBindVertexArray(0);
 	}
 };
+
+} // namespace graphic
 
 } // namespace qc

@@ -17,7 +17,7 @@
 class Application
 {
 public:
-	using RenderPostProcessPass = qc::Renderer::RenderPostProcessPass;
+	using RenderPostProcessPass = qc::graphic::Renderer::RenderPostProcessPass;
 
     Application(int argc, char** argv);
 
@@ -41,14 +41,14 @@ private:
     const glmlv::fs::path m_AssetsRootPath;
 
 	//-- Camera 
-	qc::Camera camera = qc::Camera(m_GLFWHandle);
+	qc::graphic::Camera camera = qc::graphic::Camera(m_GLFWHandle);
 
 	//-- Scene 
-	qc::Scene scene;
+	qc::graphic::Scene scene;
 
 	//-- Renderers 
-	qc::Renderer* renderer = nullptr;
-	qc::ForwardPlusRenderer forwardPlus;
+	qc::graphic::Renderer* renderer = nullptr;
+	qc::graphic::ForwardPlusRenderer forwardPlus;
 	RenderPostProcessPass postProcessPass = RenderPostProcessPass::RENDER_ALL;
     
 

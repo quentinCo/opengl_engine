@@ -1,6 +1,6 @@
 #include "Textures.hpp"
 
-using namespace qc;
+using namespace qc::graphic;
 
 Texture::Texture(const glmlv::Image2DRGBA& tex)
 {
