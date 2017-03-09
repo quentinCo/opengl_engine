@@ -1,7 +1,8 @@
 #version 430
 
-// Efficiant blur
-// Inspired form http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+// Efficient blur
+// Inspired by http://rastergrid.com/blog/2010/09/efficient-gaussian-blur-with-linear-sampling/
+// And http://www.roxlu.com/2014/045/fast-opengl-blur-shader
 // With gaussian sigma = 2.5
 
 #define TILE_SIZE 32 //16
