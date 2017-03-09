@@ -290,6 +290,9 @@ void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& came
 	if ((renderPostProcess & RENDER_BLUR) == RENDER_BLUR)
 	{
 		postProcessBlurPass(shadingRenderedTexture[EMISSIVE_TEXTURE]);
+		for(int i = 1; i < nbBlurPass; ++i)
+			postProcessBlurPass(bufferBlurred);
+
 		setTexCompositingLayer(2, &bufferBlurred);
 	}
 	else

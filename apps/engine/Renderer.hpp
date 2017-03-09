@@ -41,6 +41,9 @@ public:
 	GLsizei getWindowHeight() const
 		{return windowHeight;}
 
+	int& getNbBlurPass()
+		{return nbBlurPass;}
+
 
 	//-- SETTERS ---------------------------
 
@@ -52,6 +55,9 @@ public:
 	
 	void setTexCompositingLayer(int numLayer, GLuint *tex)
 		{if(numLayer < 10) compositingTextures[numLayer] = tex; }
+
+	void setNbBlurPass(int nb)
+		{nbBlurPass = nb;}
 
 	void setRenderPostProcess(RenderPostProcessPass pass)
 		{renderPostProcess = pass;}
@@ -109,6 +115,7 @@ protected:
 	glmlv::GLProgram programBlurPass;
 
 	//------ Textures for blurring
+	int nbBlurPass = 1;
 	GLuint bufferBlurredTexPass1 = 0;
 	GLuint bufferBlurred = 0;
 	GLuint uInitTex = 0;

@@ -270,6 +270,10 @@ void Application::renderGUI(float* clearColor)
 			renderer->setRenderPostProcess(postProcessPass);
 		}
 
+		if((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+			ImGui::SliderInt("Nb blur iteration", &(renderer->getNbBlurPass()), 1, 10);
+
+
 		if (activePhysic)
 			titleButton = "Unactive Physic";
 		else
