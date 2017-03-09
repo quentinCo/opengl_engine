@@ -1,17 +1,10 @@
 #include "Application.hpp"
 
 #include <iostream>
-#include <math.h>  
-#include <unordered_set>
+#include <math.h>
 
 #include <imgui.h>
-#include <glmlv/imgui_impl_glfw_gl3.hpp>
-#include <glmlv/Image2DRGBA.hpp>
-#include <glmlv/load_obj.hpp>
-
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/io.hpp>
 
 /*-------------------- APPLICATION  CONSTRUCTOR ----------------------------------*/
 
@@ -33,54 +26,13 @@ Application::Application(int argc, char** argv):
 	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	//scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
-	
-	/* Create Pre-def Material*/
-	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
-	for (int i = 0; i < 15; ++i)
-	{
-		preDefMaterials.push_back(std::make_shared<qc::graphic::Material>());
-		auto& material = preDefMaterials.back();
+	initLights();
 
-		float r = static_cast<float>(std::rand()) / RAND_MAX;
-		float v = static_cast<float>(std::rand()) / RAND_MAX;
-		float b = static_cast<float>(std::rand()) / RAND_MAX;
+	/* Create Particules */
+	initParticules();
 
-		material->setColor(qc::graphic::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
-	}
-
-	/* Create Point Lights for Particules */
-	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	const glm::vec3& bboxMin = scene.getBboxMin();
-	const glm::vec3& bboxMax = scene.getBboxMax();
-	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	for (size_t i = 0; i < 1500; ++i) // 3500
-	{
-		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
-		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
-
-		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
-		float radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
-		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
-
-		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
-	}
-	/*
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
-	*/
-	/* Link Particules and Point Lights */
-	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
-	for (auto& it : pointLights)
-	{
-		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], &it));
-	}
-	scene.sortParticules();
+	/* Physic */
+	initPhysic();
 
 	/* Set scene lights ssbo */
 	scene.setSsboDirectionalLights();
@@ -105,8 +57,21 @@ int Application::run()
 	{
 		const auto seconds = glfwGetTime();
 
+		/* Update Physic */
+		if(activePhysic)
+			physic = std::thread(&Application::updatePhysic, this);
+
 		/* Render Scene */
-		renderer->render(scene, camera);
+		//std::thread graphic(&Application::renderGraphic, this);
+		renderGraphic();
+
+		/* Update Graphic from Physic */
+		//graphic.join();
+		if (activePhysic)
+		{
+			physic.join();
+			updateGraphicFromPhysic();
+		}			
 
 		/* Poll for and process events */
 		glfwPollEvents();
@@ -133,6 +98,123 @@ int Application::run()
 	return 0;
 }
 
+
+/*---------------------------  INIT LIGHTS  ---------------------------------------*/
+void Application::initLights()
+{
+	//std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	const glm::vec3& bboxMin = scene.getBboxMin();
+	const glm::vec3& bboxMax = scene.getBboxMax();
+	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
+	for (size_t i = 0; i < 500; ++i) // 3500
+	{
+		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
+		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
+
+		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		float radius;
+		float intensity;
+		if (1 % 500)
+		{
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
+			intensity = 100000;
+		}
+		else if (i % 100)
+		{
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
+			intensity = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 500;
+		}
+		else
+		{
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 300 + 50;
+			intensity = static_cast<float>(std::rand()) / RAND_MAX * 200 + 200;
+		}
+
+		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
+	}
+}
+
+
+//-- INIT PARTICULES -----------------
+void Application::initParticules()
+{
+	/* Create Pre-def Material*/
+	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
+	for (int i = 0; i < 15; ++i)
+	{
+		preDefMaterials.push_back(std::make_shared<qc::graphic::Material>());
+		auto& material = preDefMaterials.back();
+
+		float r = static_cast<float>(std::rand()) / RAND_MAX;
+		float v = static_cast<float>(std::rand()) / RAND_MAX;
+		float b = static_cast<float>(std::rand()) / RAND_MAX;
+
+		material->setColor(qc::graphic::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
+	}
+
+	/* Create Point Lights for Particules */
+
+
+	/*
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(200, 100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(-200, 100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(200, -100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(-200, -100, -260), glm::vec3(1), 300));
+	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(1), 300));
+	*/
+	/* Link Particules and Point Lights */
+	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
+	for (auto& it : pointLights)
+	{
+		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
+		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &it));
+	}
+	scene.sortParticules();
+}
+
+
+//-- INIT PHYSIC ---------------------
+void Application::initPhysic()
+{
+	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
+	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
+	physicSystem.setBboxMax(scene.getBboxMax());
+	physicSystem.setBboxMin(scene.getBboxMin());
+	auto& particules = scene.getParticules();
+	for (auto& it : particules)
+	{
+		//		float mass = it.getIntensity() * it.getRadiusAttenuation();
+		float mass = 100 * it.getIntensity() / it.getRadiusAttenuation();
+		float radius = it.getRadius();
+		//		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
+		float radiusAttraction = it.getIntensity();
+		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
+		linkPhysicGraphic.insert(std::make_pair(&it, temp));
+	}
+}
+
+//-- RENDER GRAPHIC ------------------
+void Application::renderGraphic()
+{
+	renderer->render(scene, camera);
+}
+
+//-- UPDATE PHYSIC -------------------
+void Application::updatePhysic()
+{
+	physicSystem.update(1 / discretizationFrequency);
+}
+
+//-- SYNCHRO GRAPHIC PHYSIC ----------
+void Application::updateGraphicFromPhysic()
+{
+	for (auto& it : linkPhysicGraphic)
+	{
+		const auto& physicalObject = physicSystem.getPhysicalObject(it.second);
+		it.first->setPosition(glm::vec4(physicalObject.getPosition(), 1));
+	}
+}
 
 /*---------------------------  RENDER GUI  ---------------------------------------*/
 
@@ -188,13 +270,16 @@ void Application::renderGUI(float* clearColor)
 			renderer->setRenderPostProcess(postProcessPass);
 		}
 
-/*		
-		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
-		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
-		ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();
-		ImGui::RadioButton("GDiffuse", &attachedToDraw, GL_COLOR_ATTACHMENT3);
-		ImGui::RadioButton("GGlossyShininess", &attachedToDraw, GL_COLOR_ATTACHMENT4);
-*/
+		if (activePhysic)
+			titleButton = "Unactive Physic";
+		else
+			titleButton = "Active Physic";
+
+		if (ImGui::Button(titleButton.c_str()))
+			activePhysic = !activePhysic;
+
+		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 10.f, 1000.f);
+
 		if (ImGui::CollapsingHeader("Directional Light"))
 		{
 			auto& directionalLights = scene.getDirectionalLights();
@@ -219,34 +304,6 @@ void Application::renderGUI(float* clearColor)
 					}
 				}
 			}			
-		}
-
-		if (ImGui::CollapsingHeader("Point Light"))
-		{
-			auto& pointLights = scene.getPointLights();
-			for (size_t i = 0; i < pointLights.size(); ++i)
-			{
-				size_t j = i + 1;
-				std::string name = "Point Light" + std::to_string(j);
-				if (ImGui::CollapsingHeader(name.c_str()))
-				{
-					auto& pointLight = pointLights[i];
-					name = "PointLightColor" + std::to_string(j);
-					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pointLight.getColor()));
-					name = "PointLightIntensity" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
-					name = "PointAttenuationRadius" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 20.f, 1000.f);
-					name = "ConstantAttenuation" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getConstantAttenuation(), 0.1f, 1.f, 100.f);
-					name = "LinearAttenuation" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getLinearAttenuation(), 0.1f, 1.f, 100.f);
-					name = "QuadraticAttenuation" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getQuadraticAttenuation(), 0.1f, 1.f, 100.f);
-					name = "Position" + std::to_string(j);
-					ImGui::InputFloat3(name.c_str(), glm::value_ptr(pointLight.getPosition()));
-				}
-			}
 		}
 
 		ImGui::End();

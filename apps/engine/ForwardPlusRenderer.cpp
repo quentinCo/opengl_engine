@@ -326,6 +326,13 @@ void ForwardPlusRenderer::renderDepthPass(const Scene& scene, const Camera& came
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
 	}
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	GLenum err = glGetError();
+	if (err != GL_NO_ERROR)
+	{
+		std::cerr << "glGetError() : " << err << std::endl;
+		//	std::cerr << "gluErrorString() : " << gluErrorString(err) << std::endl;
+		exit(1);
+	}
 }
 
 void ForwardPlusRenderer::renderDepthDebug()
@@ -380,6 +387,7 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 		std::cerr << windowWidth << " -- " << windowHeight << std::endl;
 		std::cerr << xGroup << " -- " << yGroup << " -- " << yGroup * xGroup << std::endl;
 		std::cerr << "glGetError() : " << err << std::endl;
+	//	std::cerr << "gluErrorString() : " << gluErrorString(err) << std::endl;
 		exit(1);
 	}
 
