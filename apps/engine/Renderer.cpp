@@ -27,7 +27,7 @@ Renderer::Renderer(Renderer&& o)
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
 	uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
-	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur),
+	uTexSizeBlur (o.uTexSizeBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
@@ -47,7 +47,10 @@ Renderer::Renderer(Renderer&& o)
 		compositingTextures[i] = o.compositingTextures[i];
 		uCompositingTextures[i] = o.uCompositingTextures[i];
 		o.compositingTextures[i] = 0;
-	}		
+	}
+
+	compositingTexturesSize = o.compositingTexturesSize;
+	uCompositingTexturesSize = o.uCompositingTexturesSize;
 }
 
 Renderer& Renderer::operator=(Renderer&& o)
@@ -79,7 +82,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	o.bufferBlurredTexPass1 = 0;
 
 	uInitTex = o.uInitTex;
-	uWindowDimBlur = o.uWindowDimBlur;
+	uTexSizeBlur = o.uTexSizeBlur;
 	uDirectionBlur = o.uDirectionBlur;
 
 	programGatherPass = std::move(o.programGatherPass);
@@ -91,6 +94,9 @@ Renderer& Renderer::operator=(Renderer&& o)
 		uCompositingTextures[i] = o.uCompositingTextures[i];
 		o.compositingTextures[i] = 0;
 	}
+
+	compositingTexturesSize = o.compositingTexturesSize;
+	uCompositingTexturesSize = o.uCompositingTexturesSize;
 
 	return *this;
 }
@@ -131,7 +137,7 @@ void Renderer::initBlurPass()
 	glBindTexture(GL_TEXTURE_2D, bufferBlurredTexPass1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (GLsizei)(windowWidth * 0.5), (GLsizei)(windowHeight * 0.5), 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindImageTexture(0, bufferBlurredTexPass1, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -140,12 +146,12 @@ void Renderer::initBlurPass()
 	glBindTexture(GL_TEXTURE_2D, bufferBlurred);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowWidth, windowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (GLsizei)(windowWidth * 0.5), (GLsizei)(windowHeight * 0.5), 0, GL_RGBA, GL_FLOAT, NULL);
 	glBindImageTexture(0, bufferBlurred, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	uInitTex = glGetUniformLocation(programBlurPass.glId(), "uInitTex");
-	uWindowDimBlur = glGetUniformLocation(programBlurPass.glId(), "uWindowDim");
+	uTexSizeBlur = glGetUniformLocation(programBlurPass.glId(), "uTexSize");
 	uDirectionBlur = glGetUniformLocation(programBlurPass.glId(), "uDirection");
 }
 
@@ -181,6 +187,8 @@ void Renderer::initGatherPass(int nbTexPass)
 	uCompositingTextures[1] = glGetUniformLocation(programGatherPass.glId(), "uLayer1");
 	uCompositingTextures[2] = glGetUniformLocation(programGatherPass.glId(), "uLayer2");
 	uCompositingTextures[3] = glGetUniformLocation(programGatherPass.glId(), "uLayer3");
+
+	uCompositingTexturesSize = glGetUniformLocation(programGatherPass.glId(), "uLayer0Size");
 }
 
 
@@ -305,7 +313,7 @@ void Renderer::postProcessBlurPass(GLuint tex)
 {
 	programBlurPass.use();
 
-	glUniform2fv(uWindowDimBlur, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
+	glUniform2fv(uTexSizeBlur, 1, glm::value_ptr(glm::vec2(windowWidth * 0.5, windowHeight * 0.5)));
 
 	glBindImageTexture(0, bufferBlurredTexPass1, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glActiveTexture(GL_TEXTURE0);
@@ -336,6 +344,8 @@ void Renderer::postProcessDirectionalBlurPass(int direction)
 
 void Renderer::renderGatherPass()
 {
+	assert(compositingTextures[0]);
+
 	programGatherPass.use();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -346,6 +356,8 @@ void Renderer::renderGatherPass()
 		glActiveTexture(GL_TEXTURE0 + i);
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
+	glUniform2fv(uCompositingTexturesSize, 1, glm::value_ptr(compositingTexturesSize));
 
 	for (int i = 0; i < 4; ++i)
 	{

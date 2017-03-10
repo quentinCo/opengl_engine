@@ -6,6 +6,8 @@
 #include "Scene.hpp"
 #include "Camera.hpp"
 
+#define TEXTURE_RATIO 0.5
+
 namespace qc
 {
 	
@@ -53,8 +55,14 @@ public:
 		windowHeight = static_cast<GLsizei>(height);
 	}
 	
-	void setTexCompositingLayer(int numLayer, GLuint *tex)
-		{if(numLayer < 10) compositingTextures[numLayer] = tex; }
+	void setTexCompositingLayer(int numLayer, GLuint *tex, const glm::vec2 size = glm::vec2(0))
+	{
+		if (numLayer == 0)
+			compositingTexturesSize = size;
+
+		if (numLayer < 10)
+			compositingTextures[numLayer] = tex;
+	}
 
 	void setNbBlurPass(int nb)
 		{nbBlurPass = nb;}
@@ -123,7 +131,7 @@ protected:
 	//------ Uniform to adjust blur direction
 	GLuint uDirectionBlur;
 	
-	GLuint uWindowDimBlur;
+	GLuint uTexSizeBlur;
 	
 	//-- Gather (Compositing) Pass Variables
 	//---- Gather Pass Program
@@ -135,7 +143,9 @@ protected:
 
 	//---- Textures to gather
 	GLuint* compositingTextures[4];
+	glm::vec2 compositingTexturesSize;
 	GLuint uCompositingTextures[4];
+	GLuint uCompositingTexturesSize;
 
 
 	//-- INIT OPENGL PROPERTIES ------------

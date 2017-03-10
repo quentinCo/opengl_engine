@@ -61,6 +61,17 @@ ForwardPlusRenderer::ForwardPlusRenderer(ForwardPlusRenderer&& o)
 		shadingRenderedTexture[i] = o.shadingRenderedTexture[i];
 		o.shadingRenderedTexture[i] = 0;
 	}
+
+	if (fboEmissivePass) glDeleteFramebuffers(1, &fboEmissivePass);
+	fboEmissivePass = o.fboEmissivePass;
+	o.fboEmissivePass = 0;
+
+	if (emissiveTexture) glDeleteSamplers(2, emissiveTexture);
+	for (int i = 0; i < 2; ++i)
+	{
+		emissiveTexture[i] = o.emissiveTexture[i];
+		o.emissiveTexture[i] = 0;
+	}
 }
 
 ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
@@ -125,6 +136,17 @@ ForwardPlusRenderer& ForwardPlusRenderer::operator= (ForwardPlusRenderer&& o)
 
 	uPointLights = o.uPointLights;
 	uPointLightsNumber = o.uPointLightsNumber;
+
+	if (fboEmissivePass) glDeleteFramebuffers(1, &fboEmissivePass);
+	fboEmissivePass = o.fboEmissivePass;
+	o.fboEmissivePass = 0;
+
+	if (emissiveTexture) glDeleteSamplers(2, emissiveTexture);
+	for (int i = 0; i < 2; ++i)
+	{
+		emissiveTexture[i] = o.emissiveTexture[i];
+		o.emissiveTexture[i] = 0;
+	}
 
 	return *this;
 }
@@ -213,7 +235,8 @@ void ForwardPlusRenderer::initShadingPass()
 	for (int i = 0; i < DEPTH_TEXTURE; ++i)
 	{
 		glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[i]);
-		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, windowWidth, windowHeight);
+		/*if(i == EMISSIVE_TEXTURE) glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, (GLsizei)(windowWidth * 0.5), (GLsizei)(windowHeight * 0.5));
+		else*/  glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, windowWidth, windowHeight);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, shadingRenderedTexture[DEPTH_TEXTURE]);
@@ -268,6 +291,35 @@ void ForwardPlusRenderer::initShadingPass()
 }
 
 
+//-- INIT EMISSIVE PASS -----------------
+void ForwardPlusRenderer::initEmissivePass()
+{
+	Renderer::initEmissivePass();
+
+	glGenTextures(2, emissiveTexture);
+	glBindTexture(GL_TEXTURE_2D, emissiveTexture[0]);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB32F, (GLsizei)(windowWidth * 0.5), (GLsizei)(windowHeight * 0.5));
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D, emissiveTexture[1]);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32F, (GLsizei)(windowWidth * 0.5), (GLsizei)(windowHeight * 0.5));
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glGenFramebuffers(1, &fboEmissivePass);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboEmissivePass);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, emissiveTexture[0], 0);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, emissiveTexture[1], 0);
+
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0};
+	glDrawBuffers(1, drawBuffers);
+
+	GLenum res = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+	if (res != GL_FRAMEBUFFER_COMPLETE)
+		std::cerr << "Error check shading frame buffer : " << res << std::endl;
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
+
 //-- RENDER DEPTH PASS ------------------
 void ForwardPlusRenderer::prePassRendering(const Scene& scene, const Camera& camera)
 {
@@ -281,6 +333,14 @@ void ForwardPlusRenderer::prePassRendering(const Scene& scene, const Camera& cam
 void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 {
 	renderShadingPass(scene, camera);
+
+	if ((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
+	{
+		renderEmissivePass(scene, camera);
+		setTexCompositingLayer(1, &(emissiveTexture[0]), glm::vec2(windowWidth * 0.5, windowHeight * 0.5));
+	}
+	else
+		setTexCompositingLayer(1, 0);
 }
 
 
@@ -289,11 +349,12 @@ void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& came
 {
 	if ((renderPostProcess & RENDER_BLUR) == RENDER_BLUR)
 	{
-		postProcessBlurPass(shadingRenderedTexture[EMISSIVE_TEXTURE]);
+		//postProcessBlurPass(shadingRenderedTexture[EMISSIVE_TEXTURE]);
+		postProcessBlurPass(emissiveTexture[0]);
 		for(int i = 1; i < nbBlurPass; ++i)
 			postProcessBlurPass(bufferBlurred);
 
-		setTexCompositingLayer(2, &bufferBlurred);
+		setTexCompositingLayer(2, &bufferBlurred, glm::vec2(windowWidth * 0.5, windowHeight * 0.5));
 	}
 	else
 		setTexCompositingLayer(2, 0);
@@ -390,7 +451,6 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 		std::cerr << windowWidth << " -- " << windowHeight << std::endl;
 		std::cerr << xGroup << " -- " << yGroup << " -- " << yGroup * xGroup << std::endl;
 		std::cerr << "glGetError() : " << err << std::endl;
-	//	std::cerr << "gluErrorString() : " << gluErrorString(err) << std::endl;
 		exit(1);
 	}
 
@@ -435,11 +495,35 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	for (const auto& mesh : meshes)
 		renderMesh(mesh, camera, uModelViewProjMatrixForShading, uModelViewMatrixForShading, uNormalMatrixForShading);
 
-	if((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
-		renderParticules(scene, camera);
+	/*if((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
+		renderParticules(scene, camera);*/
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-	setTexCompositingLayer(0, &(shadingRenderedTexture[SCENE_TEXTURE]));
-	setTexCompositingLayer(1, &(shadingRenderedTexture[EMISSIVE_TEXTURE]));
+	setTexCompositingLayer(0, &(shadingRenderedTexture[SCENE_TEXTURE]), glm::vec2(windowWidth, windowHeight));
+	//setTexCompositingLayer(1, &(shadingRenderedTexture[EMISSIVE_TEXTURE]), glm::vec2(windowWidth * 0.5, windowHeight * 0.5));
+}
+
+
+//-- RENDER EMISSIVE PASS --------------
+void ForwardPlusRenderer::renderEmissivePass(const Scene& scene, const Camera& camera)
+{
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fboShadingPass);
+//	glReadBuffer(GL_COLOR_ATTACHMENT0);
+
+	// bind the destination framebuffer and select the color attachments to copy to
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboEmissivePass);
+//	glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, (GLint)(windowWidth * 0.5), (GLint)(windowHeight * 0.5), GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBlitFramebuffer(0, 0, windowWidth, windowHeight, 0, 0, (GLint)(windowWidth * 0.5), (GLint)(windowHeight * 0.5), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+//	glDepthMask(GL_FALSE);
+	glViewport(0, 0, (GLint)(windowWidth * 0.5), (GLint)(windowHeight * 0.5));
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	renderParticules(scene, camera);
+
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+	glViewport(0, 0, windowWidth, windowHeight);
+//	glDepthMask(GL_TRUE);
 }

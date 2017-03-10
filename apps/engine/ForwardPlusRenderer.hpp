@@ -14,7 +14,7 @@ class ForwardPlusRenderer : public Renderer
 	enum ShadingTexture
 	{
 		SCENE_TEXTURE = 0,
-		EMISSIVE_TEXTURE,
+//		EMISSIVE_TEXTURE,
 		DEPTH_TEXTURE,
 		NB_TEXTURE
 	};
@@ -103,6 +103,10 @@ private:
 	GLint uPointLights;
 	GLint uPointLightsNumber;
 	GLint uPoinLightIndexForShading;
+
+	//-- Emissive Pass
+	GLuint fboEmissivePass = 0;
+	GLuint emissiveTexture[2];
 	
 	
 	//-- INIT DEPTH PASS -------------------
@@ -126,6 +130,10 @@ private:
 	*/
 	void initShadingPass();
 
+
+	//-- INIT EMISSIVE PASS -----------------
+	void initEmissivePass();
+
 	//-- PARENT RENDERING FUNCTIONS ----------
 	virtual void prePassRendering(const Scene& scene, const Camera& camera);
 	virtual void renderScene(const Scene& scene, const Camera& camera);
@@ -140,6 +148,9 @@ private:
 
 	//-- RENDER SHADING PASS ---------------
 	void renderShadingPass(const Scene& scene, const Camera& camera);
+
+	//-- RENDER EMISSIVE PASS --------------
+	void renderEmissivePass(const Scene& scene, const Camera& camera);
 };
 
 } //! namespace graphic

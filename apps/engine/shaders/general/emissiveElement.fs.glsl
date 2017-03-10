@@ -1,6 +1,6 @@
 #version 330
 
-layout(location = 1) out vec3 fEmissive;
+layout(location = 0) out vec3 fEmissive;
 
 uniform vec3 uKe;
 
