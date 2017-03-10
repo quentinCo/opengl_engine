@@ -123,7 +123,7 @@ protected:
 	//------ Uniform to adjust blur direction
 	GLuint uDirectionBlur;
 	
-	GLuint uWindowDimBlur;
+	GLuint uTexSizeBlur;
 	
 	//-- Gather (Compositing) Pass Variables
 	//---- Gather Pass Program

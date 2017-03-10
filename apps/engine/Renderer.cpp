@@ -27,7 +27,7 @@ Renderer::Renderer(Renderer&& o)
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
 	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
 	uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
-	uWindowDimBlur (o.uWindowDimBlur), uDirectionBlur (o.uDirectionBlur),
+	uTexSizeBlur (o.uTexSizeBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
 	if (textureSampler) glDeleteSamplers(1, &textureSampler);
@@ -79,7 +79,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	o.bufferBlurredTexPass1 = 0;
 
 	uInitTex = o.uInitTex;
-	uWindowDimBlur = o.uWindowDimBlur;
+	uTexSizeBlur = o.uTexSizeBlur;
 	uDirectionBlur = o.uDirectionBlur;
 
 	programGatherPass = std::move(o.programGatherPass);
@@ -145,7 +145,7 @@ void Renderer::initBlurPass()
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	uInitTex = glGetUniformLocation(programBlurPass.glId(), "uInitTex");
-	uWindowDimBlur = glGetUniformLocation(programBlurPass.glId(), "uWindowDim");
+	uTexSizeBlur = glGetUniformLocation(programBlurPass.glId(), "uTexSize");
 	uDirectionBlur = glGetUniformLocation(programBlurPass.glId(), "uDirection");
 }
 
@@ -305,7 +305,7 @@ void Renderer::postProcessBlurPass(GLuint tex)
 {
 	programBlurPass.use();
 
-	glUniform2fv(uWindowDimBlur, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
+	glUniform2fv(uTexSizeBlur, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
 	glBindImageTexture(0, bufferBlurredTexPass1, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 	glActiveTexture(GL_TEXTURE0);
