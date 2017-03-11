@@ -42,8 +42,6 @@ Application::Application(int argc, char** argv):
 	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	forwardPlus = qc::graphic::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
-
-    std::cout << "End INIT" << std::endl;
 }
 
 
@@ -62,11 +60,9 @@ int Application::run()
 			physic = std::thread(&Application::updatePhysic, this);
 
 		/* Render Scene */
-		//std::thread graphic(&Application::renderGraphic, this);
 		renderGraphic();
 
 		/* Update Graphic from Physic */
-		//graphic.join();
 		if (activePhysic)
 		{
 			physic.join();
@@ -106,7 +102,7 @@ void Application::initLights()
 	const glm::vec3& bboxMin = scene.getBboxMin();
 	const glm::vec3& bboxMax = scene.getBboxMax();
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	for (size_t i = 0; i < 500; ++i) // 3500
+	for (size_t i = 0; i < 1500; ++i) // 5000
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
@@ -118,7 +114,7 @@ void Application::initLights()
 		if (1 % 500)
 		{
 			radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
-			intensity = 100000;
+			intensity = 10000;
 		}
 		else if (i % 100)
 		{

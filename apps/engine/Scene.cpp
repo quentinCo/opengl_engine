@@ -74,7 +74,6 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 		mesh.setMaterials(materials);
 
 		meshes.emplace_back(std::move(mesh));
-		std::cout << "Meshes Materials = " << meshes.back().getMaterials().size() << std::endl;
 	}
 	catch (std::runtime_error e)
 	{
