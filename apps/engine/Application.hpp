@@ -8,11 +8,11 @@
 #include <limits>
 #include <thread> 
 
-#include "Camera.hpp"
-#include "Scene.hpp"
-#include "Renderer.hpp"
-#include "ForwardPlusRenderer.hpp"
-#include "PhysicalSystem.hpp"
+#include <qc/graphic/Camera.hpp>
+#include <qc/graphic/Scene.hpp>
+#include <qc/graphic/Renderer.hpp>
+#include <qc/graphic/ForwardPlusRenderer.hpp>
+#include <qc/physic/PhysicalSystem.hpp>
 
 class Application
 {
@@ -52,7 +52,7 @@ private:
 	RenderPostProcessPass postProcessPass = RenderPostProcessPass::RENDER_ALL;
     
 	//-- Physic
-	bool activePhysic = true;
+	bool activePhysic = false;
 	std::thread physic;
 	qc::physic::PhysicalSystem physicSystem;
 	//std::map<qc::graphic::Particule*, qc::physic::PhysicalObject*> linkPhysicGraphic; // TODO : check why PhysicalObject* set at wtf value with insert
@@ -70,10 +70,6 @@ private:
 
 	//-- INIT PHYSIC ---------------------
 	void initPhysic();
-
-
-	//-- RENDER GRAPHIC ------------------
-	void renderGraphic();
 
 
 	//-- UPDATE PHYSIC -------------------
