@@ -8,11 +8,11 @@
 #include <limits>
 #include <thread> 
 
-#include "Camera.hpp"
-#include "Scene.hpp"
-#include "Renderer.hpp"
-#include "ForwardPlusRenderer.hpp"
-#include "PhysicalSystem.hpp"
+#include <qc/graphic/Camera.hpp>
+#include <qc/graphic/Scene.hpp>
+#include <qc/graphic/Renderer.hpp>
+#include <qc/graphic/ForwardPlusRenderer.hpp>
+#include <qc/physic/PhysicalSystem.hpp>
 
 class Application
 {

@@ -99,7 +99,7 @@ void Application::initLights()
 	const glm::vec3& bboxMin = scene.getBboxMin();
 	const glm::vec3& bboxMax = scene.getBboxMax();
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	for (size_t i = 0; i < 1500; ++i) // 5000
+	for (size_t i = 0; i < 1500; ++i) // 5000 // limite with physique 250
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
 		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
