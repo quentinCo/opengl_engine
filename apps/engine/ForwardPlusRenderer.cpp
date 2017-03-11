@@ -294,11 +294,11 @@ void ForwardPlusRenderer::renderDepthPass(const Scene& scene, const Camera& came
 			glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(shape.shapeSize), GL_UNSIGNED_INT, (const GLvoid*)(shape.shapeIndex * sizeof(GLuint)));
 	}
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR)
 	{
 		std::cerr << "glGetError() : " << err << std::endl;
-		//	std::cerr << "gluErrorString() : " << gluErrorString(err) << std::endl;
 		exit(1);
 	}
 }
@@ -313,16 +313,19 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 
 	programLightCullingPass.use();
 
+	// Camera and screen characteristic
 	glm::mat4 invProjMatrix = glm::inverse(camera.getProjMatrix());
 	glm::mat4 viewProj = camera.getProjMatrix() * camera.getViewMatrix();
 	glUniformMatrix4fv(uInverseProjMatrix, 1, FALSE, glm::value_ptr(invProjMatrix));
 	glUniformMatrix4fv(uViewMatrixForCulling, 1, FALSE, glm::value_ptr(camera.getViewMatrix()));
 	glUniform2fv(uWindowDim, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
+	// Bind ssbo
 	Renderer::bindSsbos(pointLights, 0, uPointLightsForCulling, programLightCullingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
 	glUniform1i(uPointLightsNumberForCulling, static_cast<GLint>(pointLights.size()));
 
 	Renderer::bindSsbosToRead(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), 1, uPointLightsIndexForCulling, programLightCullingPass, ssboPointLightsIndex);
+
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -358,11 +361,8 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 
 	//-- load directional light
 	const auto& directionalLights = scene.getDirectionalLights();
-	std::vector<Light> directionalPointLights; //TODO: revoir
-	for (const auto& it : directionalLights)
-		directionalPointLights.push_back(it);
 	if(directionalLights.size() > 0)
-		Renderer::bindSsbos(directionalPointLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+		Renderer::bindSsbos(directionalLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
 	
 	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 

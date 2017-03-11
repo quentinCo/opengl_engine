@@ -19,7 +19,6 @@ Application::Application(int argc, char** argv):
 
 	/* Loading obj in main scene */
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
-	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
 	/* Move Maya mesh */
 	qc::graphic::Mesh& mesh = scene.getMeshes().back();
@@ -35,7 +34,8 @@ Application::Application(int argc, char** argv):
 	initPhysic();
 
 	/* Set scene lights ssbo */
-	scene.setSsboDirectionalLights();
+//	scene.addDirectionalLight(qc::graphic::DirectionalLight(45, 45, glm::vec3(0.5,0.5,0), 0.25));
+//	scene.setSsboDirectionalLights();
 	scene.setSsboPointLights();
 
 	/* Init camera and renderer */
@@ -149,16 +149,6 @@ void Application::initParticules()
 		material->setColor(qc::graphic::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
 	}
 
-	/* Create Point Lights for Particules */
-
-
-	/*
-	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(200, 100, -260), glm::vec3(1), 300));
-	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(-200, 100, -260), glm::vec3(1), 300));
-	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(200, -100, -260), glm::vec3(1), 300));
-	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(-200, -100, -260), glm::vec3(1), 300));
-	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(1), 300));
-	*/
 	/* Link Particules and Point Lights */
 	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
 	for (auto& it : pointLights)
@@ -279,32 +269,6 @@ void Application::renderGUI(float* clearColor)
 			activePhysic = !activePhysic;
 
 		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 10.f, 1000.f);
-
-		if (ImGui::CollapsingHeader("Directional Light"))
-		{
-			auto& directionalLights = scene.getDirectionalLights();
-			for (size_t i = 0; i < directionalLights.size(); ++i)
-			{
-				size_t j = i + 1;
-				std::string name = "Directional Light " + std::to_string(j);
-				if (ImGui::CollapsingHeader(name.c_str()))
-				{
-					auto& directionalLight = directionalLights[i];
-					name = "DirLightDirection " + std::to_string(j);
-					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getPosition()));
-					name = "DirLightColor " + std::to_string(j);
-					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getColor()));
-					name = "DirLightIntensity " + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
-					name = "Phi Angle " + std::to_string(j);
-					std::string name2 = "Theta Angle " + std::to_string(j);
-					if (ImGui::DragFloat(name.c_str(), &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
-						ImGui::DragFloat(name2.c_str(), &directionalLight.getThetaAngle(), 1.0f, 0.0f, 180.f)) {
-						directionalLight.setDirection(directionalLight.getPhiAngle(), directionalLight.getThetaAngle());
-					}
-				}
-			}			
-		}
 
 		ImGui::End();
 	}

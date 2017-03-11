@@ -13,11 +13,7 @@ using namespace qc::graphic;
 
 void Scene::setSsboDirectionalLights()
 {
-	std::vector<Light> directionalPointLights;
-	for (const auto& it : directionalLights)
-		directionalPointLights.push_back(it);
-
-	ssboDirectionalLights = BufferObject<Light>(directionalPointLights, GL_SHADER_STORAGE_BUFFER); // TODO : revoir
+	ssboDirectionalLights = BufferObject<Light>(directionalLights, GL_SHADER_STORAGE_BUFFER); // TODO : revoir
 }
 
 

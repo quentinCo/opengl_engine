@@ -46,7 +46,7 @@ public:
 	const std::vector<PointLight>& getPointLights() const
 		{return pointLights;}
 
-	const std::vector<DirectionalLight>& getDirectionalLights() const
+	const std::vector<Light>& getDirectionalLights() const
 		{return directionalLights;}
 
 	const std::vector<Particule>& getParticules() const
@@ -59,7 +59,7 @@ public:
 	std::vector<PointLight>& getPointLights()
 		{return pointLights;}
 
-	std::vector<DirectionalLight>& getDirectionalLights()
+	std::vector<Light>& getDirectionalLights()
 		{return directionalLights;}
 	// ------------
 
@@ -117,7 +117,7 @@ public:
 private:
 	std::vector<Mesh> meshes;
 	std::vector<PointLight> pointLights;
-	std::vector<DirectionalLight> directionalLights; // TODO : revoir passer DirectionalLight -> Light or change for cast to light
+	std::vector<Light> directionalLights; // In Light cause we don't use the directional lights settings
 	std::vector<Particule> particules;
 
 	glm::vec3 bboxMin = glm::vec3(std::numeric_limits<float>::max());
