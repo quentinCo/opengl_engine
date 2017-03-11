@@ -60,7 +60,7 @@ int Application::run()
 			physic = std::thread(&Application::updatePhysic, this);
 
 		/* Render Scene */
-		renderGraphic();
+		renderer->render(scene, camera);
 
 		/* Update Graphic from Physic */
 		if (activePhysic)
@@ -80,11 +80,8 @@ int Application::run()
 
 		/* Update camera */
 		auto ellapsedTime = glfwGetTime() - seconds;
-		auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
-		if (!guiHasFocus)
-		{
+		if (!(ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard))
 			camera.updateViewController(float(ellapsedTime));
-		}
 
 		/* Event "key escape" - Quite */
 		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
@@ -178,12 +175,6 @@ void Application::initPhysic()
 		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
 	}
-}
-
-//-- RENDER GRAPHIC ------------------
-void Application::renderGraphic()
-{
-	renderer->render(scene, camera);
 }
 
 //-- UPDATE PHYSIC -------------------

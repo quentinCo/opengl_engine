@@ -72,10 +72,6 @@ private:
 	void initPhysic();
 
 
-	//-- RENDER GRAPHIC ------------------
-	void renderGraphic();
-
-
 	//-- UPDATE PHYSIC -------------------
 	void updatePhysic();
 

@@ -61,7 +61,70 @@ uniform sampler2D uKdSampler;
 uniform sampler2D uKsSampler;
 uniform sampler2D uShininessSampler;
 
-vec3 computeFragColor()
+int computePointLighting(vec3 position, vec3 ka, vec3 kd, vec3 ks, float shininess, vec3 normal, vec3 eyeDir)
+{
+	int count = 0;
+	// pointLight Tile in the lightCulling
+	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
+	
+	vec3 diffusePointLightIntensity = vec3(0);
+	vec3 specularPointLightIntensity = vec3(0);
+
+	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
+	{
+		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
+		count++;
+
+		vec3 lightCoords = (uViewMatrix * pointLights[pointLightIndex].position).xyz;
+		float distToPointLight = length(lightCoords - position);
+
+		// Attenuation compute https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+		float attenuation = 1 / (pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * distToPointLight + pointLights[pointLightIndex].quadraticAttenuation * distToPointLight * distToPointLight);
+		attenuation -= 1 /( pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * pointLights[pointLightIndex].radiusAttenuation + pointLights[pointLightIndex].quadraticAttenuation *  pointLights[pointLightIndex].radiusAttenuation *  pointLights[pointLightIndex].radiusAttenuation);
+		
+		vec3 lightIntensity = (distToPointLight <= pointLights[pointLightIndex].radiusAttenuation) ? (pointLights[pointLightIndex].color * pointLights[pointLightIndex].intensity) * attenuation : vec3(0);
+		
+		vec3 dirToPointLight = (lightCoords - position) / distToPointLight;
+		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
+
+		float dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, normalize(eyeDir + dirToPointLight)));
+		if (shininess != 1.f && shininess != 0.f)
+			dothLight = pow(dothLight, shininess);
+
+		specularPointLightIntensity += lightIntensity * dothLight;
+	}
+
+	fColor += kd * diffusePointLightIntensity;
+	fColor += ks * specularPointLightIntensity;
+
+	return count;
+}
+
+
+void computeDirectionalLighting(vec3 position, vec3 ka, vec3 kd, vec3 ks, float shininess, vec3 normal, vec3 eyeDir)
+{
+	vec3 diffuseDirectionalLightIntensity = vec3(0);
+	vec3 specularDirectionalLightIntensity = vec3(0);
+
+	for(int i = 0; i < uDirectionalLightsNumber; ++i)
+	{
+		vec3 lightCoords = (uViewMatrix * normalize(directionalLights[i].position)).xyz;
+		vec3 lightIntensity = directionalLights[i].color * directionalLights[i].intensity;
+		diffuseDirectionalLightIntensity += lightIntensity * max(0.f, dot(normal, lightCoords));
+
+		float dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, normalize(eyeDir + lightCoords))); 
+		if (shininess != 1.f && shininess != 0.f)
+			dothLight = pow(dothLight, shininess);
+
+		specularDirectionalLightIntensity += lightIntensity * dothLight;
+	}
+
+	
+	fColor += kd * diffuseDirectionalLightIntensity;
+	fColor += ks * specularDirectionalLightIntensity;
+}
+
+void computeFragColor()
 {
     vec3 position = vViewSpacePosition;
 
@@ -74,62 +137,16 @@ vec3 computeFragColor()
     vec3 normal = vViewSpaceNormal;
     vec3 eyeDir = normalize(-position);
 
-	vec3 diffuseDirectionalLightIntensity = vec3(0);
-	vec3 specularDirectionalLightIntensity = vec3(0);
-
-	vec3 lightCoords = vec3(0);
-	vec3 lightIntensity = vec3(0);
-	vec3 hLight = vec3(0);
-	float dothLight = 0;
-	for(int i = 0; i < uDirectionalLightsNumber; ++i)
-	{
-		lightCoords = (uViewMatrix * vec4(normalize(directionalLights[i].position))).xyz;
-		lightIntensity = directionalLights[i].color * directionalLights[i].intensity;
-		diffuseDirectionalLightIntensity += lightIntensity * max(0.f, dot(normal, lightCoords));
-
-		dothLight = (shininess == 0) ? 1.f :max(0.f, dot(normal, normalize(eyeDir + lightCoords))); 
-		if (shininess != 1.f && shininess != 0.f)
-			dothLight = pow(dothLight, shininess);
-
-		specularDirectionalLightIntensity += lightIntensity * dothLight;
-	}	
-
-
-	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
-	int count = 0;
-
-	vec3 diffusePointLightIntensity = vec3(0);
-	vec3 specularPointLightIntensity = vec3(0);
-
-	float distToPointLight = 0;
-	vec3 dirToPointLight = vec3(0);
-	float attenuation = 0;
-	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
-	{
-		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
-		count++;
-
-		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
-		distToPointLight = length(lightCoords - position);
-		attenuation = 1 / (pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * distToPointLight + pointLights[pointLightIndex].quadraticAttenuation * distToPointLight * distToPointLight);
-		attenuation -= 1 /( pointLights[pointLightIndex].constantAttenuation + pointLights[pointLightIndex].linearAttenuation * pointLights[pointLightIndex].radiusAttenuation + pointLights[pointLightIndex].quadraticAttenuation *  pointLights[pointLightIndex].radiusAttenuation *  pointLights[pointLightIndex].radiusAttenuation);
-		lightIntensity = (distToPointLight <= pointLights[pointLightIndex].radiusAttenuation) ? (pointLights[pointLightIndex].color * pointLights[pointLightIndex].intensity) * attenuation : vec3(0);
-		
-		dirToPointLight = (lightCoords - position) / distToPointLight;
-		diffusePointLightIntensity += lightIntensity * max(0., dot(normal, dirToPointLight));
-
-		dothLight = (shininess == 0) ? 1.f : max(0.f, dot(normal, normalize(eyeDir + dirToPointLight)));
-		if (shininess != 1.f && shininess != 0.f)
-			dothLight = pow(dothLight, shininess);
-
-		specularPointLightIntensity += lightIntensity * dothLight;
-	}
-
-	vec3 fColor = vec3(0);
+	fColor = vec3(0);
     fColor += 0.1 * ka;
-	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
-	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
-	
+
+	if(uDirectionalLightsNumber > 0)
+		computeDirectionalLighting(position, ka, kd, ks, shininess, normal, eyeDir);
+
+	int count = 0;
+	if(uPointLightsNumber > 0)
+		count = computePointLighting(position, ka, kd, ks, shininess, normal, eyeDir);
+
 	if(count > 50)
 	{
 		fColor += vec3(0.5, 0, 0);
@@ -143,10 +160,9 @@ vec3 computeFragColor()
 		fColor += vec3(0, 0, 0.5);
 	}
 
-	return fColor;
 }
 void main()
 {
-	fColor = computeFragColor();
+	computeFragColor();
 	fEmissive = vec3(0);
 }
