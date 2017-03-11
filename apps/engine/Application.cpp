@@ -210,52 +210,64 @@ void Application::renderGUI(float* clearColor)
 
 		if (ImGui::Button("Render All Post Process Pass"))
 		{
-			postProcessPass = RenderPostProcessPass::RENDER_ALL;
-			renderer->setRenderPostProcess(postProcessPass);
+			renderOptions = RenderOptions::RENDER_ALL;
+			renderer->setRenderPostProcess(renderOptions);
 		}
 
-		if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
-			titleButton = "Dont Render Emissive";
-		else
-			titleButton = "Render Emissive";
 
+		titleButton = ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE) ? "Dont Render Emissive" : "Render Emissive";
 		if (ImGui::Button(titleButton.c_str()))
 		{
-			if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
-				postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass & ~(RenderPostProcessPass::RENDER_EMISSIVE | RenderPostProcessPass::RENDER_BLUR));
+			if ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE)
+				renderOptions = static_cast<RenderOptions>(renderOptions & ~(RenderOptions::RENDER_EMISSIVE | RenderOptions::RENDER_BLUR));
 			else
-				postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass | RenderPostProcessPass::RENDER_EMISSIVE);
+				renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_EMISSIVE);
 
-			renderer->setRenderPostProcess(postProcessPass);
+			renderer->setRenderPostProcess(renderOptions);
 		}
 
-		if ((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
-			titleButton = "Dont Render Blur";
-		else
-			titleButton = "Render Blur";
 
+		titleButton = ((renderOptions & RenderOptions::RENDER_BLUR) == RenderOptions::RENDER_BLUR) ? "Dont Render Blur" : "Render Blur";
 		if (ImGui::Button(titleButton.c_str()))
 		{
-			if ((postProcessPass & RenderPostProcessPass::RENDER_EMISSIVE) == RenderPostProcessPass::RENDER_EMISSIVE)
+			if ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE)
 			{
-				if ((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
-					postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass & ~RenderPostProcessPass::RENDER_BLUR);
+				if ((renderOptions & RenderOptions::RENDER_BLUR) == RenderOptions::RENDER_BLUR)
+					renderOptions = static_cast<RenderOptions>(renderOptions & ~RenderOptions::RENDER_BLUR);
 				else
-					postProcessPass = static_cast<RenderPostProcessPass>(postProcessPass | RenderPostProcessPass::RENDER_BLUR);
+					renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_BLUR);
 			}
 
-			renderer->setRenderPostProcess(postProcessPass);
+			renderer->setRenderPostProcess(renderOptions);
 		}
 
-		if((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+		if((renderOptions & RenderOptions::RENDER_BLUR) == RenderOptions::RENDER_BLUR)
 			ImGui::SliderInt("Nb blur iteration", &(renderer->getNbBlurPass()), 1, 10);
 
 
-		if (activePhysic)
-			titleButton = "Unactive Physic";
-		else
-			titleButton = "Active Physic";
+		titleButton = ((renderOptions & RenderOptions::RENDER_POINT_LIGHTS) == RenderOptions::RENDER_POINT_LIGHTS) ? "Dont Render Point Lights" : "Render Point Lights";
+		if (ImGui::Button(titleButton.c_str()))
+		{
+			if ((renderOptions & RenderOptions::RENDER_POINT_LIGHTS) == RenderOptions::RENDER_POINT_LIGHTS)
+				renderOptions = static_cast<RenderOptions>(renderOptions & ~RenderOptions::RENDER_POINT_LIGHTS);
+			else
+				renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_POINT_LIGHTS);
 
+			renderer->setRenderPostProcess(renderOptions);
+		}
+		
+		titleButton = ((renderOptions & RenderOptions::RENDER_DIR_LIGHTS) == RenderOptions::RENDER_DIR_LIGHTS) ? "Dont Render Dir Lights" : "Render Dir Lights";
+		if (ImGui::Button(titleButton.c_str()))
+		{
+			if ((renderOptions & RenderOptions::RENDER_DIR_LIGHTS) == RenderOptions::RENDER_DIR_LIGHTS)
+				renderOptions = static_cast<RenderOptions>(renderOptions & ~RenderOptions::RENDER_DIR_LIGHTS);
+			else
+				renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_DIR_LIGHTS);
+
+			renderer->setRenderPostProcess(renderOptions);
+		}
+
+		titleButton = (activePhysic) ? "Unactive Physic" : "Active Physic";
 		if (ImGui::Button(titleButton.c_str()))
 			activePhysic = !activePhysic;
 

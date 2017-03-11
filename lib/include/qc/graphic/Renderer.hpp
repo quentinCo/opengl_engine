@@ -17,11 +17,13 @@ class Renderer
 public:
 	using SharedMaterial = std::shared_ptr<Material>;
 
-	enum RenderPostProcessPass
+	enum RenderOptions
 	{
 		DONT_RENDER = 0x00,
 		RENDER_EMISSIVE = 0x01,
 		RENDER_BLUR = 0x02,
+		RENDER_POINT_LIGHTS = 0x04,
+		RENDER_DIR_LIGHTS = 0x08,
 		RENDER_ALL = 0xFF
 	};
 
@@ -59,8 +61,8 @@ public:
 	void setNbBlurPass(int nb)
 		{nbBlurPass = nb;}
 
-	void setRenderPostProcess(RenderPostProcessPass pass)
-		{renderPostProcess = pass;}
+	void setRenderPostProcess(RenderOptions pass)
+		{renderOptions = pass;}
 
 	//-- RENDER ---------------------------
 	/*
@@ -75,12 +77,12 @@ public:
 		prePassRendering(scene, camera);
 		renderScene(scene, camera);
 	
-		if(renderPostProcess != DONT_RENDER)
+		if(renderOptions != DONT_RENDER)
 			postProcessPass(scene, camera);
 	}
 
 protected:
-	RenderPostProcessPass renderPostProcess = RENDER_ALL;
+	RenderOptions renderOptions = RENDER_ALL;
 
 	//-- Path to the shader directory
 	glmlv::fs::path shaderDirectory;

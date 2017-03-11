@@ -17,7 +17,7 @@
 class Application
 {
 public:
-	using RenderPostProcessPass = qc::graphic::Renderer::RenderPostProcessPass;
+	using RenderOptions = qc::graphic::Renderer::RenderOptions;
 
     Application(int argc, char** argv);
 
@@ -49,7 +49,7 @@ private:
 	//-- Renderers 
 	qc::graphic::Renderer* renderer = nullptr;
 	qc::graphic::ForwardPlusRenderer forwardPlus;
-	RenderPostProcessPass postProcessPass = RenderPostProcessPass::RENDER_ALL;
+	RenderOptions renderOptions = RenderOptions::RENDER_ALL;
     
 	//-- Physic
 	bool activePhysic = false;

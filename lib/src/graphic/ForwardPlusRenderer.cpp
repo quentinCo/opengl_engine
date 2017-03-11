@@ -238,7 +238,8 @@ void ForwardPlusRenderer::initShadingPass()
 void ForwardPlusRenderer::prePassRendering(const Scene& scene, const Camera& camera)
 {
 	renderDepthPass(scene, camera);
-	renderLightCullingPass(scene, camera);
+	if((renderOptions & RENDER_POINT_LIGHTS) == RENDER_POINT_LIGHTS)
+		renderLightCullingPass(scene, camera);
 }
 
 
@@ -252,7 +253,7 @@ void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 //-- RENDER DEPTH PASS ------------------
 void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& camera)
 {
-	if ((renderPostProcess & RENDER_BLUR) == RENDER_BLUR)
+	if ((renderOptions & RENDER_BLUR) == RENDER_BLUR)
 	{
 		postProcessBlurPass(shadingRenderedTexture[EMISSIVE_TEXTURE]);
 		for(int i = 1; i < nbBlurPass; ++i)
@@ -360,28 +361,17 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	glUniform2fv(uWindowDimForShading, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
 	//-- load directional light
-	const auto& directionalLights = scene.getDirectionalLights();
-	if(directionalLights.size() > 0)
-		Renderer::bindSsbos(directionalLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
-	
-	glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
+	loadDirLights(scene);
 
 	//-- load point light
-	const auto& pointLights = scene.getPointLights();
-	if (pointLights.size() > 0)
-	{
-		Renderer::bindSsbos(pointLights, 2, uPointLights, programShadingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
-		Renderer::bindSsbosToRead(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), 3, uPoinLightIndexForShading, programShadingPass, ssboPointLightsIndex);
-	}
-	
-	glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
+	loadPointLights(scene);
 	
 	//-- render meshes
 	const auto& meshes = scene.getMeshes();
 	for (const auto& mesh : meshes)
 		renderMesh(mesh, camera, uModelViewProjMatrixForShading, uModelViewMatrixForShading, uNormalMatrixForShading);
 
-	if((renderPostProcess & RENDER_EMISSIVE) == RENDER_EMISSIVE)
+	if((renderOptions & RENDER_EMISSIVE) == RENDER_EMISSIVE)
 		renderParticules(scene, camera);
 
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -389,3 +379,35 @@ void ForwardPlusRenderer::renderShadingPass(const Scene& scene, const Camera& ca
 	setTexCompositingLayer(0, &(shadingRenderedTexture[SCENE_TEXTURE]));
 	setTexCompositingLayer(1, &(shadingRenderedTexture[EMISSIVE_TEXTURE]));
 }
+
+
+void ForwardPlusRenderer::loadDirLights(const Scene& scene)
+{
+	if ((renderOptions & RENDER_DIR_LIGHTS) == RENDER_DIR_LIGHTS)
+	{
+		const auto& directionalLights = scene.getDirectionalLights();
+		if (directionalLights.size() > 0)
+			Renderer::bindSsbos(directionalLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+
+		glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
+	}
+	else
+		glUniform1i(uDirectionalLightsNumber, 0);
+}
+
+void ForwardPlusRenderer::loadPointLights(const Scene& scene)
+{
+	if ((renderOptions & RENDER_POINT_LIGHTS) == RENDER_POINT_LIGHTS)
+	{
+		const auto& pointLights = scene.getPointLights();
+		if (pointLights.size() > 0)
+		{
+			Renderer::bindSsbos(pointLights, 2, uPointLights, programShadingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+			Renderer::bindSsbosToRead(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), 3, uPoinLightIndexForShading, programShadingPass, ssboPointLightsIndex);
+		}
+		glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));
+	}
+	else
+		glUniform1i(uPointLightsNumber, 0);
+}
+
