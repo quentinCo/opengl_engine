@@ -127,6 +127,9 @@ private:
 
 	//-- RENDER SHADING PASS ---------------
 	void renderShadingPass(const Scene& scene, const Camera& camera);
+
+	void loadDirLights(const Scene& scene);
+	void loadPointLights(const Scene& scene);
 };
 
 } //! namespace graphic
