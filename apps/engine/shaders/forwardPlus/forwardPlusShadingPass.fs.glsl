@@ -96,7 +96,7 @@ vec3 computeFragColor()
 
 
 	int pointLightListIndex = ((int(gl_FragCoord.x / TILE_SIZE) + int(gl_FragCoord.y / TILE_SIZE) * int(ceil(uWindowDim.x / TILE_SIZE))) *  MAX_LIGHTS);
-	//int count = 0;
+	int count = 0;
 
 	vec3 diffusePointLightIntensity = vec3(0);
 	vec3 specularPointLightIntensity = vec3(0);
@@ -107,7 +107,7 @@ vec3 computeFragColor()
 	for(int i = 0; i < MAX_LIGHTS && i < uPointLightsNumber && pointLightsIndex[pointLightListIndex + i] != -1; ++i)
 	{
 		int pointLightIndex = pointLightsIndex[pointLightListIndex + i];
-		//count++;
+		count++;
 
 		lightCoords = (uViewMatrix * vec4(pointLights[pointLightIndex].position)).xyz;
 		distToPointLight = length(lightCoords - position);
@@ -126,22 +126,22 @@ vec3 computeFragColor()
 	}
 
 	vec3 fColor = vec3(0);
-//    fColor += ka;
+    fColor += 0.1 * ka;
 	fColor += kd * (diffuseDirectionalLightIntensity + diffusePointLightIntensity);
 	fColor += ks * (specularDirectionalLightIntensity + specularPointLightIntensity);
 	
-	//if(count > 50)
-	//{
-	//	fColor += vec3(0.5, 0, 0);
-	//}
-	//else if(count > 25)
-	//{
-	//	fColor += vec3(0, 0.5, 0);
-	//}
-	//else if(count > 10)
-	//{
-	//	fColor += vec3(0, 0, 0.5);
-	//}
+	if(count > 50)
+	{
+		fColor += vec3(0.5, 0, 0);
+	}
+	else if(count > 25)
+	{
+		fColor += vec3(0, 0.5, 0);
+	}
+	else if(count > 10)
+	{
+		fColor += vec3(0, 0, 0.5);
+	}
 
 	return fColor;
 }
