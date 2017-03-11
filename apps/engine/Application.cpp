@@ -1,17 +1,10 @@
 #include "Application.hpp"
 
 #include <iostream>
-#include <math.h>  
-#include <unordered_set>
+#include <math.h>
 
 #include <imgui.h>
-#include <glmlv/imgui_impl_glfw_gl3.hpp>
-#include <glmlv/Image2DRGBA.hpp>
-#include <glmlv/load_obj.hpp>
-
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/io.hpp>
 
 /*-------------------- APPLICATION  CONSTRUCTOR ----------------------------------*/
 
@@ -26,15 +19,119 @@ Application::Application(int argc, char** argv):
 
 	/* Loading obj in main scene */
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
-	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
 	/* Move Maya mesh */
 	qc::graphic::Mesh& mesh = scene.getMeshes().back();
 	mesh.setPosition(glm::vec3(500, 100, 0));
 
 	/* Create Lights */
-	//scene.addDirectionalLight(qc::graphic::DirectionalLight(90.f, 45.f, glm::vec3(1), 0.25f));
-	
+	initLights();
+
+	/* Create Particules */
+	initParticules();
+
+	/* Physic */
+	initPhysic();
+
+	/* Set scene lights ssbo */
+//	scene.addDirectionalLight(qc::graphic::DirectionalLight(45, 45, glm::vec3(0.5,0.5,0), 0.25));
+//	scene.setSsboDirectionalLights();
+	scene.setSsboPointLights();
+
+	/* Init camera and renderer */
+	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
+	forwardPlus = qc::graphic::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
+	renderer = &forwardPlus;
+}
+
+
+/*-------------------------------  RUN  ------------------------------------------*/
+
+int Application::run()
+{
+	float clearColor[3] = { 0, 0, 0 };
+
+	for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
+	{
+		const auto seconds = glfwGetTime();
+
+		/* Update Physic */
+		if(activePhysic)
+			physic = std::thread(&Application::updatePhysic, this);
+
+		/* Render Scene */
+		renderer->render(scene, camera);
+
+		/* Update Graphic from Physic */
+		if (activePhysic)
+		{
+			physic.join();
+			updateGraphicFromPhysic();
+		}			
+
+		/* Poll for and process events */
+		glfwPollEvents();
+
+		/* Render GUI */
+		renderGUI(clearColor);
+
+		/* Swap front and back buffers */
+		m_GLFWHandle.swapBuffers();
+
+		/* Update camera */
+		auto ellapsedTime = glfwGetTime() - seconds;
+		if (!(ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard))
+			camera.updateViewController(float(ellapsedTime));
+
+		/* Event "key escape" - Quite */
+		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
+			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
+	}
+
+	return 0;
+}
+
+
+/*---------------------------  INIT LIGHTS  ---------------------------------------*/
+void Application::initLights()
+{
+	//std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
+	const glm::vec3& bboxMin = scene.getBboxMin();
+	const glm::vec3& bboxMax = scene.getBboxMax();
+	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
+	for (size_t i = 0; i < 1500; ++i) // 5000 // limite with physique 250
+	{
+		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
+		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
+
+		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
+		float radius;
+		float intensity;
+		if (1 % 500)
+		{
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
+			intensity = 10000;
+		}
+		else if (i % 100)
+		{
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
+			intensity = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 500;
+		}
+		else
+		{
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 300 + 50;
+			intensity = static_cast<float>(std::rand()) / RAND_MAX * 200 + 200;
+		}
+
+		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
+	}
+}
+
+
+//-- INIT PARTICULES -----------------
+void Application::initParticules()
+{
 	/* Create Pre-def Material*/
 	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
 	for (int i = 0; i < 15; ++i)
@@ -49,90 +146,52 @@ Application::Application(int argc, char** argv):
 		material->setColor(qc::graphic::Material::EMMISIVE_COLOR, glm::vec3(r, v, b));
 	}
 
-	/* Create Point Lights for Particules */
-	std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	const glm::vec3& bboxMin = scene.getBboxMin();
-	const glm::vec3& bboxMax = scene.getBboxMax();
-	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	for (size_t i = 0; i < 1500; ++i) // 3500
-	{
-		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
-		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
-
-		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
-		float radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
-		float intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 200;
-
-		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
-	}
-	/*
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, 100, -260), glm::vec3(1, 0, 0), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, 100, -260), glm::vec3(0, 1, 0), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(200, -100, -260), glm::vec3(0, 0, 1), 300));
-	scene.addPointLight(qc::graphic::PointLight(20, glm::vec3(-200, -100, -260), glm::vec3(0, 1, 1), 300));
-	scene.addPointLight(qc::graphic::PointLight(500, glm::vec3(-500, 50, 0), glm::vec3(0, 1, 1), 300));
-	*/
 	/* Link Particules and Point Lights */
 	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
 	for (auto& it : pointLights)
 	{
 		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], &it));
+		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &it));
 	}
 	scene.sortParticules();
-
-	/* Set scene lights ssbo */
-	scene.setSsboDirectionalLights();
-	scene.setSsboPointLights();
-
-	/* Init camera and renderer */
-	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
-	forwardPlus = qc::graphic::ForwardPlusRenderer((m_ShadersRootPath / m_AppName), m_nWindowWidth, m_nWindowHeight);
-	renderer = &forwardPlus;
-
-    std::cout << "End INIT" << std::endl;
 }
 
 
-/*-------------------------------  RUN  ------------------------------------------*/
-
-int Application::run()
+//-- INIT PHYSIC ---------------------
+void Application::initPhysic()
 {
-	float clearColor[3] = { 0, 0, 0 };
-
-	for (auto iterationCount = 0u; !m_GLFWHandle.shouldClose(); ++iterationCount)
+	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
+	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
+	physicSystem.setBboxMax(scene.getBboxMax());
+	physicSystem.setBboxMin(scene.getBboxMin());
+	auto& particules = scene.getParticules();
+	for (auto& it : particules)
 	{
-		const auto seconds = glfwGetTime();
-
-		/* Render Scene */
-		renderer->render(scene, camera);
-
-		/* Poll for and process events */
-		glfwPollEvents();
-
-		/* Render GUI */
-		renderGUI(clearColor);
-
-		/* Swap front and back buffers */
-		m_GLFWHandle.swapBuffers();
-
-		/* Update camera */
-		auto ellapsedTime = glfwGetTime() - seconds;
-		auto guiHasFocus = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
-		if (!guiHasFocus)
-		{
-			camera.updateViewController(float(ellapsedTime));
-		}
-
-		/* Event "key escape" - Quite */
-		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
-			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
+		//		float mass = it.getIntensity() * it.getRadiusAttenuation();
+		float mass = 100 * it.getIntensity() / it.getRadiusAttenuation();
+		float radius = it.getRadius();
+		//		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
+		float radiusAttraction = it.getIntensity();
+		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
+		linkPhysicGraphic.insert(std::make_pair(&it, temp));
 	}
-
-	return 0;
 }
 
+//-- UPDATE PHYSIC -------------------
+void Application::updatePhysic()
+{
+	physicSystem.update(1 / discretizationFrequency);
+}
+
+//-- SYNCHRO GRAPHIC PHYSIC ----------
+void Application::updateGraphicFromPhysic()
+{
+	for (auto& it : linkPhysicGraphic)
+	{
+		const auto& physicalObject = physicSystem.getPhysicalObject(it.second);
+		it.first->setPosition(glm::vec4(physicalObject.getPosition(), 1));
+	}
+}
 
 /*---------------------------  RENDER GUI  ---------------------------------------*/
 
@@ -188,66 +247,19 @@ void Application::renderGUI(float* clearColor)
 			renderer->setRenderPostProcess(postProcessPass);
 		}
 
-/*		
-		ImGui::RadioButton("GPosition", &attachedToDraw, GL_COLOR_ATTACHMENT0); ImGui::SameLine();
-		ImGui::RadioButton("GNormal", &attachedToDraw, GL_COLOR_ATTACHMENT1);
-		ImGui::RadioButton("GAmbient", &attachedToDraw, GL_COLOR_ATTACHMENT2); ImGui::SameLine();
-		ImGui::RadioButton("GDiffuse", &attachedToDraw, GL_COLOR_ATTACHMENT3);
-		ImGui::RadioButton("GGlossyShininess", &attachedToDraw, GL_COLOR_ATTACHMENT4);
-*/
-		if (ImGui::CollapsingHeader("Directional Light"))
-		{
-			auto& directionalLights = scene.getDirectionalLights();
-			for (size_t i = 0; i < directionalLights.size(); ++i)
-			{
-				size_t j = i + 1;
-				std::string name = "Directional Light " + std::to_string(j);
-				if (ImGui::CollapsingHeader(name.c_str()))
-				{
-					auto& directionalLight = directionalLights[i];
-					name = "DirLightDirection " + std::to_string(j);
-					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getPosition()));
-					name = "DirLightColor " + std::to_string(j);
-					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(directionalLight.getColor()));
-					name = "DirLightIntensity " + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &directionalLight.getIntensity(), 0.1f, 0.f, 100.f);
-					name = "Phi Angle " + std::to_string(j);
-					std::string name2 = "Theta Angle " + std::to_string(j);
-					if (ImGui::DragFloat(name.c_str(), &directionalLight.getPhiAngle(), 1.0f, 0.0f, 360.f) ||
-						ImGui::DragFloat(name2.c_str(), &directionalLight.getThetaAngle(), 1.0f, 0.0f, 180.f)) {
-						directionalLight.setDirection(directionalLight.getPhiAngle(), directionalLight.getThetaAngle());
-					}
-				}
-			}			
-		}
+		if((postProcessPass & RenderPostProcessPass::RENDER_BLUR) == RenderPostProcessPass::RENDER_BLUR)
+			ImGui::SliderInt("Nb blur iteration", &(renderer->getNbBlurPass()), 1, 10);
 
-		if (ImGui::CollapsingHeader("Point Light"))
-		{
-			auto& pointLights = scene.getPointLights();
-			for (size_t i = 0; i < pointLights.size(); ++i)
-			{
-				size_t j = i + 1;
-				std::string name = "Point Light" + std::to_string(j);
-				if (ImGui::CollapsingHeader(name.c_str()))
-				{
-					auto& pointLight = pointLights[i];
-					name = "PointLightColor" + std::to_string(j);
-					ImGui::ColorEdit3(name.c_str(), glm::value_ptr(pointLight.getColor()));
-					name = "PointLightIntensity" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getIntensity(), 0.1f, 0.f, 16000.f);
-					name = "PointAttenuationRadius" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getRadiusAttenuation(), 0.1f, 20.f, 1000.f);
-					name = "ConstantAttenuation" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getConstantAttenuation(), 0.1f, 1.f, 100.f);
-					name = "LinearAttenuation" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getLinearAttenuation(), 0.1f, 1.f, 100.f);
-					name = "QuadraticAttenuation" + std::to_string(j);
-					ImGui::DragFloat(name.c_str(), &pointLight.getQuadraticAttenuation(), 0.1f, 1.f, 100.f);
-					name = "Position" + std::to_string(j);
-					ImGui::InputFloat3(name.c_str(), glm::value_ptr(pointLight.getPosition()));
-				}
-			}
-		}
+
+		if (activePhysic)
+			titleButton = "Unactive Physic";
+		else
+			titleButton = "Active Physic";
+
+		if (ImGui::Button(titleButton.c_str()))
+			activePhysic = !activePhysic;
+
+		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 10.f, 1000.f);
 
 		ImGui::End();
 	}

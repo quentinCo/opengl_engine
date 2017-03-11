@@ -2,17 +2,17 @@
 
 #include <glmlv/filesystem.hpp>
 #include <glmlv/GLFWHandle.hpp>
-#include <glmlv/GLProgram.hpp>
-#include <glmlv/simple_geometry.hpp>
 
 #include <glm/glm.hpp>
 
 #include <limits>
+#include <thread> 
 
-#include "Camera.hpp"
-#include "Scene.hpp"
-#include "Renderer.hpp"
-#include "ForwardPlusRenderer.hpp"
+#include <qc/graphic/Camera.hpp>
+#include <qc/graphic/Scene.hpp>
+#include <qc/graphic/Renderer.hpp>
+#include <qc/graphic/ForwardPlusRenderer.hpp>
+#include <qc/physic/PhysicalSystem.hpp>
 
 class Application
 {
@@ -51,6 +51,34 @@ private:
 	qc::graphic::ForwardPlusRenderer forwardPlus;
 	RenderPostProcessPass postProcessPass = RenderPostProcessPass::RENDER_ALL;
     
+	//-- Physic
+	bool activePhysic = false;
+	std::thread physic;
+	qc::physic::PhysicalSystem physicSystem;
+	//std::map<qc::graphic::Particule*, qc::physic::PhysicalObject*> linkPhysicGraphic; // TODO : check why PhysicalObject* set at wtf value with insert
+	std::map<qc::graphic::Particule*, int> linkPhysicGraphic;
+	float discretizationFrequency = 100.f;
+
+	
+	//-- INIT LIGHTS ---------------------
+	void initLights();
+
+
+	//-- INIT PARTICULES -----------------
+	void initParticules();
+
+
+	//-- INIT PHYSIC ---------------------
+	void initPhysic();
+
+
+	//-- UPDATE PHYSIC -------------------
+	void updatePhysic();
+
+
+	//-- SYNCHRO GRAPHIC PHYSIC ----------
+	void updateGraphicFromPhysic();
+
 
 	//-- RENDER GUI ----------------------
 	/*
