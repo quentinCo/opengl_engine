@@ -226,6 +226,15 @@ protected:
 		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * data.size());
 	}
 
+	template<typename T>
+	static void bindSsbosToRead(size_t dataSize, GLuint bindingIndex, GLint uniform, glmlv::GLProgram& program, const BufferObject<T>& ssbo)
+	{
+		glShaderStorageBlockBinding(program.glId(), uniform, bindingIndex);
+
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo.getPointer());
+		glBindBufferRange(GL_SHADER_STORAGE_BUFFER, bindingIndex, ssbo.getPointer(), 0, sizeof(T) * dataSize);
+	}
+
 };
 
 }//! namespace graphic
