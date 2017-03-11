@@ -8,7 +8,7 @@ using namespace qc::graphic;
 
 
 Renderer::Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)
-	: shaderDirectory(shaderDirectory), windowWidth(static_cast<GLsizei>(windowWidth)), windowHeight(static_cast<GLsizei>(windowHeight))
+	: shaderDirectory(shaderDirectory / "qc"), windowWidth(static_cast<GLsizei>(windowWidth)), windowHeight(static_cast<GLsizei>(windowHeight))
 {
 	initOpenGLProperties();
 }
@@ -25,8 +25,8 @@ Renderer::~Renderer()
 Renderer::Renderer(Renderer&& o)
 	: shaderDirectory(o.shaderDirectory), windowWidth(o.windowWidth), windowHeight(o.windowHeight),
 	uKa(o.uKa), uKd(o.uKd), uKs(o.uKs),	uShininess (o.uShininess), uKaSampler(o.uKaSampler), uKdSampler(o.uKdSampler), uKsSampler(o.uKsSampler),
-	uShininessSampler(o.uShininessSampler), programEmissivePass(std::move(o.programEmissivePass)), uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass),
-	uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
+	uShininessSampler(o.uShininessSampler), uNormalSampler(o.uNormalSampler), programEmissivePass(std::move(o.programEmissivePass)),
+	uMVPMatrixEmissivePass(o.uMVPMatrixEmissivePass), uKe(o.uKe), programBlurPass (std::move(o.programBlurPass)), uInitTex (o.uInitTex),
 	uTexSizeBlur (o.uTexSizeBlur), uDirectionBlur (o.uDirectionBlur),
 	programGatherPass(std::move(o.programGatherPass)), screenVaoGather (o.screenVaoGather), screenVboGather (o.screenVboGather)
 {
@@ -64,6 +64,7 @@ Renderer& Renderer::operator=(Renderer&& o)
 	uKdSampler = o.uKdSampler;
 	uKsSampler = o.uKsSampler;
 	uShininessSampler = o.uShininessSampler;
+	uNormalSampler = o.uNormalSampler;
 
 	programEmissivePass = std::move(o.programEmissivePass);
 	uMVPMatrixEmissivePass = o.uMVPMatrixEmissivePass;
@@ -199,11 +200,13 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMat
 	glBindSampler(1, textureSampler);
 	glBindSampler(2, textureSampler);
 	glBindSampler(3, textureSampler);
+	glBindSampler(4, textureSampler);
 
 	glUniform1i(uKaSampler, 0);
 	glUniform1i(uKdSampler, 1);
 	glUniform1i(uKsSampler, 2);
 	glUniform1i(uShininessSampler, 3);
+	glUniform1i(uNormalSampler, 4);
 
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;
@@ -245,6 +248,11 @@ void Renderer::bindMeshMaterial(const SharedMaterial& material)
 	glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::SPECULAR_TEXTURE)->getPointer());
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::SPECULAR_HIGHT_LIGHT_TEXTURE)->getPointer());
+	if (material->getTexture(Material::NORMAL_TEXTURE) != nullptr)
+	{
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, material->getTexture(Material::NORMAL_TEXTURE)->getPointer());
+	}
 }
 
 

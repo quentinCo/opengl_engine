@@ -103,6 +103,7 @@ protected:
 	GLint uKdSampler;
 	GLint uKsSampler;
 	GLint uShininessSampler;
+	GLint uNormalSampler;
 
 	//-- Emissive Rendering Variables
 	//---- Emissive Pass Program

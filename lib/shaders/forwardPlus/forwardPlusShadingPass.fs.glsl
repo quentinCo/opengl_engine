@@ -60,6 +60,7 @@ uniform sampler2D uKaSampler;
 uniform sampler2D uKdSampler;
 uniform sampler2D uKsSampler;
 uniform sampler2D uShininessSampler;
+uniform sampler2D uNormalSampler;
 
 int computePointLighting(vec3 position, vec3 ka, vec3 kd, vec3 ks, float shininess, vec3 normal, vec3 eyeDir)
 {
@@ -124,6 +125,17 @@ void computeDirectionalLighting(vec3 position, vec3 ka, vec3 kd, vec3 ks, float 
 	fColor += ks * specularDirectionalLightIntensity;
 }
 
+vec3 getNormal()
+{
+	vec3 normal = vec3(texture(uNormalSampler, vTexCoords));
+	if(normal == vec3(0))
+		normal = vec3(1);
+
+	normal = (normal * 2 - 1) *vViewSpaceNormal;
+
+	return normal;
+}
+
 void computeFragColor()
 {
     vec3 position = vViewSpacePosition;
@@ -163,6 +175,7 @@ void computeFragColor()
 }
 void main()
 {
-	computeFragColor();
+	//computeFragColor();
+	fColor = getNormal();
 	fEmissive = vec3(0);
 }
