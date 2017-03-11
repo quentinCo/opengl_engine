@@ -39,21 +39,12 @@ private:
 	//---- Model View Proj Martix
 	GLuint uDepthModelViewProjMatrix;
 
-	//-- Depth Debug Variables 
-	glmlv::GLProgram programDebugDepth;
-	GLuint screenVao = 0;
-	GLuint screenVbo = 0;
-	GLint uDepthMap = 0;
-
 	//-- Light culling variables
 	//---- Light Culling Program
 	glmlv::GLProgram programLightCullingPass;
 	
 	//---- Block nomber compute on base of 32 threads
 	glm::vec3 nbComputeBlock;
-
-	//---- Vector for the storing of the lights index that have an influence on a tile (32 * 32) - use to initialise the ssbo
-	std::vector<int> pointLightsIndex; // TODO : delete
 
 	//---- Ssbo to store the lights index.
 	BufferObject<int> ssboPointLightsIndex;
@@ -68,9 +59,7 @@ private:
 	
 	//------ Matrix
 	GLuint uInverseProjMatrix;
-	GLuint uViewProjMatrixForCulling;
 	GLuint uViewMatrixForCulling;
-	GLuint uProjMatrixForCulling;
 	
 	//------ Uniform use to verify that the thread doesn't handle a pixel that's on the screen
 	GLuint uWindowDim;
@@ -110,7 +99,6 @@ private:
 		Initialise every variables for the depth pass
 	*/
 	void initDepthPass();
-	void initDepthDebug(); // TODO : delete
 	
 	
 	//-- INIT LIGHT CULLING PASS ------------
@@ -133,7 +121,6 @@ private:
 
 	//-- RENDER DEPTH PASS------------------
 	void renderDepthPass(const Scene& scene, const Camera& camera);
-	void renderDepthDebug();
 
 	//-- RENDER LIGHT CULLING PASS ---------
 	void renderLightCullingPass(const Scene& scene, const Camera& camera);
