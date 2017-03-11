@@ -27,15 +27,8 @@ layout(std430, binding = 1) writeonly buffer uPointLightsIndex
 	uint pointLightsIndex[ ];
 };
 
-/*layout(std430, binding = 2) writeonly buffer uDebugOutput
-{
-	float debugOutput[];
-};*/
-
 uniform mat4 uInverseProjMatrix;
-uniform mat4 uViewProjMatrix;
 uniform mat4 uViewMatrix;
-uniform mat4 uProjMatrix;
 uniform vec2 uWindowDim;
 
 uniform sampler2D uDepthMap;
@@ -123,7 +116,6 @@ void lightCulling(int threadIndex)
 		bool intersect = true;
 		for(int j = 0; j < 4; ++j)
 		{
-			// distance = dot(v, n) / length(n) -> length(n) = 1;
 			if(dot(frustumPlanes[j].xyz, pointLightCoords.xyz) - frustumPlanes[j].w < -pointLights[lightIndex].radiusAttenuation)
 			{
 				intersect = false;
@@ -191,7 +183,6 @@ void main()
 		{
 			int indexMinus1 = i + offset;
 			pointLightsIndex[indexMinus1] = -1; // To mark limite data.
-			//debugOutput[indexMinus1] = -1;
 		}
 	}
 
