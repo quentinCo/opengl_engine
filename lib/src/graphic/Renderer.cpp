@@ -8,7 +8,7 @@ using namespace qc::graphic;
 
 
 Renderer::Renderer(const glmlv::fs::path& shaderDirectory, size_t windowWidth, size_t windowHeight)
-	: shaderDirectory(shaderDirectory), windowWidth(static_cast<GLsizei>(windowWidth)), windowHeight(static_cast<GLsizei>(windowHeight))
+	: shaderDirectory(shaderDirectory / "qc"), windowWidth(static_cast<GLsizei>(windowWidth)), windowHeight(static_cast<GLsizei>(windowHeight))
 {
 	initOpenGLProperties();
 }
