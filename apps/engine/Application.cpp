@@ -35,7 +35,7 @@ Application::Application(int argc, char** argv):
 	scene.setSsboPointLights();
 
 	/* Init camera and renderer */
-	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,10,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
+	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,100,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	forwardPlus = qc::graphic::ForwardPlusRenderer((m_ShadersRootPath), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
 }
@@ -95,33 +95,29 @@ void Application::initLights()
 	const glm::vec3& bboxMin = scene.getBboxMin();
 	const glm::vec3& bboxMax = scene.getBboxMax();
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
-	for (size_t i = 0; i < 1500; ++i) // 5000 // limite with physique 250
+	for (size_t i = 0; i < 250; ++i) // 5000 // limite with physique 250
 	{
 		float x = static_cast<float>(std::rand()) / RAND_MAX * dimScene.x - dimScene.x / 2.f;
-		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;;
+		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
 
 		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
-		float radius;
-		float intensity;
-		if (1 % 500)
+		float radius; 
+		float intensity;		
+		if (i % 50 == 0)
 		{
-			radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
-			intensity = 10000;
-		}
-		else if (i % 100)
-		{
-			radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 50;
-			intensity = static_cast<float>(std::rand()) / RAND_MAX * 1000 + 500;
+			intensity = static_cast<float>(std::rand()) / RAND_MAX * 500 + 1000;
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 200 + 200;
 		}
 		else
 		{
-			radius = static_cast<float>(std::rand()) / RAND_MAX * 300 + 50;
 			intensity = static_cast<float>(std::rand()) / RAND_MAX * 200 + 200;
+			radius = static_cast<float>(std::rand()) / RAND_MAX * 100 + 50;
 		}
 
 		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
 	}
+	scene.addPointLight(qc::graphic::PointLight(200, glm::vec3(0, 100, 0), glm::vec3(1), 2000));
 }
 
 
@@ -158,19 +154,39 @@ void Application::initPhysic()
 {
 	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
 	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
-	physicSystem.setBboxMax(scene.getBboxMax());
-	physicSystem.setBboxMin(scene.getBboxMin());
+	physicSystem.setBboxMax(scene.getBboxMax() * (2 / 3.f));
+	physicSystem.setBboxMin(scene.getBboxMin() * (2 / 3.f));
+	float diagScene = glm::distance(scene.getBboxMax() * (2 / 3.f), scene.getBboxMin() * (2 / 3.f));
 	auto& particules = scene.getParticules();
+
+	int i = 0;
 	for (auto& it : particules)
 	{
-		//		float mass = it.getIntensity() * it.getRadiusAttenuation();
-		float mass = 100 * it.getIntensity() / it.getRadiusAttenuation();
+		float mass;
+		/*if (i % 100 == 0)
+			mass = pow(10, 14);
+		else
+			mass =10;
+		
+		mass *= (it.getIntensity() * it.getRadiusAttenuation());*/
+		mass = it.getIntensity() * it.getRadiusAttenuation() * pow(10, 10); // Cause of the gravitational constant
+		if (it.getIntensity() < 1000)
+			mass /= 2000000; // ratio Sun / Earth
+
 		float radius = it.getRadius();
-		//		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
-		float radiusAttraction = it.getIntensity();
+		//float radiusAttraction = mass * it.getRadiusAttenuation() / (diagScene * pow(10, 14));
+		//float radiusAttraction = 1.5f * it.getRadiusAttenuation();
+		//float radiusAttraction = it.getIntensity();
+		float radiusAttraction = 0;
+		std::cout << "radiusAttraction = " << radiusAttraction << " -- mass = " << mass << std::endl;
 		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
+
+		//it.setRadius(mass);
+
+		++i;
 	}
+	std::cout << "diag = " << diagScene << std::endl;
 }
 
 //-- UPDATE PHYSIC -------------------
@@ -201,17 +217,17 @@ void Application::renderGUI(float* clearColor)
 		if (ImGui::ColorEdit3("clearColor", clearColor)) {
 			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
 		}
-
-		std::string titleButton = "";
-
+		ImGui::Text("Nb Particules (Point Lights) %d", scene.getParticules().size());
+		
 		if (ImGui::Button("Render All Post Process Pass"))
 		{
 			renderOptions = RenderOptions::RENDER_ALL;
 			renderer->setRenderPostProcess(renderOptions);
 		}
 
+//		ImGui::InputInt("input int", &i0);
 
-		titleButton = ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE) ? "Dont Render Emissive" : "Render Emissive";
+		std::string titleButton = ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE) ? "Dont Render Emissive" : "Render Emissive";
 		if (ImGui::Button(titleButton.c_str()))
 		{
 			if ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE)
@@ -267,7 +283,7 @@ void Application::renderGUI(float* clearColor)
 		if (ImGui::Button(titleButton.c_str()))
 			activePhysic = !activePhysic;
 
-		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 10.f, 1000.f);
+		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 5.f, 200.f);
 
 		ImGui::End();
 	}
