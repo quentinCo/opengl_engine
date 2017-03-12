@@ -1,6 +1,8 @@
 #include <algorithm>
 
 #include <qc/physic/PhysicalSystem.hpp>
+#include <qc/physic/GravitationalLink.hpp>
+#include <qc/physic/SimpleAttractionLink.hpp>
 
 using namespace qc::physic;
 
@@ -47,10 +49,17 @@ PhysicalSystem PhysicalSystem::operator=(PhysicalSystem&& o)
 	if (physicalLink != nullptr)
 		delete physicalLink;
 
+	physicalType = o.physicalType;
 	physicalLink = o.physicalLink;
 	o.physicalLink = 0;
 
 	return *this;
+}
+
+void PhysicalSystem::setPhysicType(PhysicType type)
+{
+	physicalType = type;
+	physicalLink = getPhysicalLink();
 }
 
 // return index of physical particule
@@ -104,11 +113,19 @@ void PhysicalSystem::update(float h)
 
 Link* PhysicalSystem::getPhysicalLink()
 {
+	if (physicalLink)
+		delete physicalLink;
+
+	Link* link = nullptr;
 	switch (physicalType)
 	{
+		case SIMPLE_ATTRACTION:
+			link = new SimpleAttractionLink();
+			link->setStiffness(100);
+			break;
 		case GRAVITATIONAL:
-			return new GravitationalLink();
+			link = new GravitationalLink();
 			break;
 	}
-	return nullptr;
+	return link;
 }
