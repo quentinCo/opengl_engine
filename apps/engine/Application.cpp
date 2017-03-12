@@ -19,6 +19,7 @@ Application::Application(int argc, char** argv):
 
 	/* Loading obj in main scene */
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
+	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "Maya" / "maya2.obj");
 
 	/* Move Maya mesh */
 	qc::graphic::Mesh& mesh = scene.getMeshes().back();
