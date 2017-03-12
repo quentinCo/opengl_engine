@@ -44,6 +44,7 @@ layout(std430, binding = 3) readonly buffer uPointLightsIndex
 in vec3 vViewSpacePosition;
 in vec3 vViewSpaceNormal;
 in vec2 vTexCoords;
+in mat3 vTbnMat;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uViewMatrix;
@@ -128,10 +129,16 @@ void computeDirectionalLighting(vec3 position, vec3 ka, vec3 kd, vec3 ks, float 
 vec3 getNormal()
 {
 	vec3 normal = vec3(texture(uNormalSampler, vTexCoords));
-	if(normal == vec3(0))
-		normal = vec3(1);
 
-	normal = (normal * 2 - 1) *vViewSpaceNormal;
+	if(normal != vec3(0))
+	{
+		normal = (normal * 2 - 1);
+		normal = normalize(vTbnMat * normal);
+	}
+	else
+	{
+		normal = vViewSpaceNormal;
+	}
 
 	return normal;
 }
@@ -146,7 +153,7 @@ void computeFragColor()
 
     float shininess = uShininess * vec3(texture(uShininessSampler, vTexCoords)).x;
 
-    vec3 normal = vViewSpaceNormal;
+    vec3 normal = getNormal();
     vec3 eyeDir = normalize(-position);
 
 	fColor = vec3(0);
@@ -159,23 +166,22 @@ void computeFragColor()
 	if(uPointLightsNumber > 0)
 		count = computePointLighting(position, ka, kd, ks, shininess, normal, eyeDir);
 
-	if(count > 50)
-	{
-		fColor += vec3(0.5, 0, 0);
-	}
-	else if(count > 25)
-	{
-		fColor += vec3(0, 0.5, 0);
-	}
-	else if(count > 10)
-	{
-		fColor += vec3(0, 0, 0.5);
-	}
+	//if(count > 50)
+	//{
+	//	fColor += vec3(0.5, 0, 0);
+	//}
+	//else if(count > 25)
+	//{
+	//	fColor += vec3(0, 0.5, 0);
+	//}
+	//else if(count > 10)
+	//{
+	//	fColor += vec3(0, 0, 0.5);
+	//}
 
 }
 void main()
 {
-	//computeFragColor();
-	fColor = getNormal();
+	computeFragColor();
 	fEmissive = vec3(0);
 }
