@@ -21,7 +21,6 @@ public:
 	using VBO = const BufferObject<T>&;
 	using IBO = const BufferObject<uint32_t>&;
 
-
 	ArrayObject() {}
 
 	ArrayObject(VBO vbo, IBO ibo)

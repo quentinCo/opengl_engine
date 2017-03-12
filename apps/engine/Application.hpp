@@ -18,6 +18,7 @@ class Application
 {
 public:
 	using RenderOptions = qc::graphic::Renderer::RenderOptions;
+	using PhysicType = qc::physic::PhysicalSystem::PhysicType;
 
     Application(int argc, char** argv);
 
@@ -55,10 +56,11 @@ private:
 	bool activePhysic = false;
 	std::thread physic;
 	qc::physic::PhysicalSystem physicSystem;
-	//std::map<qc::graphic::Particule*, qc::physic::PhysicalObject*> linkPhysicGraphic; // TODO : check why PhysicalObject* set at wtf value with insert
+
 	std::map<qc::graphic::Particule*, int> linkPhysicGraphic;
 	float discretizationFrequency = 100.f;
 
+	PhysicType physicLinkType;
 	
 	//-- INIT LIGHTS ---------------------
 	void initLights();

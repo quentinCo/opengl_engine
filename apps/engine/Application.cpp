@@ -153,7 +153,11 @@ void Application::initParticules()
 void Application::initPhysic()
 {
 	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
-	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
+
+	//physicLinkType = PhysicType::GRAVITATIONAL;
+	physicLinkType = PhysicType::SIMPLE_ATTRACTION;
+
+	physicSystem = qc::physic::PhysicalSystem(physicLinkType);
 	physicSystem.setBboxMax(scene.getBboxMax());
 	physicSystem.setBboxMin(scene.getBboxMin());
 	float diagScene = glm::distance(scene.getBboxMax(), scene.getBboxMin());
@@ -176,8 +180,7 @@ void Application::initPhysic()
 		float radius = it.getRadius();
 		//float radiusAttraction = mass * it.getRadiusAttenuation() / (diagScene * pow(10, 14));
 		//float radiusAttraction = 1.5f * it.getRadiusAttenuation();
-		//float radiusAttraction = it.getIntensity();
-		float radiusAttraction = 0;
+		float radiusAttraction = it.getIntensity();
 		std::cout << "radiusAttraction = " << radiusAttraction << " -- mass = " << mass << std::endl;
 		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
@@ -282,6 +285,26 @@ void Application::renderGUI(float* clearColor)
 		titleButton = (activePhysic) ? "Unactive Physic" : "Active Physic";
 		if (ImGui::Button(titleButton.c_str()))
 			activePhysic = !activePhysic;
+
+		if (activePhysic)
+		{
+			int physicType = static_cast<int>(physicLinkType);
+			ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION); ImGui::SameLine();
+			ImGui::RadioButton("Gravitational", &physicType, PhysicType::GRAVITATIONAL);
+
+			if (physicType != physicLinkType)
+			{
+				physicLinkType = static_cast<PhysicType>(physicType);
+				physicSystem.setPhysicType(physicLinkType);
+			}
+		}
+
+		if (activePhysic && physicLinkType != PhysicType::GRAVITATIONAL)
+		{
+			float k = physicSystem.getLink()->getStiffness();
+			if(ImGui::SliderFloat("Stiffness coeff", &k, 5.f, 200.f))
+				physicSystem.getLink()->setStiffness(k);
+		}
 
 		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 5.f, 200.f);
 
