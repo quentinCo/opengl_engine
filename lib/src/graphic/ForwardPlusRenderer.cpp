@@ -231,6 +231,7 @@ void ForwardPlusRenderer::initShadingPass()
 	uKdSampler = glGetUniformLocation(programShadingPass.glId(), "uKdSampler");
 	uKsSampler = glGetUniformLocation(programShadingPass.glId(), "uKsSampler");
 	uShininessSampler = glGetUniformLocation(programShadingPass.glId(), "uShininessSampler");
+	uNormalSampler = glGetUniformLocation(programShadingPass.glId(), "uNormalSampler");
 }
 
 

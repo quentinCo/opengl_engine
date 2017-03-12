@@ -53,6 +53,7 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 			if (it.KdTextureId >= 0) material->setTexture(Material::DIFFUSE_TEXTURE, textures[it.KdTextureId]);
 			if (it.KsTextureId >= 0) material->setTexture(Material::SPECULAR_TEXTURE, textures[it.KsTextureId]);
 			if (it.shininessTextureId >= 0) material->setTexture(Material::SPECULAR_HIGHT_LIGHT_TEXTURE, textures[it.shininessTextureId]);
+			if (it.BumpTextureId >= 0) material->setTexture(Material::NORMAL_TEXTURE, textures[it.BumpTextureId]); // Trick normal map save in bump
 		}
 
 		// Init mesh shape infos

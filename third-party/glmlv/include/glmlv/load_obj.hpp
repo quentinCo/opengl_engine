@@ -21,6 +21,7 @@ namespace glmlv
             int32_t KaTextureId = -1;
             int32_t KdTextureId = -1;
             int32_t KsTextureId = -1;
+			int32_t BumpTextureId = -1;
             int32_t shininessTextureId = -1;
         };
 

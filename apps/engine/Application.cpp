@@ -20,10 +20,6 @@ Application::Application(int argc, char** argv):
 	/* Loading obj in main scene */
 	scene.addObj(m_AssetsRootPath / m_AppName / "models" / "crytek-sponza" / "sponza.obj");
 
-	/* Move Maya mesh */
-	qc::graphic::Mesh& mesh = scene.getMeshes().back();
-	mesh.setPosition(glm::vec3(500, 100, 0));
-
 	/* Create Lights */
 	initLights();
 
@@ -39,7 +35,7 @@ Application::Application(int argc, char** argv):
 	scene.setSsboPointLights();
 
 	/* Init camera and renderer */
-	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,0,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
+	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,10,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
 	forwardPlus = qc::graphic::ForwardPlusRenderer((m_ShadersRootPath), m_nWindowWidth, m_nWindowHeight);
 	renderer = &forwardPlus;
 }
