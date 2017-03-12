@@ -2,7 +2,7 @@
 
 using namespace qc::physic;
 
-const float GravitationalLink::gConst = static_cast<float>( 6.67384 /* pow(10, -11)*/);
+const float GravitationalLink::gConst = static_cast<float>( 6.67384 * pow(10, -11));
 
 void GravitationalLink::update(float h)
 {
@@ -11,8 +11,8 @@ void GravitationalLink::update(float h)
 
 	glm::vec3 direction = object2->getPosition() - object1->getPosition();
 	float distance = static_cast<float>(glm::length(direction));
-	float minDist = object2->getRadiusAttraction() + object1->getRadiusAttraction();
-	if (distance > minDist)
+	float minDistAttraction = object2->getRadiusAttraction() + object1->getRadiusAttraction();
+	if ((object2->getRadiusAttraction() != 0 && object1->getRadiusAttraction() != 0) && distance > minDistAttraction)
 		return;
 
 	direction = glm::normalize(direction);
