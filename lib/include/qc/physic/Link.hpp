@@ -27,7 +27,7 @@ public:
 	PhysicalObject* getObject2()
 		{return object2;}
 
-	float getStiffness() 
+	float getStiffness() const
 		{return stiffness;}
 
 	void setObject1(PhysicalObject* object)
