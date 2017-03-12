@@ -108,6 +108,7 @@ void loadObj(const fs::path & objPath, const fs::path & mtlBaseDir, ObjData & da
             texturePaths.emplace(material.diffuse_texname);
             texturePaths.emplace(material.specular_texname);
             texturePaths.emplace(material.specular_highlight_texname);
+			texturePaths.emplace(material.bump_texname);
         }
     }
 
@@ -167,6 +168,10 @@ void loadObj(const fs::path & objPath, const fs::path & mtlBaseDir, ObjData & da
             const auto it = textureIdMap.find(material.specular_highlight_texname);
             newMaterial.shininessTextureId = it != end(textureIdMap) ? (*it).second : -1;
         }
+		if (!material.bump_texname.empty()) {
+			const auto it = textureIdMap.find(material.bump_texname);
+			newMaterial.BumpTextureId = it != end(textureIdMap) ? (*it).second : -1;
+		}
     }
 }
 

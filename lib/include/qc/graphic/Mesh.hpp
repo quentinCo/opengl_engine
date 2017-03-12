@@ -7,6 +7,7 @@
 #include "BufferObject.hpp"
 #include "ArrayObject.hpp"
 #include "Material.hpp"
+#include "Vertex.hpp"
 
 namespace qc
 {
@@ -30,9 +31,9 @@ class Mesh
 {
 //: NOT COPYABLE CLASS
 public:
-	using Vbo = BufferObject<glmlv::Vertex3f3f2f>;
+	using Vbo = BufferObject<Vertex>;
 	using Ibo = BufferObject<uint32_t>;
-	using Vao = ArrayObject<glmlv::Vertex3f3f2f>;
+	using Vao = ArrayObject<Vertex>;
 	using SharedMaterial = std::shared_ptr<Material>;
 	using SharedTexture = std::shared_ptr<Texture>;
 
@@ -92,7 +93,7 @@ protected:
 	/*
 		Initialise vbo, ibo and vao
 	*/
-	void initBuffers(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices);
+	void initBuffers(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
 
 private:
 
@@ -114,6 +115,9 @@ private:
 		Sort the shape in function of the material.
 	*/
 	void sortShape();
+
+	//-- COMPUTE TANGENT AND BITANGENT ---
+	void computeTangentAndBitangent(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& ibo, std::vector<Vertex>& res);
 };
 
 } //! namespace graphic

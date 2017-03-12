@@ -27,9 +27,13 @@ void Particule::initShape(std::shared_ptr<Material> mat)
 	glmlv::SimpleGeometry sp = glmlv::makeSphere(4);
 //	glmlv::SimpleGeometry sp = glmlv::makeCube();
 	std::vector<glmlv::Vertex3f3f2f> vertices = sp.vertexBuffer;
+	std::vector<Vertex> completVertices;
+	for (const auto& it : vertices)
+		completVertices.emplace_back(it);
+
 	std::vector<uint32_t> index = sp.indexBuffer;
 
-	initBuffers(vertices, index);
+	initBuffers(completVertices, index);
 
 	// init materials
 	std::vector<std::shared_ptr<Material>> materials;
