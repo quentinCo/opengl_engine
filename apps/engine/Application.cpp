@@ -154,9 +154,9 @@ void Application::initPhysic()
 {
 	linkPhysicGraphic = std::map<qc::graphic::Particule*, int>();
 	physicSystem = qc::physic::PhysicalSystem(qc::physic::PhysicalSystem::GRAVITATIONAL);
-	physicSystem.setBboxMax(scene.getBboxMax() * (2 / 3.f));
-	physicSystem.setBboxMin(scene.getBboxMin() * (2 / 3.f));
-	float diagScene = glm::distance(scene.getBboxMax() * (2 / 3.f), scene.getBboxMin() * (2 / 3.f));
+	physicSystem.setBboxMax(scene.getBboxMax());
+	physicSystem.setBboxMin(scene.getBboxMin());
+	float diagScene = glm::distance(scene.getBboxMax(), scene.getBboxMin());
 	auto& particules = scene.getParticules();
 
 	int i = 0;

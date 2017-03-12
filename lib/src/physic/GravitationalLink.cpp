@@ -11,12 +11,9 @@ void GravitationalLink::update(float h)
 
 	glm::vec3 direction = object2->getPosition() - object1->getPosition();
 	float distance = static_cast<float>(glm::length(direction));
-	float minDistAttraction = object2->getRadiusAttraction() + object1->getRadiusAttraction();
-	if ((object2->getRadiusAttraction() != 0 && object1->getRadiusAttraction() != 0) && distance > minDistAttraction)
-		return;
 
 	direction = glm::normalize(direction);
-	glm::vec3 force = -gConst * object1->getMass() * object2->getMass() * direction / (distance * distance);
+	glm::vec3 force = -stiffness * object1->getMass() * object2->getMass() * direction / (distance * distance);
 
 	object1->addToForce(-force);
 	object2->addToForce(force);

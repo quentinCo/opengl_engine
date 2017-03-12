@@ -87,11 +87,11 @@ void PhysicalSystem::update(float h)
 		bool changeDirection = false;
 		for (int i = 0; i < 3; ++i)
 		{
-			if (position[i] > bboxMax[i] || position[i] < bboxMin[i])
+			if (position[i] >= bboxMax[i] || position[i] <= bboxMin[i])
 			{
 				changeDirection = true;
 				celerity[i] = -celerity[i] * 0.5;
-				position[i] = std::min(bboxMax[i], std::max(bboxMin[i], position[0]));
+				position[i] = glm::min(bboxMax[i], glm::max(bboxMin[i], position[0]));
 			}
 		}
 		if (changeDirection)
