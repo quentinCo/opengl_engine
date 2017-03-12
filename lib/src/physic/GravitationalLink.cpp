@@ -2,7 +2,7 @@
 
 using namespace qc::physic;
 
-const float GravitationalLink::gConst = static_cast<float>( 6.67384 * pow(10, -11));
+const float GravitationalLink::gConst = static_cast<float>( 6.67384 /* pow(10, -11)*/);
 
 void GravitationalLink::update(float h)
 {

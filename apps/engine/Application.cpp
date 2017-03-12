@@ -173,14 +173,14 @@ void Application::initPhysic()
 			mass =10;
 		
 		mass *= (it.getIntensity() * it.getRadiusAttenuation());*/
-		mass = it.getIntensity() * it.getRadiusAttenuation() * pow(10, 10); // Cause of the gravitational constant
+		mass = it.getIntensity() * it.getRadiusAttenuation() /* pow(10, 10)*/; // Cause of the gravitational constant
 		if (it.getIntensity() < 1000)
 			mass /= 2000000; // ratio Sun / Earth
 
 		float radius = it.getRadius();
 		//float radiusAttraction = mass * it.getRadiusAttenuation() / (diagScene * pow(10, 14));
-		//float radiusAttraction = 1.5f * it.getRadiusAttenuation();
-		float radiusAttraction = it.getIntensity();
+		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
+		//float radiusAttraction = it.getIntensity();
 		std::cout << "radiusAttraction = " << radiusAttraction << " -- mass = " << mass << std::endl;
 		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
@@ -302,7 +302,7 @@ void Application::renderGUI(float* clearColor)
 		if (activePhysic && physicLinkType != PhysicType::GRAVITATIONAL)
 		{
 			float k = physicSystem.getLink()->getStiffness();
-			if(ImGui::SliderFloat("Stiffness coeff", &k, 5.f, 200.f))
+			if(ImGui::SliderFloat("Stiffness coeff", &k, 0.001f, 10.f))
 				physicSystem.getLink()->setStiffness(k);
 		}
 

@@ -16,15 +16,9 @@ void SimpleAttractionLink::update(float)
 
 	float l0 = object1->getRadius() + object2->getRadius();
 	direction = glm::normalize(direction);
-	glm::vec3 force = stiffness * direction * (l0 - distance);
-//	force -= 2.f * (object1->getCelerity() - object2->getCelerity());
+	glm::vec3 force = stiffness * direction * (distance - l0) / distance;
+//	force -= direction * (object1->getCelerity() - object2->getCelerity());
 
-	object1->setForce(force);
-	object2->setForce(-force);
-
-/*	double dV = l->p1->v - l->p2->v;
-	f = l->z + dV;
-
-	l->p1->f -= f;
-	l->p2->f += f;*/
+	object1->addToForce(force);
+	object2->addToForce(-force);
 }

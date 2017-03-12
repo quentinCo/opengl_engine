@@ -121,7 +121,7 @@ Link* PhysicalSystem::getPhysicalLink()
 	{
 		case SIMPLE_ATTRACTION:
 			link = new SimpleAttractionLink();
-			link->setStiffness(100);
+			link->setStiffness(1);
 			break;
 		case GRAVITATIONAL:
 			link = new GravitationalLink();
