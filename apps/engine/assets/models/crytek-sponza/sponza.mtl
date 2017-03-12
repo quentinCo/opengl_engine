@@ -119,6 +119,7 @@ newmtl ceiling
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\sponza_ceiling_a_diff.png
 	map_Kd textures\sponza_ceiling_a_diff.png
+	map_bump textures\sponza_ceiling_a_NRM.png
 
 newmtl column_a
 	Ns 10.0000
@@ -148,6 +149,7 @@ newmtl floor
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\sponza_floor_a_diff.png
 	map_Kd textures\sponza_floor_a_diff.png
+	map_bump textures\sponza_floor_a_NRM.png
 
 newmtl column_c
 	Ns 10.0000
