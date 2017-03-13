@@ -71,6 +71,11 @@ public:
 	//PhysicalObject* addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
 	int addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
 
+	void clearObjects()
+		{objects.clear();}
+
+	void resetCelerities();
+
 	virtual void update(float h);
 
 private:

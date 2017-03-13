@@ -107,6 +107,17 @@ public:
 		{particules.push_back(std::move(particule));}
 
 
+	//-- CLEAR POINT LIGHT -----------------
+	void clearPointLight()
+	{
+		pointLights.clear();
+		setSsboPointLights();
+	}
+
+	//-- CLEAR PARTICULES ------------------
+	void clearParticules()
+		{particules.clear();}
+
 	//-- SORT PARTICULES -------------------
 	/*
 		Sort particules according the materials.

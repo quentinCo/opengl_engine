@@ -69,12 +69,18 @@ int PhysicalSystem::addObject(const glm::vec3& position, float mass, float radiu
 	return static_cast<int>(objects.size() - 1);
 }
 
+void PhysicalSystem::resetCelerities()
+{
+	for (auto& it : objects)
+		it.setCelerity(glm::vec3(0));
+}
+
 void PhysicalSystem::update(float h)
 {
 	for (auto& it : objects)
 		updatesListe.push_back(&it);
 
-	while (updatesListe.size() != 1)
+	while (updatesListe.size() > 1)
 	{
 		physicalLink->setObject1(updatesListe.front());
 		for (int i = 1; i < updatesListe.size(); ++i)
@@ -84,7 +90,8 @@ void PhysicalSystem::update(float h)
 		}
 		updatesListe.pop_front();
 	}
-	updatesListe.pop_front();
+	if(updatesListe.size() > 0)
+		updatesListe.pop_front();
 
 	for (auto& it : objects)
 	{
