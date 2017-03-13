@@ -32,7 +32,6 @@ Application::Application(int argc, char** argv):
 	/* Set scene lights ssbo */
 //	scene.addDirectionalLight(qc::graphic::DirectionalLight(45, 45, glm::vec3(0.5,0.5,0), 0.25));
 //	scene.setSsboDirectionalLights();
-	scene.setSsboPointLights();
 
 	/* Init camera and renderer */
 	camera = qc::graphic::Camera(m_GLFWHandle, glm::vec3(0,100,0), glm::vec3(0,0,-1), 70.f, 0.01f * scene.getSceneSize(), scene.getSceneSize(), scene.getSceneSize() * 0.1f);
@@ -57,6 +56,7 @@ int Application::run()
 
 		/* Render Scene */
 		renderer->render(scene, camera);
+		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Update Graphic from Physic */
 		if (activePhysic)
@@ -67,9 +67,11 @@ int Application::run()
 
 		/* Poll for and process events */
 		glfwPollEvents();
+		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Render GUI */
 		renderGUI(clearColor);
+		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Swap front and back buffers */
 		m_GLFWHandle.swapBuffers();
@@ -78,10 +80,17 @@ int Application::run()
 		auto ellapsedTime = glfwGetTime() - seconds;
 		if (!(ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard))
 			camera.updateViewController(float(ellapsedTime));
+		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Event "key escape" - Quite */
 		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
 			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
+		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
+
+
+		/* */
+		if (resetSystem)
+			resetPhysicalParticulesSystem();
 	}
 
 	return 0;
@@ -92,8 +101,8 @@ int Application::run()
 void Application::initLights()
 {
 	//std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	const glm::vec3& bboxMin = glm::vec3(-500, 0, -500);//scene.getBboxMin();
-	const glm::vec3& bboxMax = glm::vec3(500, 500, 500);// scene.getBboxMax();
+	glm::vec3 bboxMin = scene.getBboxMin() * (2 / 3.f);
+	glm::vec3 bboxMax =scene.getBboxMax() * (2 / 3.f);
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
 	for (size_t i = 0; i < 250; ++i) // 5000 // limite with physique 250
 	{
@@ -119,6 +128,7 @@ void Application::initLights()
 	}
 	scene.addPointLight(qc::graphic::PointLight(200, glm::vec3(0, 100, 0), glm::vec3(1), 2000));
 	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(0, 110, 0), glm::vec3(1), 100));
+	scene.setSsboPointLights();
 }
 
 
@@ -159,44 +169,47 @@ void Application::initPhysic()
 	physicLinkType = PhysicType::SIMPLE_ATTRACTION;
 
 	physicSystem = qc::physic::PhysicalSystem(physicLinkType);
-	physicSystem.setBboxMax(glm::vec3(500, 500, 500) /*scene.getBboxMax()*/);
-	physicSystem.setBboxMin(glm::vec3(-500, 0, -500)/*scene.getBboxMin()*/);
-	float diagScene = glm::distance(scene.getBboxMax(), scene.getBboxMin());
+	physicSystem.setBboxMax(scene.getBboxMax() * (2 / 3.f));
+	physicSystem.setBboxMin(scene.getBboxMin() * (2 / 3.f));
+
 	auto& particules = scene.getParticules();
 
-	int i = 0;
 	for (auto& it : particules)
 	{
 		float mass;
-		/*if (i % 100 == 0)
-			mass = pow(10, 14);
-		else
-			mass =10;
-		
-		mass *= (it.getIntensity() * it.getRadiusAttenuation());*/
-		mass = it.getIntensity() * it.getRadiusAttenuation() /* pow(10, 10)*/; // Cause of the gravitational constant
+		mass = it.getIntensity() * it.getRadiusAttenuation();
 		if (it.getIntensity() < 1000)
 			mass /= 2000000; // ratio Sun / Earth
 
 		float radius = it.getRadius();
-		//float radiusAttraction = mass * it.getRadiusAttenuation() / (diagScene * pow(10, 14));
 		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
-		//float radiusAttraction = it.getIntensity();
-		std::cout << "radiusAttraction = " << radiusAttraction << " -- mass = " << mass << std::endl;
+
 		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
 		linkPhysicGraphic.insert(std::make_pair(&it, temp));
-
-		//it.setRadius(mass);
-
-		++i;
 	}
-	std::cout << "diag = " << diagScene << std::endl;
 }
 
 //-- UPDATE PHYSIC -------------------
 void Application::updatePhysic()
 {
 	physicSystem.update(1 / discretizationFrequency);
+}
+
+//-- RESET PHYSICAL PARTICULES SYSTEM 
+void Application::resetPhysicalParticulesSystem()
+{
+	activePhysic = false;
+	scene.clearParticules();
+	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
+	scene.clearPointLight();
+	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
+	physicSystem.clearObjects();
+	initLights();
+	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
+	initParticules();
+	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
+	initPhysic();
+	resetSystem = false;
 }
 
 //-- SYNCHRO GRAPHIC PHYSIC ----------
@@ -228,9 +241,7 @@ void Application::renderGUI(float* clearColor)
 			renderOptions = RenderOptions::RENDER_ALL;
 			renderer->setRenderPostProcess(renderOptions);
 		}
-
-//		ImGui::InputInt("input int", &i0);
-
+		
 		std::string titleButton = ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE) ? "Dont Render Emissive" : "Render Emissive";
 		if (ImGui::Button(titleButton.c_str()))
 		{
@@ -287,10 +298,23 @@ void Application::renderGUI(float* clearColor)
 		if (ImGui::Button(titleButton.c_str()))
 			activePhysic = !activePhysic;
 
+		ImGui::SameLine();
+		titleButton = "Reset Celerity";
+		if (ImGui::Button(titleButton.c_str()))
+			physicSystem.resetCelerities();
+		/*
+		ImGui::SameLine();
+		titleButton = "Reset System";
+		if (ImGui::Button(titleButton.c_str()))
+			resetSystem = true;
+		*/
 		int physicType = static_cast<int>(physicLinkType);
-		ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION);
-		ImGui::RadioButton("Lennard Jones", &physicType, PhysicType::LENNARD_JONES);
-		ImGui::RadioButton("Gravitational", &physicType, PhysicType::GRAVITATIONAL);
+		if (ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION) ||
+			ImGui::RadioButton("Lennard Jones", &physicType, PhysicType::LENNARD_JONES) ||
+			ImGui::RadioButton("Gravitational", &physicType, PhysicType::GRAVITATIONAL))
+		{
+			physicSystem.resetCelerities();
+		}
 
 		if (physicType != physicLinkType)
 		{
@@ -301,14 +325,14 @@ void Application::renderGUI(float* clearColor)
 		if (physicLinkType == PhysicType::SIMPLE_ATTRACTION)
 		{
 			float k = physicSystem.getLink()->getStiffness();
-			if(ImGui::SliderFloat("Stiffness coeff", &k, 0.001f, 10.f))
+			if(ImGui::SliderFloat("Stiffness coeff", &k, 0.001f, 50.f, "%.4f"))
 				physicSystem.getLink()->setStiffness(k);
 		}
 		else if (physicLinkType == PhysicType::LENNARD_JONES)
 		{
 			qc::physic::LennardJonesLink* link = static_cast<qc::physic::LennardJonesLink*>(physicSystem.getLink());
 			float k = link->getStiffness();
-			if (ImGui::SliderFloat("Potential well", &k, 1.f, 100.f))
+			if (ImGui::SliderFloat("Potential well", &k, 1.f, 10.f))
 				link->setStiffness(k);
 
 			k = link->getPower();

@@ -61,6 +61,8 @@ private:
 	float discretizationFrequency = 100.f;
 
 	PhysicType physicLinkType;
+
+	bool resetSystem = false;
 	
 	//-- INIT LIGHTS ---------------------
 	void initLights();
@@ -77,6 +79,9 @@ private:
 	//-- UPDATE PHYSIC -------------------
 	void updatePhysic();
 
+
+	//-- RESET PHYSICAL PARTICULES SYSTEM 
+	void resetPhysicalParticulesSystem();
 
 	//-- SYNCHRO GRAPHIC PHYSIC ----------
 	void updateGraphicFromPhysic();
