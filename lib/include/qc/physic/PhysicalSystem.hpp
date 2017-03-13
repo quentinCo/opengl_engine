@@ -20,6 +20,7 @@ public:
 	enum PhysicType
 	{
 		SIMPLE_ATTRACTION,
+		LENNARD_JONES,
 		GRAVITATIONAL
 	};
 

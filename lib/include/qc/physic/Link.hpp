@@ -14,10 +14,11 @@ class Link : public Updatable
 
 public:
 	
-	Link()
+	Link(float k = 1.f)
+		: stiffness(k)
 	{}
 
-	Link(PhysicalObject* object1, PhysicalObject* object2, float k = 1)
+	Link(PhysicalObject* object1, PhysicalObject* object2, float k = 1.f)
 		: object1(object1), object2(object2), stiffness(k)
 	{}
 

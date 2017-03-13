@@ -12,7 +12,7 @@ void LennardJonesLink::update(float)
 	float l0 = object2->getRadius() + object1->getRadius();
 
 	direction = glm::normalize(direction);
-	glm::vec3 force = 4.f * stiffness * (pow(l0 / distance, 12) - pow(l0 / distance, 6)) * direction;
+	glm::vec3 force = (4.f * stiffness * (pow(l0 / distance, 12) - pow(l0 / distance, 6)) * direction) / distance;
 
 	object1->addToForce(-force);
 	object2->addToForce(force);

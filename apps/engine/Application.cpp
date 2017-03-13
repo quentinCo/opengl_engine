@@ -92,8 +92,8 @@ int Application::run()
 void Application::initLights()
 {
 	//std::srand(static_cast<unsigned int>(std::time(0))); //use current time as seed for random generator
-	const glm::vec3& bboxMin = scene.getBboxMin();
-	const glm::vec3& bboxMax = scene.getBboxMax();
+	const glm::vec3& bboxMin = glm::vec3(-500, 0, -500);//scene.getBboxMin();
+	const glm::vec3& bboxMax = glm::vec3(500, 500, 500);// scene.getBboxMax();
 	glm::vec3& dimScene = glm::abs(bboxMax - bboxMin);
 	for (size_t i = 0; i < 250; ++i) // 5000 // limite with physique 250
 	{
@@ -118,6 +118,7 @@ void Application::initLights()
 		scene.addPointLight(qc::graphic::PointLight(radius, glm::vec3(x, y, z), glm::vec3(1), intensity));
 	}
 	scene.addPointLight(qc::graphic::PointLight(200, glm::vec3(0, 100, 0), glm::vec3(1), 2000));
+	scene.addPointLight(qc::graphic::PointLight(100, glm::vec3(0, 110, 0), glm::vec3(1), 100));
 }
 
 
@@ -158,8 +159,8 @@ void Application::initPhysic()
 	physicLinkType = PhysicType::SIMPLE_ATTRACTION;
 
 	physicSystem = qc::physic::PhysicalSystem(physicLinkType);
-	physicSystem.setBboxMax(scene.getBboxMax());
-	physicSystem.setBboxMin(scene.getBboxMin());
+	physicSystem.setBboxMax(glm::vec3(500, 500, 500) /*scene.getBboxMax()*/);
+	physicSystem.setBboxMin(glm::vec3(-500, 0, -500)/*scene.getBboxMin()*/);
 	float diagScene = glm::distance(scene.getBboxMax(), scene.getBboxMin());
 	auto& particules = scene.getParticules();
 
@@ -286,10 +287,11 @@ void Application::renderGUI(float* clearColor)
 		if (ImGui::Button(titleButton.c_str()))
 			activePhysic = !activePhysic;
 
-		if (activePhysic)
-		{
+		/*if (activePhysic)
+		{*/
 			int physicType = static_cast<int>(physicLinkType);
-			ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION); ImGui::SameLine();
+			ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION);
+			ImGui::RadioButton("Lennard Jones", &physicType, PhysicType::LENNARD_JONES);
 			ImGui::RadioButton("Gravitational", &physicType, PhysicType::GRAVITATIONAL);
 
 			if (physicType != physicLinkType)
@@ -297,12 +299,18 @@ void Application::renderGUI(float* clearColor)
 				physicLinkType = static_cast<PhysicType>(physicType);
 				physicSystem.setPhysicType(physicLinkType);
 			}
-		}
+		//}
 
-		if (activePhysic && physicLinkType != PhysicType::GRAVITATIONAL)
+		if (activePhysic && physicLinkType == PhysicType::SIMPLE_ATTRACTION)
 		{
 			float k = physicSystem.getLink()->getStiffness();
 			if(ImGui::SliderFloat("Stiffness coeff", &k, 0.001f, 10.f))
+				physicSystem.getLink()->setStiffness(k);
+		}
+		else if (activePhysic && physicLinkType == PhysicType::LENNARD_JONES)
+		{
+			float k = physicSystem.getLink()->getStiffness();
+			if (ImGui::SliderFloat("Potential well", &k, 1.f, 10000.f))
 				physicSystem.getLink()->setStiffness(k);
 		}
 

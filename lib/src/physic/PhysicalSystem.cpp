@@ -3,6 +3,7 @@
 #include <qc/physic/PhysicalSystem.hpp>
 #include <qc/physic/GravitationalLink.hpp>
 #include <qc/physic/SimpleAttractionLink.hpp>
+#include <qc/physic/LennardJonesLink.hpp>
 
 using namespace qc::physic;
 
@@ -121,7 +122,9 @@ Link* PhysicalSystem::getPhysicalLink()
 	{
 		case SIMPLE_ATTRACTION:
 			link = new SimpleAttractionLink();
-			link->setStiffness(1);
+			break;
+		case LENNARD_JONES:
+			link = new LennardJonesLink();
 			break;
 		case GRAVITATIONAL:
 			link = new GravitationalLink();
