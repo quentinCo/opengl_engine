@@ -1,9 +1,6 @@
 #include <algorithm>
 
 #include <qc/physic/PhysicalSystem.hpp>
-#include <qc/physic/GravitationalLink.hpp>
-#include <qc/physic/SimpleAttractionLink.hpp>
-#include <qc/physic/LennardJonesLink.hpp>
 
 using namespace qc::physic;
 

@@ -6,6 +6,9 @@
 #include "PhysicalObject.hpp"
 #include "Link.hpp"
 #include "Updatable.hpp"
+#include "GravitationalLink.hpp"
+#include "SimpleAttractionLink.hpp"
+#include "LennardJonesLink.hpp"
 
 namespace qc
 {
