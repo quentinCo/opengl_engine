@@ -287,31 +287,33 @@ void Application::renderGUI(float* clearColor)
 		if (ImGui::Button(titleButton.c_str()))
 			activePhysic = !activePhysic;
 
-		/*if (activePhysic)
-		{*/
-			int physicType = static_cast<int>(physicLinkType);
-			ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION);
-			ImGui::RadioButton("Lennard Jones", &physicType, PhysicType::LENNARD_JONES);
-			ImGui::RadioButton("Gravitational", &physicType, PhysicType::GRAVITATIONAL);
+		int physicType = static_cast<int>(physicLinkType);
+		ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION);
+		ImGui::RadioButton("Lennard Jones", &physicType, PhysicType::LENNARD_JONES);
+		ImGui::RadioButton("Gravitational", &physicType, PhysicType::GRAVITATIONAL);
 
-			if (physicType != physicLinkType)
-			{
-				physicLinkType = static_cast<PhysicType>(physicType);
-				physicSystem.setPhysicType(physicLinkType);
-			}
-		//}
+		if (physicType != physicLinkType)
+		{
+			physicLinkType = static_cast<PhysicType>(physicType);
+			physicSystem.setPhysicType(physicLinkType);
+		}
 
-		if (activePhysic && physicLinkType == PhysicType::SIMPLE_ATTRACTION)
+		if (physicLinkType == PhysicType::SIMPLE_ATTRACTION)
 		{
 			float k = physicSystem.getLink()->getStiffness();
 			if(ImGui::SliderFloat("Stiffness coeff", &k, 0.001f, 10.f))
 				physicSystem.getLink()->setStiffness(k);
 		}
-		else if (activePhysic && physicLinkType == PhysicType::LENNARD_JONES)
+		else if (physicLinkType == PhysicType::LENNARD_JONES)
 		{
-			float k = physicSystem.getLink()->getStiffness();
-			if (ImGui::SliderFloat("Potential well", &k, 1.f, 10000.f))
-				physicSystem.getLink()->setStiffness(k);
+			qc::physic::LennardJonesLink* link = static_cast<qc::physic::LennardJonesLink*>(physicSystem.getLink());
+			float k = link->getStiffness();
+			if (ImGui::SliderFloat("Potential well", &k, 1.f, 100.f))
+				link->setStiffness(k);
+
+			k = link->getPower();
+			if (ImGui::SliderFloat("Power factor", &k, 1/12.f, 12.f))
+				link->setPower(k);
 		}
 
 		ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 5.f, 200.f);
