@@ -41,7 +41,7 @@ public:
 
 	Mesh(){}
 	Mesh(const std::vector<glmlv::Vertex3f3f2f>& vertices, const std::vector<uint32_t>& indices, const std::vector<ShapeData> shapesData, const glm::vec3& position = glm::vec3(0));
-
+	
 	Mesh(const Mesh& o) = delete;
 	Mesh& operator= (const Mesh& o) = delete;
 
@@ -102,13 +102,13 @@ private:
 	std::unique_ptr<Vao> vao;
 
 	//-- Information about the different shape and material that compose the mesh object
-	std::vector<ShapeData> shapesData;
+	std::vector<ShapeData> shapesData = std::vector<ShapeData>();
 
 	glm::mat4 modelMatrix = glm::mat4();
 
 	//-- Mesh materials
-	std::vector<SharedMaterial> materials;
-	std::vector<SharedTexture> textures;
+	std::vector<SharedMaterial> materials = std::vector<SharedMaterial>();
+	std::vector<SharedTexture> textures = std::vector<SharedTexture>();
 
 	//-- SORT SHAPE -----------------------
 	/*
