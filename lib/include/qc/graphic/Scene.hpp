@@ -76,7 +76,7 @@ public:
 	//-- SETTERS ---------------------------
 
 	void setSsboPointLights()
-		{ssboPointLights = BufferObject<PointLight>(pointLights, GL_SHADER_STORAGE_BUFFER);}
+		{ssboPointLights = BufferObject<PointLight>(pointLights, GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);}
 
 	void setSsboDirectionalLights();
 
@@ -87,9 +87,7 @@ public:
 	*/
 	void addObj(const glmlv::fs::path& pathfile );
 	void addObj(Mesh& mesh)
-	{
-		meshes.push_back(std::move(mesh));
-	}
+		{meshes.emplace_back(std::move(mesh));}
 
 
 	//-- ADD POINT LIGHT -------------------
@@ -104,7 +102,7 @@ public:
 
 	//-- ADD PARTICULES --------------------
 	void addParticules(Particule& particule)
-		{particules.push_back(std::move(particule));}
+		{particules.emplace_back(std::move(particule));}
 
 
 	//-- CLEAR POINT LIGHT -----------------
