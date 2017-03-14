@@ -27,21 +27,21 @@ public:
 		{initArrayObject(vbo, ibo);}
 
 	~ArrayObject()
-		{if (pointer) glDeleteBuffers(1, &pointer);}
+		{if (pointer) glDeleteVertexArrays(1, &pointer);}
 
 	ArrayObject(const ArrayObject<T>& o) = delete;
 	ArrayObject<T>& operator= (const ArrayObject<T>& o) = delete;
 
 	ArrayObject(ArrayObject<T>&& o)
 	{
-		if (pointer) glDeleteBuffers(1, &pointer);
+		if (pointer) glDeleteVertexArrays(1, &pointer);
 		pointer = o.pointer;
 		o.pointer = 0;
 	}
 
 	ArrayObject<T>& operator= (ArrayObject<T>&& o)
 	{
-		if (pointer) glDeleteBuffers(1, &pointer);
+		if (pointer) glDeleteVertexArrays(1, &pointer);
 		pointer = o.pointer;
 		o.pointer = 0;
 		return *this;
