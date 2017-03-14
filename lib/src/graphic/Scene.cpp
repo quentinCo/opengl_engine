@@ -13,7 +13,7 @@ using namespace qc::graphic;
 
 void Scene::setSsboDirectionalLights()
 {
-	ssboDirectionalLights = BufferObject<Light>(directionalLights, GL_SHADER_STORAGE_BUFFER); // TODO : revoir
+	ssboDirectionalLights = BufferObject<Light>(directionalLights, GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW); // TODO : revoir
 }
 
 
@@ -83,7 +83,11 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 
 void Scene::sortParticules()
 {
-	std::sort(particules.begin(), particules.end(), [](Particule& a, Particule& b) {
+	std::sort(particules.begin(), particules.end(), [](const Particule& a, const Particule& b) {
+		if (b.getMaterials().size() == 0)
+			return false;
+		if (a.getMaterials().size() == 0)
+			return true;
 		return a.getMaterials()[0] < b.getMaterials()[0];
 	});
 }
