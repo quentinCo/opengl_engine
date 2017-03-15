@@ -56,7 +56,6 @@ int Application::run()
 
 		/* Render Scene */
 		renderer->render(scene, camera);
-		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Update Graphic from Physic */
 		if (activePhysic)
@@ -67,11 +66,9 @@ int Application::run()
 
 		/* Poll for and process events */
 		glfwPollEvents();
-		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Render GUI */
 		renderGUI(clearColor);
-		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Swap front and back buffers */
 		m_GLFWHandle.swapBuffers();
@@ -80,15 +77,11 @@ int Application::run()
 		auto ellapsedTime = glfwGetTime() - seconds;
 		if (!(ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard))
 			camera.updateViewController(float(ellapsedTime));
-		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
 		/* Event "key escape" - Quite */
 		if (glfwGetKey(m_GLFWHandle.window(), GLFW_KEY_ESCAPE))
 			glfwSetWindowShouldClose(m_GLFWHandle.window(), GLFW_TRUE);
-		assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 
-
-		/* */
 		if (resetSystem)
 			resetPhysicalParticulesSystem();
 	}
@@ -110,7 +103,6 @@ void Application::initLights()
 		float y = static_cast<float>(std::rand()) / RAND_MAX * dimScene.y + 10;
 		float z = static_cast<float>(std::rand()) / RAND_MAX * dimScene.z - dimScene.z / 2.f;
 
-		//float radius = static_cast<float>(std::rand()) / RAND_MAX * 500 + 50;
 		float radius; 
 		float intensity;		
 		if (i % 50 == 0)
@@ -199,17 +191,18 @@ void Application::updatePhysic()
 void Application::resetPhysicalParticulesSystem()
 {
 	activePhysic = false;
+
 	scene.clearParticules();
-	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 	scene.clearPointLight();
-	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 	physicSystem.clearObjects();
+
 	initLights();
-	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 	initParticules();
-	assert(glGetError() == GL_NO_ERROR); // Tricks to reset gl errors
 	initPhysic();
+
 	resetSystem = false;
+
+	ImGui_ImplGlfwGL3_InvalidateDeviceObjects(); // Use to fixe the INVALIDE of ImGui and the particule reset
 }
 
 //-- SYNCHRO GRAPHIC PHYSIC ----------
@@ -302,12 +295,12 @@ void Application::renderGUI(float* clearColor)
 		titleButton = "Reset Celerity";
 		if (ImGui::Button(titleButton.c_str()))
 			physicSystem.resetCelerities();
-		/*
+		
 		ImGui::SameLine();
 		titleButton = "Reset System";
 		if (ImGui::Button(titleButton.c_str()))
 			resetSystem = true;
-		*/
+		
 		int physicType = static_cast<int>(physicLinkType);
 		if (ImGui::RadioButton("Simple Attraction", &physicType, PhysicType::SIMPLE_ATTRACTION) ||
 			ImGui::RadioButton("Lennard Jones", &physicType, PhysicType::LENNARD_JONES) ||
