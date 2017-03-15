@@ -84,7 +84,15 @@ int Application::run()
 		glfwPollEvents();
 
 		/* Render GUI */
-		renderGUI(clearColor);
+		/*try
+		{*/
+			renderGUI(clearColor);
+		//}
+		/*catch ()
+		{
+			ImGui_ImplGlfwGL3_InvalidateDeviceObjects();
+			ImGui_ImplGlfwGL3_CreateDeviceObjects();
+		}*/
 
 		/* Swap front and back buffers */
 		m_GLFWHandle.swapBuffers();
@@ -114,9 +122,9 @@ void Application::initLights()
 {
 	glm::vec3 dimScene = glm::abs(bboxMax - bboxMin);
 
-	nbParticules = initNbParticules;
+	nbPointLight = initNbParticules;
 
-	for (int i = 0; i < nbParticules; ++i) // 5000 
+	for (int i = 0; i < nbPointLight; ++i) // 5000 
 		scene.addPointLight(getRandPointLight(dimScene, i));
 
 	scene.setSsboPointLights();
@@ -150,10 +158,10 @@ void Application::initParticules()
 {
 	/* Link Particules and Point Lights */
 	std::vector<qc::graphic::PointLight>& pointLights = scene.getPointLights();
-	for (auto& it : pointLights)
+	for (int i = 0; i < pointLights.size(); ++i)
 	{
 		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &it));
+		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &pointLights[i], i));
 	}
 	scene.sortParticules();
 }
@@ -162,7 +170,7 @@ void Application::initParticules()
 //-- INIT PHYSIC ---------------------
 void Application::initPhysic()
 {
-	linkPhysicGraphic = std::map<int, int>();
+	//linkPhysicGraphic = std::map<int, int>();
 
 	//physicLinkType = PhysicType::GRAVITATIONAL;
 	physicLinkType = PhysicType::SIMPLE_ATTRACTION;
@@ -185,8 +193,7 @@ void Application::initPhysic()
 		float radius = it.getRadius();
 		float radiusAttraction = 1.5f * it.getRadiusAttenuation();
 
-		int temp = physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction);
-		linkPhysicGraphic.insert(std::make_pair(i, temp));
+		linkPhysicGraphic.push_back(physicSystem.addObject(it.getPosition(), mass, radius, radiusAttraction));
 	}
 }
 
@@ -201,6 +208,8 @@ void Application::resetPhysicalParticulesSystem()
 {
 	activePhysic = false;
 
+	linkPhysicGraphic.clear();
+
 	scene.clearParticules();
 	scene.clearPointLight();
 	physicSystem.clearObjects();
@@ -211,51 +220,54 @@ void Application::resetPhysicalParticulesSystem()
 
 	resetSystem = false;
 
-	ImGui_ImplGlfwGL3_InvalidateDeviceObjects(); // Use to fixe the INVALIDE of ImGui and the particule reset
+	ImGui_ImplGlfwGL3_InvalidateDeviceObjects(); // Use to fixe the INVALIDE of ImGui with the particule reset
+	ImGui_ImplGlfwGL3_CreateDeviceObjects();
 }
 
 //-- SYNCHRO GRAPHIC PHYSIC ----------
 void Application::updateGraphicFromPhysic()
 {
 	auto& particules = scene.getParticules();
-	for (auto& it : linkPhysicGraphic)
+	for (int i = 0; i < linkPhysicGraphic.size(); ++i)
 	{
-		const auto& physicalObject = physicSystem.getPhysicalObject(it.second);
-		particules[it.first].setPosition(glm::vec4(physicalObject.getPosition(), 1));
+		const auto& physicalObject = physicSystem.getPhysicalObject(linkPhysicGraphic[i]);
+		particules[i].setPosition(glm::vec4(physicalObject.getPosition(), 1));
 	}
 }
 
 //-- CHANGE NB PARTICULES ------------
 void Application::changeNbParticules()
 {
-	if (nbParticules > scene.getParticules().size())
-		incrementParticules();
+	if (nbPointLight > scene.getParticules().size())
+		incrementPointLights();
 	else
 		decrementParticules();
-
-	ImGui_ImplGlfwGL3_InvalidateDeviceObjects();
 }
 
-void Application::incrementParticules()
+void Application::incrementPointLights()
 {
 	glm::vec3 dimScene = glm::abs(bboxMax - bboxMin);
 
-	const auto& particules = scene.getParticules();
-	for (int i = particules.size(); i < nbParticules; ++i)
+	for (int i = scene.getPointLights().size(); i < nbPointLight; ++i)
 	{
 		auto* pointLight = scene.addPointLight(getRandPointLight(dimScene, i));
 		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, pointLight));
+		pointLight->setColor(preDefMaterials[indexMat]->getColor(qc::graphic::Material::EMMISIVE_COLOR));
 	}
+
+	auto& pointLights = scene.getPointLights();
+	auto& particules = scene.getParticules();
+	// Update pointers
+	for (auto& it : particules)
+		it.setPointLight(&(pointLights[it.getPointLightIndex()]));
 }
 void Application::decrementParticules()
 {
-	auto& particules = scene.getParticules();
-	unsigned int delta = particules.size() - nbParticules;
+	const auto& pointLights = scene.getPointLights();
+	unsigned int delta = pointLights.size() - nbPointLight;
 	
 	// remove graphic element
-	scene.removeParticules(nbParticules - 1, delta);
-	scene.removePointLights(nbParticules - 1, delta);
+	scene.removePointLights(nbPointLight-1, delta);
 }
 
 /*---------------------------  RENDER GUI  ---------------------------------------*/
@@ -281,9 +293,9 @@ void Application::renderGUI(float* clearColor)
 		if(ImGui::DragFloat3("Limite Min", glm::value_ptr(bboxMin), 1.f, -100.f, -1200.f))
 			physicSystem.setBboxMin(bboxMin);
 
-		nbParticulesChange = (ImGui::SliderInt("Nb Particule (graphic)", &nbParticules, initNbParticules, 4000));
-		if (nbParticulesChange && nbParticules < initNbParticules)
-			nbParticules = initNbParticules;
+		nbParticulesChange = (ImGui::SliderInt("Nb Particule (graphic)", &nbPointLight, initNbParticules, 4000));
+		if (nbParticulesChange && nbPointLight < initNbParticules)
+			nbPointLight = initNbParticules;
 
 		if (ImGui::CollapsingHeader("Graphics Options"))
 			renderGraphicOption();
@@ -303,9 +315,8 @@ void Application::renderGraphicOption()
 	if (ImGui::Button("Render All Post Process Pass"))
 	{
 		renderOptions = RenderOptions::RENDER_ALL;
-		renderer->setRenderPostProcess(renderOptions);
+		renderer->setRenderOptions(renderOptions);
 	}
-
 	std::string titleButton = ((renderOptions & RenderOptions::RENDER_EMISSIVE) == RenderOptions::RENDER_EMISSIVE) ? "Dont Render Emissive" : "Render Emissive";
 	if (ImGui::Button(titleButton.c_str()))
 	{
@@ -314,7 +325,7 @@ void Application::renderGraphicOption()
 		else
 			renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_EMISSIVE);
 
-		renderer->setRenderPostProcess(renderOptions);
+		renderer->setRenderOptions(renderOptions);
 	}
 
 
@@ -329,7 +340,7 @@ void Application::renderGraphicOption()
 				renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_BLUR);
 		}
 
-		renderer->setRenderPostProcess(renderOptions);
+		renderer->setRenderOptions(renderOptions);
 	}
 
 	if ((renderOptions & RenderOptions::RENDER_BLUR) == RenderOptions::RENDER_BLUR)
@@ -344,7 +355,7 @@ void Application::renderGraphicOption()
 		else
 			renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_POINT_LIGHTS);
 
-		renderer->setRenderPostProcess(renderOptions);
+		renderer->setRenderOptions(renderOptions);
 	}
 
 	titleButton = ((renderOptions & RenderOptions::RENDER_DIR_LIGHTS) == RenderOptions::RENDER_DIR_LIGHTS) ? "Dont Render Dir Lights" : "Render Dir Lights";
@@ -355,7 +366,7 @@ void Application::renderGraphicOption()
 		else
 			renderOptions = static_cast<RenderOptions>(renderOptions | RenderOptions::RENDER_DIR_LIGHTS);
 
-		renderer->setRenderPostProcess(renderOptions);
+		renderer->setRenderOptions(renderOptions);
 	}
 }
 
