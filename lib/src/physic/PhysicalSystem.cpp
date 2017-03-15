@@ -69,6 +69,23 @@ int PhysicalSystem::addObject(const glm::vec3& position, float mass, float radiu
 	return static_cast<int>(objects.size() - 1);
 }
 
+void PhysicalSystem::removeObject(unsigned int index)
+{
+	if (index >= objects.size())
+		return;
+
+	objects.erase(objects.begin() + index);
+}
+
+void PhysicalSystem::removeObjects(unsigned int index, int nb)
+{
+	if (index > objects.size())
+		return;
+
+	auto end = (index + nb > objects.size()) ? objects.end() : objects.begin() + index + nb;
+	objects.erase(objects.begin() + index, end);
+}
+
 void PhysicalSystem::resetCelerities()
 {
 	for (auto& it : objects)
