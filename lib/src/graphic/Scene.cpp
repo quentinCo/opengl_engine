@@ -78,6 +78,39 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 	}	
 }
 
+//-- ADD POINT LIGHT -------------------
+PointLight* Scene::addPointLight(const PointLight& light)
+{
+	pointLights.push_back(light);
+	return &(pointLights.back());
+}
+
+//-- ADD PARTICULES --------------------
+Particule* Scene::addParticules(Particule& particule)
+{
+	particules.emplace_back(std::move(particule));
+	return &(particules.back());
+}
+
+//-- REMOVE POINTLIGHTS ----------------
+void Scene::removePointLights(unsigned int index, int nb)
+{
+	if (index >= pointLights.size())
+		return;
+
+	auto end = (index + nb > pointLights.size()) ? pointLights.end() : pointLights.begin() + index + nb;
+	pointLights.erase(pointLights.begin() + index, end);
+}
+
+//-- REMOVE PARTICULES -----------------
+void Scene::removeParticules(unsigned int index, int nb)
+{
+	if (index >= particules.size())
+		return;
+
+	auto end = (index + nb > particules.size()) ? particules.end() : particules.begin() + index + nb;
+	particules.erase(particules.begin() + index, end);
+}
 
 //-- SORT PARTICULES -------------------
 
