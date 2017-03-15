@@ -19,12 +19,12 @@ public:
 
 	enum RenderOptions
 	{
-		DONT_RENDER = 0x00,
-		RENDER_EMISSIVE = 0x01,
-		RENDER_BLUR = 0x02,
-		RENDER_POINT_LIGHTS = 0x04,
-		RENDER_DIR_LIGHTS = 0x08,
-		RENDER_ALL = 0xFF
+		DONT_RENDER = 0,
+		RENDER_EMISSIVE = 1 << 0,
+		RENDER_BLUR = 1 << 1,
+		RENDER_POINT_LIGHTS = 1 << 2,
+		RENDER_DIR_LIGHTS = 1 << 3,
+		RENDER_ALL = 0xFFFF
 	};
 
 	Renderer() {}
@@ -61,7 +61,7 @@ public:
 	void setNbBlurPass(int nb)
 		{nbBlurPass = nb;}
 
-	void setRenderPostProcess(RenderOptions pass)
+	void setRenderOptions(RenderOptions pass)
 		{renderOptions = pass;}
 
 	//-- RENDER ---------------------------

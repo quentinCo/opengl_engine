@@ -59,7 +59,7 @@ private:
 	std::thread physic;
 	qc::physic::PhysicalSystem physicSystem;
 
-	std::map<int, int> linkPhysicGraphic; // particule index / physicalObj index //TODO change struct
+	std::vector<int> linkPhysicGraphic; // particule index / physicalObj index //TODO change struct
 
 	PhysicType physicLinkType;
 
@@ -69,7 +69,7 @@ private:
 
 	//---- Lights
 	const int initNbParticules = 350;
-	int nbParticules;
+	int nbPointLight;
 	bool nbParticulesChange = false;
 
 	//---- Physic
@@ -102,7 +102,7 @@ private:
 	//-- CHANGE NB PARTICULES ------------
 	void changeNbParticules();
 
-	void incrementParticules();
+	void incrementPointLights();
 	void decrementParticules();
 
 	//-- RENDER GUI ----------------------
