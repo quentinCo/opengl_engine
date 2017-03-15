@@ -46,7 +46,7 @@ public:
 
 	const PhysicalObject& getPhysicalObject(int index) const
 		{return objects[index];}
-
+	
 	const glm::vec3& getBboxMin() const
 		{return bboxMin;}
 
@@ -70,6 +70,10 @@ public:
 	// return index of physical particule
 	//PhysicalObject* addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
 	int addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
+
+	void removeObject(unsigned int index);
+
+	void removeObjects(unsigned int index, int nb);
 
 	void clearObjects()
 		{objects.clear();}

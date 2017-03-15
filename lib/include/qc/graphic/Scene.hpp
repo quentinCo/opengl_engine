@@ -91,8 +91,7 @@ public:
 
 
 	//-- ADD POINT LIGHT -------------------
-	void addPointLight(const PointLight& light)
-		{pointLights.push_back(light);}
+	PointLight* addPointLight(const PointLight& light);
 
 
 	//-- ADD DIRECTIONAL LIGHT -------------
@@ -101,9 +100,13 @@ public:
 
 
 	//-- ADD PARTICULES --------------------
-	void addParticules(Particule& particule)
-		{particules.emplace_back(std::move(particule));}
+	Particule* addParticules(Particule& particule);
 
+	//-- REMOVE POINTLIGHTS ----------------
+	void removePointLights(unsigned int index, int nb);
+
+	//-- REMOVE PARTICULES -----------------
+	void removeParticules(unsigned int index, int nb);
 
 	//-- CLEAR POINT LIGHT -----------------
 	void clearPointLight()
