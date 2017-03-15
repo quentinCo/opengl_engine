@@ -18,8 +18,6 @@ public:
 		:Mesh(), radius(radius), pointLight(pointLight)
 	{initShape(mat);}
 
-	~Particule() {}
-
 	Particule(Particule&& o) = default;
 	Particule& operator= (Particule&& o) = default;
 
