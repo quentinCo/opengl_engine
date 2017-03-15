@@ -26,10 +26,10 @@ public:
 		{return radius;}
 
 	float getIntensity() const
-		{return pointLight->getIntensity();}
+		{return (pointLight) ? pointLight->getIntensity() : 0;}
 
 	float getRadiusAttenuation() const
-		{return pointLight->getRadiusAttenuation();}
+		{return (pointLight) ? pointLight->getRadiusAttenuation() : 0;}
 	
 	//-- SETTERS ---------------------------
 	void setRadius(float radius)
@@ -46,8 +46,6 @@ private:
 
 	//-- pointer to a pointlight if lighted particule
 	PointLight* pointLight;
-	
-	static std::shared_ptr<Material> defaultMaterial;
 
 	//-- INIT SHAPE ------------------------
 	/*

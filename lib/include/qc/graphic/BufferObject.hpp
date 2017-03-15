@@ -16,12 +16,12 @@ class BufferObject
 
 public:
 	BufferObject() {};
-	BufferObject(const std::vector<T>& data, const GLenum target = GL_ARRAY_BUFFER)
-		: target(target), size(data.size())
+	BufferObject(const std::vector<T>& data, const GLenum target = GL_ARRAY_BUFFER, const GLenum usageFlags = 0)
+		: target(target), size(data.size()), usageFlags(usageFlags)
 	{initBufferObject(&data);}
 
-	BufferObject(size_t size, const GLenum target = GL_ARRAY_BUFFER)
-		: target(target), size(size)
+	BufferObject(size_t size, const GLenum target = GL_ARRAY_BUFFER, const GLenum usageFlags = 0)
+		: target(target), size(size), usageFlags(usageFlags)
 	{initBufferObject(nullptr);}
 
 	~BufferObject()
@@ -31,7 +31,7 @@ public:
 	BufferObject<T>& operator= (const BufferObject<T>& o) = delete;
 
 	BufferObject(BufferObject<T>&& o)
-		: target(o.target), size(o.size)
+		: target(o.target), size(o.size), usageFlags(o.usageFlags)
 	{
 		if (pointer) glDeleteBuffers(1, &pointer);
 		pointer = o.pointer;
@@ -43,6 +43,7 @@ public:
 		if (pointer) glDeleteBuffers(1, &pointer);
 		pointer = o.pointer;
 		target = o.target;
+		usageFlags = o.usageFlags;
 		size = o.size;
 		o.pointer = 0;
 		return *this;
@@ -64,6 +65,8 @@ private:
 	//-- Buffer type
 	GLenum target;
 
+	GLenum usageFlags;
+
 	//-- Buffer size
 	size_t size;
 
@@ -77,9 +80,11 @@ private:
 
 		glGenBuffers(1, &pointer);
 		glBindBuffer(target, pointer);
-		if(target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) glBufferStorage(target, size * sizeof(T), dataPointer, 0);
-		else if(target == GL_UNIFORM_BUFFER) glBufferData(target, size * sizeof(T), dataPointer, GL_DYNAMIC_DRAW);
-		else if(target == GL_SHADER_STORAGE_BUFFER) glBufferData(target, size * sizeof(T), dataPointer, GL_DYNAMIC_COPY);
+		if(target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER)
+			glBufferStorage(target, size * sizeof(T), dataPointer, usageFlags);
+		else
+			glBufferData(target, size * sizeof(T), dataPointer, usageFlags);
+		// TODO : create another class for ubo and ssbo
 		glBindBuffer(target, 0);
 	}
 };

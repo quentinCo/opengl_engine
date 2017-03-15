@@ -23,31 +23,29 @@ void Particule::setPosition(const glm::vec4& position)
 void Particule::initShape(std::shared_ptr<Material> mat)
 {
 	// TODO : change for Billboard Particules
-	// init shape and buffers
 	glmlv::SimpleGeometry sp = glmlv::makeSphere(4);
-//	glmlv::SimpleGeometry sp = glmlv::makeCube();
-	std::vector<glmlv::Vertex3f3f2f> vertices = sp.vertexBuffer;
-	std::vector<Vertex> completVertices;
-	for (const auto& it : vertices)
-		completVertices.emplace_back(it);
-
-	std::vector<uint32_t> index = sp.indexBuffer;
-
-	initBuffers(completVertices, index);
 
 	// init materials
 	std::vector<std::shared_ptr<Material>> materials;
 	materials.push_back(mat);
-	setMaterials(materials);
 	if (pointLight)
 	{
 		setPosition(pointLight->getPosition());
 		pointLight->setColor(mat->getColor(Material::EMMISIVE_COLOR));
 	}
-
+	
 	// init shape object
-	ShapeData shapeData = ShapeData(index.size(), 0, mat);
+	ShapeData shapeData = ShapeData(sp.indexBuffer.size(), 0, mat);
 	std::vector<ShapeData> shapes = { shapeData };
+
+	// init shape and buffers
+	std::vector<Vertex> completVertices;
+	for (const auto& it : sp.vertexBuffer)
+		completVertices.emplace_back(it);
+
+	initBuffers(completVertices, sp.indexBuffer);
+
+	setMaterials(materials);
 	setShapesData(shapes);
 
 	setScale(glm::vec3(radius));

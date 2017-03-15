@@ -5,8 +5,10 @@
 
 #include "PhysicalObject.hpp"
 #include "Link.hpp"
-#include "GravitationalLink.hpp"
 #include "Updatable.hpp"
+#include "GravitationalLink.hpp"
+#include "SimpleAttractionLink.hpp"
+#include "LennardJonesLink.hpp"
 
 namespace qc
 {
@@ -20,6 +22,8 @@ class PhysicalSystem : public Updatable
 public:
 	enum PhysicType
 	{
+		SIMPLE_ATTRACTION,
+		LENNARD_JONES,
 		GRAVITATIONAL
 	};
 
@@ -42,12 +46,18 @@ public:
 
 	const PhysicalObject& getPhysicalObject(int index) const
 		{return objects[index];}
-
+	
 	const glm::vec3& getBboxMin() const
 		{return bboxMin;}
 
 	const glm::vec3& getBboxMax() const
 		{return bboxMax;}
+
+	const PhysicType getPhysicType() const
+		{return physicalType;}
+
+	Link* getLink() const
+		{return physicalLink;}
 
 	void setBboxMin(const glm::vec3& min)
 		{bboxMin = min;}
@@ -55,9 +65,20 @@ public:
 	void setBboxMax(const glm::vec3& max)
 		{bboxMax = max;}
 
+	void setPhysicType(PhysicType type);
+
 	// return index of physical particule
 	//PhysicalObject* addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
 	int addObject(const glm::vec3& position, float mass, float radius, float radiusAttraction);
+
+	void removeObject(unsigned int index);
+
+	void removeObjects(unsigned int index, int nb);
+
+	void clearObjects()
+		{objects.clear();}
+
+	void resetCelerities();
 
 	virtual void update(float h);
 
