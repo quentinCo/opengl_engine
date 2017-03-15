@@ -3,6 +3,7 @@
 This project is an application that render a classical scene ([Sponza](http://graphics.cs.williams.edu/data/meshes.xml)) and enable to navigate in it.
 This application implements different opengl rendering and physical simulation methods to render multiple pointlights and animate an particule system by attraction.
 A user interface allows, among other things, to set the number of pointlight in scene, the blur effect apply on particles and the type physical interaction between them.
+
 [![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/uJkZxVlYVa0/0.jpg)](https://youtu.be/uJkZxVlYVa0)
 
 ## Rendering Methods
