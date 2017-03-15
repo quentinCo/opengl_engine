@@ -18,6 +18,7 @@ class Application
 {
 public:
 	using RenderOptions = qc::graphic::Renderer::RenderOptions;
+	using PhysicType = qc::physic::PhysicalSystem::PhysicType;
 
     Application(int argc, char** argv);
 
@@ -51,18 +52,34 @@ private:
 	qc::graphic::ForwardPlusRenderer forwardPlus;
 	RenderOptions renderOptions = RenderOptions::RENDER_ALL;
     
+	//-- Predef Materials for particules init
+	std::vector<std::shared_ptr<qc::graphic::Material>> preDefMaterials;
+
 	//-- Physic
-	bool activePhysic = false;
 	std::thread physic;
 	qc::physic::PhysicalSystem physicSystem;
-	//std::map<qc::graphic::Particule*, qc::physic::PhysicalObject*> linkPhysicGraphic; // TODO : check why PhysicalObject* set at wtf value with insert
-	std::map<qc::graphic::Particule*, int> linkPhysicGraphic;
-	float discretizationFrequency = 100.f;
 
+	std::map<int, int> linkPhysicGraphic; // particule index / physicalObj index //TODO change struct
+
+	PhysicType physicLinkType;
+
+	//-- UI variables
+	glm::vec3 bboxMax;
+	glm::vec3 bboxMin;
+
+	//---- Lights
+	const int initNbParticules = 350;
+	int nbParticules;
+	bool nbParticulesChange = false;
+
+	//---- Physic
+	bool activePhysic = false;
+	bool resetSystem = false;
+	float discretizationFrequency = 100.f;
 	
 	//-- INIT LIGHTS ---------------------
 	void initLights();
-
+	qc::graphic::PointLight getRandPointLight(glm::vec3& dimScene, int i);
 
 	//-- INIT PARTICULES -----------------
 	void initParticules();
@@ -76,13 +93,23 @@ private:
 	void updatePhysic();
 
 
+	//-- RESET PHYSICAL PARTICULES SYSTEM 
+	void resetPhysicalParticulesSystem();
+
 	//-- SYNCHRO GRAPHIC PHYSIC ----------
 	void updateGraphicFromPhysic();
 
+	//-- CHANGE NB PARTICULES ------------
+	void changeNbParticules();
+
+	void incrementParticules();
+	void decrementParticules();
 
 	//-- RENDER GUI ----------------------
 	/*
 		UI rendering
 	*/
 	void renderGUI(float* clearColor);
+	void renderGraphicOption();
+	void renderPhysicOption();
 };

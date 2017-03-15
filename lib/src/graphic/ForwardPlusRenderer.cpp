@@ -156,7 +156,7 @@ void ForwardPlusRenderer::initLightCullingPass()
 
 	nbComputeBlock = glm::vec3((GLuint)ceil(windowWidth / 16.f), (GLuint)ceil(windowHeight / 16.f), 1);
 
-	ssboPointLightsIndex = BufferObject<int>(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), GL_SHADER_STORAGE_BUFFER);
+	ssboPointLightsIndex = BufferObject<int>(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_READ);
 	
 	uPointLightsForCulling = glGetProgramResourceIndex(programLightCullingPass.glId(), GL_SHADER_STORAGE_BLOCK,"uPointLights");
 	uPointLightsNumberForCulling = glGetUniformLocation(programLightCullingPass.glId(), "uPointLightsNumber");
@@ -323,11 +323,10 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 	glUniform2fv(uWindowDim, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
 	// Bind ssbo
-	Renderer::bindSsbos(pointLights, 0, uPointLightsForCulling, programLightCullingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+	Renderer::bindSsbos(pointLights, 0, uPointLightsForCulling, programLightCullingPass, scene.getSsboPointLights(), GL_DYNAMIC_DRAW);
 	glUniform1i(uPointLightsNumberForCulling, static_cast<GLint>(pointLights.size()));
 
 	Renderer::bindSsbosToRead(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), 1, uPointLightsIndexForCulling, programLightCullingPass, ssboPointLightsIndex);
-
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, depthMap);
@@ -388,7 +387,7 @@ void ForwardPlusRenderer::loadDirLights(const Scene& scene)
 	{
 		const auto& directionalLights = scene.getDirectionalLights();
 		if (directionalLights.size() > 0)
-			Renderer::bindSsbos(directionalLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_STREAM_DRAW);
+			Renderer::bindSsbos(directionalLights, 1, uDirectionalLights, programShadingPass, scene.getSsboDirectionalLights(), GL_DYNAMIC_DRAW);
 
 		glUniform1i(uDirectionalLightsNumber, static_cast<GLint>(directionalLights.size()));
 	}
@@ -403,7 +402,7 @@ void ForwardPlusRenderer::loadPointLights(const Scene& scene)
 		const auto& pointLights = scene.getPointLights();
 		if (pointLights.size() > 0)
 		{
-			Renderer::bindSsbos(pointLights, 2, uPointLights, programShadingPass, scene.getSsboPointLights(), GL_STREAM_DRAW);
+			Renderer::bindSsbos(pointLights, 2, uPointLights, programShadingPass, scene.getSsboPointLights(), GL_DYNAMIC_DRAW);
 			Renderer::bindSsbosToRead(static_cast<size_t>(nbComputeBlock.x * nbComputeBlock.y * 200), 3, uPoinLightIndexForShading, programShadingPass, ssboPointLightsIndex);
 		}
 		glUniform1i(uPointLightsNumber, static_cast<GLint>(pointLights.size()));

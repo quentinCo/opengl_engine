@@ -14,11 +14,12 @@ class Link : public Updatable
 
 public:
 	
-	Link()
+	Link(float k = 1.f)
+		: stiffness(k)
 	{}
 
-	Link(PhysicalObject* object1, PhysicalObject* object2)
-		: object1(object1), object2(object2)
+	Link(PhysicalObject* object1, PhysicalObject* object2, float k = 1.f)
+		: object1(object1), object2(object2), stiffness(k)
 	{}
 
 	PhysicalObject* getObject1()
@@ -27,21 +28,25 @@ public:
 	PhysicalObject* getObject2()
 		{return object2;}
 
+	float getStiffness() const
+		{return stiffness;}
+
 	void setObject1(PhysicalObject* object)
 		{object1 = object;}
 	
 	void setObject2(PhysicalObject* object)
 		{object2 = object;}
 
-//	virtual void update(float h) = 0;
-	virtual void update(float h)
-	{
-		int i = 4;
-	}
+	void setStiffness(float k)
+		{stiffness = k;}
+
+	virtual void update(float h) = 0;
 
 protected:
 	PhysicalObject* object1 = nullptr;
 	PhysicalObject* object2 = nullptr;
+
+	float stiffness;
 
 };
 
