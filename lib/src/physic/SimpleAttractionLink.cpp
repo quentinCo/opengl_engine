@@ -2,7 +2,7 @@
 
 using namespace qc::physic;
 
-void SimpleAttractionLink::update(float)
+void SimpleAttractionLink::update(float h)
 {
 	if (!object1 || !object2)
 		return;
@@ -17,6 +17,12 @@ void SimpleAttractionLink::update(float)
 	float l0 = object1->getRadius() + object2->getRadius();
 	direction = glm::normalize(direction);
 	glm::vec3 force = stiffness * direction * (distance - l0) / distance;
+	glm::vec3 am = direction * (object1->getCelerity() + object2->getCelerity());
+	if (absorption != 0)
+		am *=  absorption / getMaxAbsorption();
+	else
+		am *= 0;
+	force -= am;
 
 	object1->addToForce(force);
 	object2->addToForce(-force);
