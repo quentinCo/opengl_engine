@@ -122,7 +122,7 @@ void Application::initLights()
 {
 	glm::vec3 dimScene = glm::abs(bboxMax - bboxMin);
 
-	nbPointLight = initNbParticules;
+	nbPointLight = initNbPointLights;
 
 	for (int i = 0; i < nbPointLight; ++i) // 5000 
 		scene.addPointLight(getRandPointLight(dimScene, i));
@@ -283,7 +283,7 @@ void Application::renderGUI(float* clearColor)
 			glClearColor(clearColor[0], clearColor[1], clearColor[2], 1.f);
 		}
 		
-		ImGui::Text("\nNb Particules (Point Lights) %d", scene.getParticules().size());
+		ImGui::Text("\nNb PointLights %d", scene.getParticules().size());
 		ImGui::Text("Nb Physical Object %d", physicSystem.getPhysicalObjects().size());
 
 		ImGui::Text("\nBox limits for lights init and physic collider");
@@ -293,9 +293,9 @@ void Application::renderGUI(float* clearColor)
 		if(ImGui::DragFloat3("Limite Min", glm::value_ptr(bboxMin), 1.f, -100.f, -1200.f))
 			physicSystem.setBboxMin(bboxMin);
 
-		nbParticulesChange = (ImGui::SliderInt("Nb Particule (graphic)", &nbPointLight, initNbParticules, 4000));
-		if (nbParticulesChange && nbPointLight < initNbParticules)
-			nbPointLight = initNbParticules;
+		nbParticulesChange = (ImGui::SliderInt("Nb PointLights (graphic)", &nbPointLight, initNbPointLights, 4000));
+		if (nbParticulesChange && nbPointLight < initNbPointLights)
+			nbPointLight = initNbPointLights;
 
 		if (ImGui::CollapsingHeader("Graphics Options"))
 			renderGraphicOption();

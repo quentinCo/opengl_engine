@@ -68,7 +68,7 @@ private:
 	glm::vec3 bboxMin;
 
 	//---- Lights
-	const int initNbParticules = 350;
+	const int initNbPointLights = 350;
 	int nbPointLight;
 	bool nbParticulesChange = false;
 
