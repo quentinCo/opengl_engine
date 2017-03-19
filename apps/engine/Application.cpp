@@ -410,6 +410,13 @@ void Application::renderPhysicOption()
 		if (ImGui::SliderFloat("Absorption coeff", &k, 0.f, 20.f, "%.4f"))
 			link->setAbsorption(k);
 	}
+	else if (physicLinkType == PhysicType::GRAVITATIONAL)
+	{
+		qc::physic::GravitationalLink* link = static_cast<qc::physic::GravitationalLink*>(physicSystem.getLink());
+		float k = link->getStiffness();
+		if (ImGui::SliderFloat("Gravitational const", &k, 0.f, 100.f, "%.4f"))
+			link->setStiffness(k);
+	}
 	else if (physicLinkType == PhysicType::LENNARD_JONES)
 	{
 		qc::physic::LennardJonesLink* link = static_cast<qc::physic::LennardJonesLink*>(physicSystem.getLink());
