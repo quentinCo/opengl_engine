@@ -22,8 +22,9 @@ The application implement 3 differents interactions type:
 ## Compilation instruction
 Execute the cmake to generate the project.
 - [x] Tested on windows (visual studio)
-- [ ] Tested on linux
+- [x] Tested on linux
 - [ ] Tested on Mac
+
 On visual studio set "engine" as main project.
 
 ### Possible problemes
