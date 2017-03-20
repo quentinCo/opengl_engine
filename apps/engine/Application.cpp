@@ -161,7 +161,8 @@ void Application::initParticules()
 	for (int i = 0; i < pointLights.size(); ++i)
 	{
 		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &pointLights[i], i));
+		auto particule = qc::graphic::Particule(preDefMaterials[indexMat], 1, &pointLights[i], i);
+		scene.addParticules(particule);
 	}
 	scene.sortParticules();
 }

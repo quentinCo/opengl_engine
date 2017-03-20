@@ -16,7 +16,7 @@ namespace graphic
 class Camera
 {
 public:
-	Camera(glmlv::GLFWHandle& glfwHandle, glm::vec3& position  = glm::vec3(0), glm::vec3& front = glm::vec3(0,0,-1),
+	Camera(glmlv::GLFWHandle& glfwHandle, glm::vec3 position  = glm::vec3(0), glm::vec3 front = glm::vec3(0,0,-1),
 		float fovy = 0, float nearPlan = 0.1f, float farPlan = 100.f, float speedMove = 1.f, float speedRotate = 0.01f);
 	
 
@@ -63,7 +63,7 @@ public:
 			Left click : unlock camera rotation.
 			Right click : lock camera rotation.
 	*/
-	void Camera::updateViewController(float time);
+	void updateViewController(float time);
 	
 	//-- COMPUTE MODELS MATRIX -------------------------------
 	/*

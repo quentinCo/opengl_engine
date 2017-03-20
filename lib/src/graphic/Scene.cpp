@@ -3,8 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-#include <glmlv/load_obj.hpp>
-
 #include <qc/graphic/Scene.hpp>
 
 using namespace qc::graphic;
@@ -25,7 +23,7 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 	{
 		glmlv::ObjData data;
 
-		loadObj(pathfile, data);
+		glmlv::loadObj(pathfile, data);
 
 		// Init scene limite
 		bboxMin = glm::min(data.bboxMin, bboxMin);

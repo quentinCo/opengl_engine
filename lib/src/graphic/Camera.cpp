@@ -6,7 +6,7 @@
 
 using namespace qc::graphic;
 
-Camera::Camera(glmlv::GLFWHandle& glfwHandle, glm::vec3& position, glm::vec3& front,
+Camera::Camera(glmlv::GLFWHandle& glfwHandle, glm::vec3 position, glm::vec3 front,
 	float fovy, float nearPlan, float farPlan, float speedMove, float speedRotate)
 	: window(glfwHandle.window()) , position(position), frontVector(glm::normalize(front)), viewportSize(glfwHandle.framebufferSize()),
 	fovY(fovy), nearPlan(nearPlan), farPlan(farPlan), speedMove(speedMove), speedRotate(speedRotate)
