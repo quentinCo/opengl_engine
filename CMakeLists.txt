@@ -95,6 +95,12 @@ add_library(
 	${QC_LIB_FILES}
 )
 
+
+target_link_libraries(
+    qc
+    glmlv
+)
+
 c2ba_add_shader_directory(${CMAKE_CURRENT_SOURCE_DIR}/lib/shaders ${SHADER_OUTPUT_PATH}/qc)
 c2ba_add_assets_directory(${CMAKE_CURRENT_SOURCE_DIR}/lib/assets ${ASSET_OUTPUT_PATH}/qc)
 

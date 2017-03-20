@@ -286,7 +286,7 @@ void ForwardPlusRenderer::renderDepthPass(const Scene& scene, const Camera& came
 		glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
 		camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
 
-		glUniformMatrix4fv(uDepthModelViewProjMatrix, 1, FALSE, glm::value_ptr(mvpMatrix));
+		glUniformMatrix4fv(uDepthModelViewProjMatrix, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 		
 		const auto& shapes = mesh.getShapesData();
 
@@ -318,8 +318,8 @@ void ForwardPlusRenderer::renderLightCullingPass(const Scene& scene, const Camer
 	// Camera and screen characteristic
 	glm::mat4 invProjMatrix = glm::inverse(camera.getProjMatrix());
 	glm::mat4 viewProj = camera.getProjMatrix() * camera.getViewMatrix();
-	glUniformMatrix4fv(uInverseProjMatrix, 1, FALSE, glm::value_ptr(invProjMatrix));
-	glUniformMatrix4fv(uViewMatrixForCulling, 1, FALSE, glm::value_ptr(camera.getViewMatrix()));
+	glUniformMatrix4fv(uInverseProjMatrix, 1, GL_FALSE, glm::value_ptr(invProjMatrix));
+	glUniformMatrix4fv(uViewMatrixForCulling, 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
 	glUniform2fv(uWindowDim, 1, glm::value_ptr(glm::vec2(windowWidth, windowHeight)));
 
 	// Bind ssbo

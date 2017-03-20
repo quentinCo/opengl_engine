@@ -26,6 +26,10 @@ Execute the cmake to generate the project.
 - [ ] Tested on Mac
 On visual studio set "engine" as main project.
 
+###Possible problemes
+If you have a error at the compilation with the inlcude of "experimental/filesystem", it's probabli that you don't support the experimental c++ methods. In this case, use the library [Boost](http://www.boost.org/) and reexecute the cmake file with command line below:
+	cmake -DGLMLV_USE_BOOST_FILESYSTEM=ON ../opengl_engine/
+
 ## Navigation control
 - z-q-s-d (or w-a-s-d with qwerty keybord) : moving front - left - back - right.
 - space / shift: up / down.

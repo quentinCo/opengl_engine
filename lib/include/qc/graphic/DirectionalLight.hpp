@@ -26,7 +26,7 @@ public:
 	float getThetaAngle() const
 		{return thetaAngle;}
 
-	const glm::vec3& getDirection() const
+	const glm::vec4& getDirection() const
 		{return this->getPosition();}
 
 	/*TODO : delete after test*/
