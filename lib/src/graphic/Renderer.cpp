@@ -192,9 +192,9 @@ void Renderer::renderMesh(const Mesh& mesh, const Camera& camera, GLint& uMVPMat
 	glm::mat4 mvMatrix, mvpMatrix, normalMatrix;
 	camera.computeModelsMatrix(mesh.getModelMatrix(), mvMatrix, mvpMatrix, normalMatrix);
 
-	glUniformMatrix4fv(uMVPMatrix, 1, FALSE, glm::value_ptr(mvpMatrix));
-	glUniformMatrix4fv(uMVMatrix, 1, FALSE, glm::value_ptr(mvMatrix));
-	glUniformMatrix4fv(uNormalMatrix, 1, FALSE, glm::value_ptr(normalMatrix));
+	glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
+	glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(mvMatrix));
+	glUniformMatrix4fv(uNormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
 	glBindSampler(0, textureSampler);
 	glBindSampler(1, textureSampler);
@@ -278,7 +278,7 @@ void Renderer::renderParticule(const Mesh& mesh, const Camera& camera, SharedMat
 	glm::mat4 mvpMatrix;
 	camera.computeMVPMatrix(mesh.getModelMatrix(), mvpMatrix);
 
-	glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, FALSE, glm::value_ptr(mvpMatrix));
+	glUniformMatrix4fv(uMVPMatrixEmissivePass, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
 
 	const auto& shapes = mesh.getShapesData();
 	const auto& defaultMaterial = Mesh::defaultMaterial;

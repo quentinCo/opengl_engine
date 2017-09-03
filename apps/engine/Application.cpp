@@ -161,7 +161,8 @@ void Application::initParticules()
 	for (int i = 0; i < pointLights.size(); ++i)
 	{
 		int indexMat = static_cast<int>(static_cast<float>(std::rand()) / RAND_MAX * (preDefMaterials.size() - 1));
-		scene.addParticules(qc::graphic::Particule(preDefMaterials[indexMat], 1, &pointLights[i], i));
+		auto particule = qc::graphic::Particule(preDefMaterials[indexMat], 1, &pointLights[i], i);
+		scene.addParticules(particule);
 	}
 	scene.sortParticules();
 }
@@ -398,11 +399,24 @@ void Application::renderPhysicOption()
 		physicSystem.setPhysicType(physicLinkType);
 	}
 
+
 	if (physicLinkType == PhysicType::SIMPLE_ATTRACTION)
 	{
-		float k = physicSystem.getLink()->getStiffness();
+		qc::physic::SimpleAttractionLink* link = static_cast<qc::physic::SimpleAttractionLink*>(physicSystem.getLink());
+		float k = link->getStiffness();
 		if (ImGui::SliderFloat("Stiffness coeff", &k, 0.001f, 50.f, "%.4f"))
-			physicSystem.getLink()->setStiffness(k);
+			link->setStiffness(k);
+
+		k = link->getAbsorption();
+		if (ImGui::SliderFloat("Absorption coeff", &k, 0.f, 20.f, "%.4f"))
+			link->setAbsorption(k);
+	}
+	else if (physicLinkType == PhysicType::GRAVITATIONAL)
+	{
+		qc::physic::GravitationalLink* link = static_cast<qc::physic::GravitationalLink*>(physicSystem.getLink());
+		float k = link->getStiffness();
+		if (ImGui::SliderFloat("Gravitational const", &k, 0.f, 100.f, "%.4f"))
+			link->setStiffness(k);
 	}
 	else if (physicLinkType == PhysicType::LENNARD_JONES)
 	{
@@ -415,6 +429,6 @@ void Application::renderPhysicOption()
 		if (ImGui::SliderFloat("Power factor", &k, 1 / 12.f, 12.f))
 			link->setPower(k);
 	}
-
+	
 	ImGui::SliderFloat("Physical Discretization Frequency", &discretizationFrequency, 5.f, 500.f);
 }

@@ -5,6 +5,7 @@
 #include <glm/vec3.hpp>
 
 #include <glmlv/filesystem.hpp>
+#include <glmlv/load_obj.hpp>
 
 #include "Mesh.hpp"
 #include "Light.hpp"
