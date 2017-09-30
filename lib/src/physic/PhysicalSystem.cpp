@@ -47,10 +47,17 @@ PhysicalSystem PhysicalSystem::operator=(PhysicalSystem&& o)
 	if (physicalLink != nullptr)
 		delete physicalLink;
 
+	physicalType = o.physicalType;
 	physicalLink = o.physicalLink;
 	o.physicalLink = 0;
 
 	return *this;
+}
+
+void PhysicalSystem::setPhysicType(PhysicType type)
+{
+	physicalType = type;
+	physicalLink = getPhysicalLink();
 }
 
 // return index of physical particule
@@ -62,12 +69,35 @@ int PhysicalSystem::addObject(const glm::vec3& position, float mass, float radiu
 	return static_cast<int>(objects.size() - 1);
 }
 
+void PhysicalSystem::removeObject(unsigned int index)
+{
+	if (index >= objects.size())
+		return;
+
+	objects.erase(objects.begin() + index);
+}
+
+void PhysicalSystem::removeObjects(unsigned int index, int nb)
+{
+	if (index > objects.size())
+		return;
+
+	auto end = (index + nb > objects.size()) ? objects.end() : objects.begin() + index + nb;
+	objects.erase(objects.begin() + index, end);
+}
+
+void PhysicalSystem::resetCelerities()
+{
+	for (auto& it : objects)
+		it.setCelerity(glm::vec3(0));
+}
+
 void PhysicalSystem::update(float h)
 {
 	for (auto& it : objects)
 		updatesListe.push_back(&it);
 
-	while (updatesListe.size() != 1)
+	while (updatesListe.size() > 1)
 	{
 		physicalLink->setObject1(updatesListe.front());
 		for (int i = 1; i < updatesListe.size(); ++i)
@@ -77,7 +107,8 @@ void PhysicalSystem::update(float h)
 		}
 		updatesListe.pop_front();
 	}
-	updatesListe.pop_front();
+	if(updatesListe.size() > 0)
+		updatesListe.pop_front();
 
 	for (auto& it : objects)
 	{
@@ -87,11 +118,11 @@ void PhysicalSystem::update(float h)
 		bool changeDirection = false;
 		for (int i = 0; i < 3; ++i)
 		{
-			if (position[i] > bboxMax[i] || position[i] < bboxMin[i])
+			if (position[i] >= bboxMax[i] || position[i] <= bboxMin[i])
 			{
 				changeDirection = true;
 				celerity[i] = -celerity[i] * 0.5;
-				position[i] = std::min(bboxMax[i], std::max(bboxMin[i], position[0]));
+				position[i] = glm::min(bboxMax[i], glm::max(bboxMin[i], position[0]));
 			}
 		}
 		if (changeDirection)
@@ -104,11 +135,21 @@ void PhysicalSystem::update(float h)
 
 Link* PhysicalSystem::getPhysicalLink()
 {
+	if (physicalLink)
+		delete physicalLink;
+
+	Link* link = nullptr;
 	switch (physicalType)
 	{
+		case SIMPLE_ATTRACTION:
+			link = new SimpleAttractionLink();
+			break;
+		case LENNARD_JONES:
+			link = new LennardJonesLink();
+			break;
 		case GRAVITATIONAL:
-			return new GravitationalLink();
+			link = new GravitationalLink();
 			break;
 	}
-	return nullptr;
+	return link;
 }

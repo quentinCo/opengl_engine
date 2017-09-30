@@ -5,6 +5,7 @@
 #include <glm/vec3.hpp>
 
 #include <glmlv/filesystem.hpp>
+#include <glmlv/load_obj.hpp>
 
 #include "Mesh.hpp"
 #include "Light.hpp"
@@ -76,7 +77,7 @@ public:
 	//-- SETTERS ---------------------------
 
 	void setSsboPointLights()
-		{ssboPointLights = BufferObject<PointLight>(pointLights, GL_SHADER_STORAGE_BUFFER);}
+		{ssboPointLights = BufferObject<PointLight>(pointLights, GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);}
 
 	void setSsboDirectionalLights();
 
@@ -87,14 +88,11 @@ public:
 	*/
 	void addObj(const glmlv::fs::path& pathfile );
 	void addObj(Mesh& mesh)
-	{
-		meshes.push_back(std::move(mesh));
-	}
+		{meshes.emplace_back(std::move(mesh));}
 
 
 	//-- ADD POINT LIGHT -------------------
-	void addPointLight(const PointLight& light)
-		{pointLights.push_back(light);}
+	PointLight* addPointLight(const PointLight& light);
 
 
 	//-- ADD DIRECTIONAL LIGHT -------------
@@ -103,9 +101,24 @@ public:
 
 
 	//-- ADD PARTICULES --------------------
-	void addParticules(Particule& particule)
-		{particules.push_back(std::move(particule));}
+	Particule* addParticules(Particule& particule);
 
+	//-- REMOVE POINTLIGHTS ----------------
+	void removePointLights(unsigned int index, int nb);
+
+	//-- REMOVE PARTICULES -----------------
+	void removeParticules(unsigned int index, int nb);
+
+	//-- CLEAR POINT LIGHT -----------------
+	void clearPointLight()
+	{
+		pointLights.clear();
+		setSsboPointLights();
+	}
+
+	//-- CLEAR PARTICULES ------------------
+	void clearParticules()
+		{particules.clear();}
 
 	//-- SORT PARTICULES -------------------
 	/*

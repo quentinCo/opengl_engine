@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glmlv/simple_geometry.hpp>
+
 #include "PointLight.hpp"
 #include "Mesh.hpp"
 #include "Camera.hpp"
@@ -14,8 +16,8 @@ class Particule : public Mesh
 {
 
 public:
-	Particule(std::shared_ptr<Material> mat, float radius = 1, PointLight* pointLight = nullptr)
-		:Mesh(), radius(radius), pointLight(pointLight)
+	Particule(std::shared_ptr<Material> mat, float radius = 1, PointLight* pointLight = nullptr, int pointLightIndex = -1)
+		:Mesh(), radius(radius), pointLight(pointLight), pointLightIndex(pointLightIndex)
 	{initShape(mat);}
 
 	Particule(Particule&& o) = default;
@@ -26,10 +28,13 @@ public:
 		{return radius;}
 
 	float getIntensity() const
-		{return pointLight->getIntensity();}
+		{return (pointLight) ? pointLight->getIntensity() : 0;}
 
 	float getRadiusAttenuation() const
-		{return pointLight->getRadiusAttenuation();}
+		{return (pointLight) ? pointLight->getRadiusAttenuation() : 0;}
+
+	int getPointLightIndex() const
+		{return pointLightIndex;}
 	
 	//-- SETTERS ---------------------------
 	void setRadius(float radius)
@@ -37,6 +42,9 @@ public:
 		this->radius = radius;
 		setScale(glm::vec3(radius));
 	}
+
+	void setPointLight(PointLight* light)
+		{pointLight = light;}
 
 	virtual void setPosition(const glm::vec4& position);
 
@@ -46,8 +54,7 @@ private:
 
 	//-- pointer to a pointlight if lighted particule
 	PointLight* pointLight;
-	
-	static std::shared_ptr<Material> defaultMaterial;
+	int pointLightIndex;
 
 	//-- INIT SHAPE ------------------------
 	/*

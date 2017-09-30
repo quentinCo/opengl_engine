@@ -157,7 +157,7 @@ void computeFragColor()
     vec3 eyeDir = normalize(-position);
 
 	fColor = vec3(0);
-    fColor += 0.1 * ka;
+    fColor += 0.05 * ka;
 
 	if(uDirectionalLightsNumber > 0)
 		computeDirectionalLighting(position, ka, kd, ks, shininess, normal, eyeDir);

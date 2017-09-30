@@ -3,8 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-#include <glmlv/load_obj.hpp>
-
 #include <qc/graphic/Scene.hpp>
 
 using namespace qc::graphic;
@@ -13,7 +11,7 @@ using namespace qc::graphic;
 
 void Scene::setSsboDirectionalLights()
 {
-	ssboDirectionalLights = BufferObject<Light>(directionalLights, GL_SHADER_STORAGE_BUFFER); // TODO : revoir
+	ssboDirectionalLights = BufferObject<Light>(directionalLights, GL_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW); // TODO : revoir
 }
 
 
@@ -25,7 +23,7 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 	{
 		glmlv::ObjData data;
 
-		loadObj(pathfile, data);
+		glmlv::loadObj(pathfile, data);
 
 		// Init scene limite
 		bboxMin = glm::min(data.bboxMin, bboxMin);
@@ -78,12 +76,49 @@ void Scene::addObj(const glmlv::fs::path& pathfile)
 	}	
 }
 
+//-- ADD POINT LIGHT -------------------
+PointLight* Scene::addPointLight(const PointLight& light)
+{
+	pointLights.push_back(light);
+	return &(pointLights.back());
+}
+
+//-- ADD PARTICULES --------------------
+Particule* Scene::addParticules(Particule& particule)
+{
+	particules.emplace_back(std::move(particule));
+	return &(particules.back());
+}
+
+//-- REMOVE POINTLIGHTS ----------------
+void Scene::removePointLights(unsigned int index, int nb)
+{
+	if (index >= pointLights.size())
+		return;
+
+	auto end = (index + nb > pointLights.size()) ? pointLights.end() : pointLights.begin() + index + nb;
+	pointLights.erase(pointLights.begin() + index, end);
+}
+
+//-- REMOVE PARTICULES -----------------
+void Scene::removeParticules(unsigned int index, int nb)
+{
+	if (index >= particules.size())
+		return;
+
+	auto end = (index + nb > particules.size()) ? particules.end() : particules.begin() + index + nb;
+	particules.erase(particules.begin() + index, end);
+}
 
 //-- SORT PARTICULES -------------------
 
 void Scene::sortParticules()
 {
-	std::sort(particules.begin(), particules.end(), [](Particule& a, Particule& b) {
+	std::sort(particules.begin(), particules.end(), [](const Particule& a, const Particule& b) {
+		if (b.getMaterials().size() == 0)
+			return false;
+		if (a.getMaterials().size() == 0)
+			return true;
 		return a.getMaterials()[0] < b.getMaterials()[0];
 	});
 }

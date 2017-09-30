@@ -13,11 +13,11 @@ class GravitationalLink : public Link
 
 public:
 	GravitationalLink()
-		:Link()
+		:Link(gConst)
 	{}
 
 	GravitationalLink(PhysicalObject* object1, PhysicalObject* object2)
-		: Link(object1, object2)
+		: Link(object1, object2, gConst)
 	{}
 
 	virtual void update(float);
