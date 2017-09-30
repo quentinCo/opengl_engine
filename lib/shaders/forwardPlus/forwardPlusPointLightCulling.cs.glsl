@@ -54,7 +54,7 @@ vec4 clipSpaceToViewSpace(vec4 point)
 vec4 screenSpaceToViewSpace(vec4 point)
 {
 	vec4 clipPoint = vec4(point.xy / uWindowDim, point.z, point.w); // normalize the point xy
-	clipPoint.xy = vec2((2 * clipPoint.x - 1), (2 * clipPoint.y - 1));
+	clipPoint.xy = vec2((2 * clipPoint.x - 1), (1 - 2 * clipPoint.y));
 	clipPoint = clipSpaceToViewSpace(clipPoint);
 	return clipPoint;
 }
@@ -157,7 +157,7 @@ void main()
 
 	if(pixelGlobalPosition.x < uWindowDim.x && pixelGlobalPosition.y < uWindowDim.y)
 	{
-		uint currentDepth = floatBitsToUint(texelFetch(uDepthMap, ivec2(pixelGlobalPosition), 0).x);
+		uint currentDepth = floatBitsToUint(texelFetch(uDepthMap, ivec2(pixelGlobalPosition.x, uWindowDim.y - (pixelGlobalPosition.y + 1)), 0).x);
 		
 		atomicMin(depthMinInt, currentDepth);
 		atomicMax(depthMaxInt, currentDepth);

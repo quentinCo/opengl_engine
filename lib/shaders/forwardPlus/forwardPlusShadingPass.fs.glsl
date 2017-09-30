@@ -3,6 +3,7 @@
 #define MAX_LIGHTS 200
 #define TILE_SIZE 16
 
+layout(origin_upper_left) in vec4 gl_FragCoord;
 layout(location = 0) out vec3 fColor;
 layout(location = 1) out vec3 fEmissive;
 
@@ -178,6 +179,14 @@ void computeFragColor()
 	//{
 	//	fColor += vec3(0, 0, 0.5);
 	//}
+
+	/*if(uPointLightsNumber > 0)
+		fColor += vec3(1) - vec3(
+			3 * abs(count - uPointLightsNumber),
+			abs(3 * count - 2 * uPointLightsNumber) / uPointLightsNumber,
+			abs(3 * count - uPointLightsNumber) / uPointLightsNumber
+		);*/
+	
 
 }
 void main()
