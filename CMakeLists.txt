@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.9.3)
 
-project(opengl)
+#[[project(opengl)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     add_definitions(
@@ -181,4 +181,4 @@ if(EXISTS ${APP_DIRECTORIES}/assets/)
         DIRECTORY ${APP_DIRECTORIES}/assets/
         DESTINATION assets/${APP}
     )
-endif()
+endif()]]
