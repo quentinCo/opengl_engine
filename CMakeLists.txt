@@ -1,184 +1,124 @@
-cmake_minimum_required(VERSION 3.9.3)
+cmake_minimum_required(VERSION 3.9)
 
-#[[project(opengl)
+project(opengl_engine)
 
-if(CMAKE_COMPILER_IS_GNUCXX)
-    add_definitions(
-        -std=c++14
-    )
-endif()
+# Lib files
+	# qc_graphic
+set(QC_GRAPHIC_DIR lib/qc_graphic)
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+file(GLOB_RECURSE
+	QC_GRAPHIC_SRC_FILES
+	${QC_GRAPHIC_DIR}/src/*.c
+	${QC_GRAPHIC_DIR}/src/*.cpp
+)
 
-option(GLMLV_USE_BOOST_FILESYSTEM "Use boost for filesystem library instead of experimental std lib" OFF)
+file(
+	GLOB_RECURSE
+	QC_GRAPHIC_INCLUDE_FILES
+	${QC_GRAPHIC_DIR}/include/qc_graphic/*.h
+	${QC_GRAPHIC_DIR}/include/qc_graphic/*.hpp
+)
 
-if (GLMLV_USE_BOOST_FILESYSTEM)
-    add_definitions(
-        -DGLMLV_USE_BOOST_FILESYSTEM
-    )
-endif()
+file(
+	GLOB_RECURSE
+	QC_GRAPHIC_SHADER_FILES
+	${QC_GRAPHIC_DIR}/shaders/*.glsl
+)
 
-set(IMGUI_DIR imgui-1.49)
-set(GLFW_DIR glfw-3.2.1)
-set(GLM_DIR glm-0.9.8.3)
-set(GLAD_DIR glad)
-set(JSON_DIR json-2.0.9)
-set(STB_DIR stb)
-set(TINY_OBJ_LOADER_DIR tinyobjloader-1.0.5)
-set(GLMLV_DIR glmlv)
+add_library(
+	qc_graphic
+	${QC_GRAPHIC_SRC_FILES}
+	${QC_GRAPHIC_INCLUDE_FILES}
+	${QC_GRAPHIC_SHADER_FILES}
+)
 
-add_subdirectory(third-party/${GLFW_DIR})
+source_group(
+	"Shaders"
+	FILES
+	${QC_GRAPHIC_SHADER_FILES}
+)
 
+set(LIBRARIES ${LIBRARIES} qc_graphic)
+add_subdirectory(${QC_GRAPHIC_DIR})
+include_directories(${QC_GRAPHIC_DIR}/include)
+
+	# third-parties
+		# OpenGL
 find_package(OpenGL REQUIRED)
+set(LIBRARIES ${LIBRARIES} ${OPENGL_LIBRARIES})
+include_directories(${OPENGL_INCLUDE_DIRS})
 
-if(GLMLV_USE_BOOST_FILESYSTEM)
-    find_package(Boost COMPONENTS system filesystem REQUIRED)
-endif()
-
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-include(c2ba-glsl-shaders)
-include(c2ba-copy-dll-post-build)
-include(c2ba-assets-directory)
-
-if(MSVC)
-    set(SHADER_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/\$\(Configuration\)/shaders)
-    set(ASSET_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/\$\(Configuration\)/assets)
-else()
-    set(SHADER_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/shaders)
-    set(ASSET_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/assets)
-endif()
-
+		# assimp
+set(ASSIMP_DIR third-party/assimp)
+set(LIBRARIES ${LIBRARIES} assimp)
+add_subdirectory(${ASSIMP_DIR})
 include_directories(
-    ${OPENGL_INCLUDE_DIRS}
-    third-party/${GLFW_DIR}/include
-    third-party/${GLM_DIR}
-    third-party/${GLAD_DIR}/include
-    third-party/${JSON_DIR}
-    third-party/${IMGUI_DIR}
-    third-party/${STB_DIR}
-    third-party/${TINY_OBJ_LOADER_DIR}
-	third-party/${GLMLV_DIR}/include
-    lib/include
+	${ASSIMP_DIR}/include
+	${ASSIMP_DIR}/code
 )
 
-if(GLMLV_USE_BOOST_FILESYSTEM)
-    include_directories (
-        ${Boost_INCLUDE_DIRS}
-    )
-endif()
+# Add the temporary output directories to the library path to make sure the
+# Assimp library can be found, even if it is not installed system-wide yet.
+#link_directories( ${Assimp_BINARY_DIR} ${AssetImporter_BINARY_DIR}/lib )
+
+		# glad
+set(GLAD_DIR third-party/glad)
+#set(LIBRARIES ${LIBRARIES} glad)
+include_directories(${GLAD_DIR}/include)
+
+		# glfw
+set(GLFW_DIR third-party/glfw)
+set(LIBRARIES ${LIBRARIES} glfw)
+add_subdirectory(${GLFW_DIR})
+include_directories(${GLFW_DIR}/include)
+
+		# glm
+set(GLM_DIR third-party/glm)
+#set(LIBRARIES ${LIBRARIES} glm)
+include_directories(${GLM_DIR})
+
+		# imgui
+set(IMGUI_DIR third-party/imgui)
+file(GLOB
+	IMGUI_SRC_FILES
+	${IMGUI_DIR}/*.cpp
+)
 
 file(
-    GLOB_RECURSE
-    GLMLV_LIB_FILES
-    third-party/${GLMLV_DIR}/*.cpp third-party/${GLMLV_DIR}/*.hpp
+	GLOB
+	IMGUI_INCLUDE_FILES
+	${IMGUI_DIR}/*.h
 )
-
 
 add_library(
-    glmlv
-    ${GLMLV_LIB_FILES}
+	imgui
+	${IMGUI_SRC_FILES}
+	${IMGUI_INCLUDE_FILES}
 )
+#set(LIBRARIES ${LIBRARIES} imgui)
+include_directories(${IMGUI_DIR})
 
-file(
-    GLOB_RECURSE
-    QC_LIB_FILES
-    lib/*.cpp lib/*.hpp lib/*.glsl lib/assets/*
-)
+		# stb
+set(STB_DIR third-party/stb)
+#set(LIBRARIES ${LIBRARIES} stb)
+include_directories(${STB_DIR})
 
-add_library(
-	qc
-	${QC_LIB_FILES}
-)
+# App files
+set(APP_DIR "app/engine")
 
+file(GLOB_RECURSE APP_SRC_FILES ${APP_DIR}/*.c ${APP_DIR}/*.cpp)
+file(GLOB_RECURSE APP_INCLUDE_FILES ${APP_DIR}/*.h ${APP_DIR}/*.hpp)
 
-target_link_libraries(
-    qc
-    glmlv
-)
+# Executable
+	# Create
+add_executable(engine ${APP_SRC_FILES} ${APP_INCLUDE_FILES}) 
 
-c2ba_add_shader_directory(${CMAKE_CURRENT_SOURCE_DIR}/lib/shaders ${SHADER_OUTPUT_PATH}/qc)
-c2ba_add_assets_directory(${CMAKE_CURRENT_SOURCE_DIR}/lib/assets ${ASSET_OUTPUT_PATH}/qc)
+	# Link
+target_link_libraries(engine ${LIBRARIES})
 
+	# Copy useful file
 install(
-    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/shaders/
-    DESTINATION shaders/qc
-    FILES_MATCHING PATTERN "*.glsl"
+	DIRECTORY ${APP_DIR}/shaders/
+	DESTINATION shaders/${APP}
+	FILES_MATCHING PATTERN "*.glsl"
 )
-
-set(
-    IMGUI_SRC_FILES
-    third-party/${IMGUI_DIR}/imgui.cpp
-    third-party/${IMGUI_DIR}/imgui_demo.cpp
-    third-party/${IMGUI_DIR}/imgui_draw.cpp
-)
-
-set(
-    THIRD_PARTY_SRC_FILES
-    ${IMGUI_SRC_FILES}
-    third-party/${GLAD_DIR}/src/glad.c
-)
-
-set(
-    LIBRARIES
-    ${OPENGL_LIBRARIES}
-    glfw
-    glmlv
-	qc
-)
-
-if(CMAKE_COMPILER_IS_GNUCXX AND NOT GLMLV_USE_BOOST_FILESYSTEM)
-    set(LIBRARIES ${LIBRARIES} stdc++fs)
-endif()
-
-if (GLMLV_USE_BOOST_FILESYSTEM)
-    set(LIBRARIES ${LIBRARIES} ${Boost_SYSTEM_LIBRARY}  ${Boost_FILESYSTEM_LIBRARY})
-endif()
-
-source_group ("glsl" REGULAR_EXPRESSION "*/*.glsl")
-source_group ("third-party" REGULAR_EXPRESSION "third-party/*.*")
-
-file(GLOB APP_DIRECTORIES "apps/engine")
-get_filename_component(APP ${APP_DIRECTORIES} NAME)
-
-file(
-    GLOB_RECURSE
-    SRC_FILES
-    apps/${APP}/*.cpp apps/${APP}/*.hpp apps/${APP}/*.glsl apps/${APP}/assets/*
-)
-
-add_executable(
-    ${APP}
-    ${SRC_FILES}
-    ${THIRD_PARTY_SRC_FILES}
-)
-
-target_link_libraries(
-    ${APP}
-    ${LIBRARIES}
-)
-
-install(
-    TARGETS ${APP}
-    DESTINATION .
-)
-
-c2ba_add_shader_directory(${APP_DIRECTORIES}/shaders ${SHADER_OUTPUT_PATH}/${APP})
-c2ba_add_assets_directory(${APP_DIRECTORIES}/assets ${ASSET_OUTPUT_PATH}/${APP})
-
-install(
-    DIRECTORY ${APP_DIRECTORIES}/shaders/
-    DESTINATION shaders/${APP}
-    FILES_MATCHING PATTERN "*.glsl"
-)
-
-if(EXISTS ${APP_DIRECTORIES}/assets/)
-    install(
-        DIRECTORY ${APP_DIRECTORIES}/assets/
-        DESTINATION assets/${APP}
-    )
-endif()]]
