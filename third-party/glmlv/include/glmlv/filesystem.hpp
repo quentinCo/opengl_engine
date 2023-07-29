@@ -3,7 +3,7 @@
 #ifdef GLMLV_USE_BOOST_FILESYSTEM
 #include <boost/filesystem.hpp>
 #else
-#include <experimental/filesystem>
+#include <filesystem>
 #endif
 
 namespace glmlv
@@ -12,7 +12,7 @@ namespace glmlv
 #ifdef GLMLV_USE_BOOST_FILESYSTEM
 namespace fs = boost::filesystem;
 #else
-namespace fs = std::experimental::filesystem; // Shorter namespace for experimental filesystem standard library
+namespace fs = std::filesystem; // Shorter namespace for experimental filesystem standard library
 #endif
 
 }
