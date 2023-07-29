@@ -86,6 +86,8 @@ file(
     lib/*.cpp lib/*.hpp lib/*.glsl lib/assets/*
 )
 
+add_compile_definitions(NO_POSTPROCESS)
+
 add_library(
 	qc
 	${QC_LIB_FILES}

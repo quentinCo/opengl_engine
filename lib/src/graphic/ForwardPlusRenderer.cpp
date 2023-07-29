@@ -254,6 +254,7 @@ void ForwardPlusRenderer::renderScene(const Scene& scene, const Camera& camera)
 //-- RENDER DEPTH PASS ------------------
 void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& camera)
 {
+#ifndef NO_POSTPROCESS
 	if ((renderOptions & RENDER_BLUR) == RENDER_BLUR)
 	{
 		postProcessBlurPass(shadingRenderedTexture[EMISSIVE_TEXTURE]);
@@ -263,6 +264,7 @@ void ForwardPlusRenderer::postProcessPass(const Scene& scene, const Camera& came
 		setTexCompositingLayer(2, &bufferBlurred);
 	}
 	else
+#endif
 		setTexCompositingLayer(2, 0);
 
 	renderGatherPass();	

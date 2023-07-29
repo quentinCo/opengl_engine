@@ -125,6 +125,7 @@ void Renderer::initEmissivePass()
 
 void Renderer::initBlurPass()
 {
+#ifndef NO_POSTPROCESS
 	programBlurPass = glmlv::compileProgram({ shaderDirectory / "postProcess" / "blur.cs.glsl" });
 
 	glGenTextures(1, &bufferBlurredTexPass1);
@@ -148,6 +149,7 @@ void Renderer::initBlurPass()
 	uInitTex = glGetUniformLocation(programBlurPass.glId(), "uInitTex");
 	uTexSizeBlur = glGetUniformLocation(programBlurPass.glId(), "uTexSize");
 	uDirectionBlur = glGetUniformLocation(programBlurPass.glId(), "uDirection");
+#endif
 }
 
 

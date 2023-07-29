@@ -329,7 +329,7 @@ void Application::renderGraphicOption()
 		renderer->setRenderOptions(renderOptions);
 	}
 
-
+#ifndef NO_POSTPROCESS
 	titleButton = ((renderOptions & RenderOptions::RENDER_BLUR) == RenderOptions::RENDER_BLUR) ? "Dont Render Blur" : "Render Blur";
 	if (ImGui::Button(titleButton.c_str()))
 	{
@@ -346,7 +346,7 @@ void Application::renderGraphicOption()
 
 	if ((renderOptions & RenderOptions::RENDER_BLUR) == RenderOptions::RENDER_BLUR)
 		ImGui::SliderInt("Nb blur iteration", &(renderer->getNbBlurPass()), 1, 10);
-
+#endif
 
 	titleButton = ((renderOptions & RenderOptions::RENDER_POINT_LIGHTS) == RenderOptions::RENDER_POINT_LIGHTS) ? "Dont Render Point Lights" : "Render Point Lights";
 	if (ImGui::Button(titleButton.c_str()))
